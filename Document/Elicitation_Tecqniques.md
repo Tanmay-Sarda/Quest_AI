@@ -31,7 +31,7 @@
 
 ---
 
-### 5. Domain Expert (Humanity Professors)
+### 4. Domain Expert (Humanity Professors)
 **Interview**  
 - **Why:** To ask questions on both their earlier knowledge of generating text, and inputs on our current plans.  
 - **How to use it:** Conduct interview with humanity professors and ask questions such as:  
@@ -48,3 +48,50 @@
 **Questionnaires**  
 - **Why:** A short and simple interaction, surveys are best to know what most users like.  
 - **How to use:** Ask questions pertaining to how exciting they find the overall idea and each feature to be.
+
+- ---
+
+### 1. Casual Storytelling Enjoyers
+*Interviews*  
+•⁠  ⁠*Why:* This is probably the largest demographic, as others are niches. We need to know if there will be aspects of our software they enjoy.  
+•⁠  ⁠*How to use:* Conduct interview and ask questions such as:  
+  - Have you ever used AI for making stories before?  
+  - Any suggestion or additional feature you want to add in our project?  
+  - What critiques do you have with our approach?  
+  - Do you think our app has a demographic, including you?
+
+*Prototyping*  
+•⁠  ⁠*Why:* Shows if the design is simple enough for casual fun.  
+•⁠  ⁠*How to use:* Let them test a very basic version where they just pick a setting and character and see the story and make suggestions.
+
+---
+
+### 2. RPG (Role Playing Game) Players
+*Interviews*  
+•⁠  ⁠*Why:* RPG players like complex systems, so interviews help understand details like stats, quests, and dice fairness.  
+•⁠  ⁠*How to use:* Conduct interview and ask questions such as:  
+  - Do you have previous experiences of using AI to generate text unrelated to non-fiction?  
+  - Any suggestion or additional feature you want to add in our project?  
+  - What critiques do you have with our approach?  
+  - Do you think our app has a demographic, including you?  
+  - What are your expectations in branching stories, dice rolls and role-playing?  
+  - Do you think our app has a demographic, including you?
+
+*Prototyping*  
+•⁠  ⁠*Why:* Shows if the idea of this is appealing to RPG Players.  
+•⁠  ⁠*How to use:* Let them test a very basic version where they just pick a setting and character and see the story and make suggestions.
+
+---
+
+### 3. FanFic Enjoyers
+*Interviews*  
+•⁠  ⁠*Why:* Fanfic readers and writers often care about genres, characters, and personalization. We need to know if these are suitable additional features.  
+•⁠  ⁠*How to use:* Conduct interview and ask questions such as:  
+  - Have you ever used AI for making fanfics before?  
+  - Any suggestion or additional feature you want to add in our project?  
+  - What critiques do you have with our approach?  
+  - Do you think our app has a demographic, including you?
+
+*Prototyping*  
+•⁠  ⁠*Why:* FanFic enjoyers are creative users they don’t just read they add twists so prototype that will let us see how they actually interact with AI.  
+•⁠  ⁠*How to use:* Let them try a prototype where they can make a story of their own ideas and give feedback.
