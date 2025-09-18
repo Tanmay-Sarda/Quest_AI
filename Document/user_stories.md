@@ -1,9 +1,9 @@
 # Essential Features
 
 ## 1. Register
-*a. Front* - As a user, I need to Register so that I can save my content.  
+**a. Front** - As a user, I need to Register so that I can save my content.  
 
-*b. Back* -  
+**b. Back** -  
    i. Users can register with required details (username, email, password).  
    ii. Passwords must meet minimum security requirements.  
    iii. Duplicate emails are not allowed.  
@@ -13,9 +13,9 @@
 ---
 
 ## 2. Login
-*a. Front* - As a user, I need to Login so that I can access my saved content on different devices or on reloading.  
+**a. Front** - As a user, I need to Login so that I can access my saved content on different devices or on reloading.  
 
-*b. Back* -  
+**b. Back** -  
    i. Users can log in with valid credentials (Username, Email and Password must match in database).  
    ii. Invalid credentials show a clear error message.  
    iii. Session remains active until logout or timeout.  
@@ -24,17 +24,17 @@
 ---
 
 ## 3. Create New Story
-*a. Front* - As a user, I want to Create a New Story so that I can access my saved content on different devices or on reloading.  
+**a. Front** - As a user, I want to Create a New Story so that I can access my saved content on different devices or on reloading.  
 
-*b. Back* -  
+**b. Back** -  
    i. The user is redirected to the Story Form to provide details to be filled in that entry.  
 
 ---
 
 ## 4. Logout
-*a. Front* - As a user, I want to be able to Logout so that I can login from other accounts or prevent someone else from accessing without logging in.  
+**a. Front** - As a user, I want to be able to Logout so that I can login from other accounts or prevent someone else from accessing without logging in.  
 
-*b. Back* -  
+**b. Back** -  
    i. Session is terminated on logout.  
    ii. The user is redirected to the Login Page.  
    iii. Prevents access to stories until re-login.
