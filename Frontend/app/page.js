@@ -48,7 +48,8 @@ export default function SignUpPage() {
         setForm({ name: "", email: "", password: "", profilePicture: "" });
       }else{
         console.log(data);
-        toast.error("⚠️Error: "+data.message)
+       toast.error("⚠️Error: " + (data.message || "Registration Cancle"));
+
       }
     }catch(error){
       console.error("Registration error:", error);
