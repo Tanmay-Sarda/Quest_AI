@@ -48,8 +48,7 @@ export default function SignUpPage() {
         setForm({ name: "", email: "", password: "", profilePicture: "" });
       }else{
         console.log(data);
-       toast.error("⚠️Error: " + (data.message || "Registration Cancle"));
-
+        toast.error("⚠️Error: "+data.message)
       }
     }catch(error){
       console.error("Registration error:", error);
@@ -148,16 +147,7 @@ export default function SignUpPage() {
             )}
           </motion.div>
           
-          {/* Profile Picture Upload (Optional) */}
-          <motion.input
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 }}
-            type="text"
-            name="profilePicture"
-            placeholder="Enter the image URL"
-            className="w-full rounded-xl bg-white/20 px-4 py-3 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 hover:bg-white/30 hover:shadow-lg hover:shadow-indigo-500/30"
-          />
+          
 
           {/* Submit */}
           <motion.button
