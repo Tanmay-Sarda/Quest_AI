@@ -16,7 +16,7 @@
 **Reason for elicitation technique:** This is the basic and obvious feature for our application.  
 
 4. **Logout**  
-**Reason:** To login users should register first.  
+**Reason:** The user must be able to log out and log in again, or log in through a different account.  
 **Elicitation Technique:** Prototyping  
 **Reason for elicitation technique:** This one of the standard features for this app. Prototyping because while creating the basic paper prototyping for the app we get to know this must be included in the app flow.  
 

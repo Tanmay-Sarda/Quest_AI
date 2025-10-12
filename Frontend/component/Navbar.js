@@ -29,9 +29,9 @@ export default function Navbar() {
         {/* Website Name */}
         <div
           onClick={() => router.push("/")}
-          className="text-2xl font-bold cursor-pointer flex gap-3 hover:text-indigo-400 transition"
+          className="text-2xl font-bold cursor-pointer hover:text-indigo-400 transition"
         >
-         <span><img className="w-11 h-10 rounded-xl" src="./QuestAI.jpg" alt="" /></span> Quest-AI
+          Quest-AI
         </div>
 
         {/* Right Side Buttons */}

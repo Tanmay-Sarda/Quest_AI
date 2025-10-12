@@ -74,8 +74,7 @@
   - Any suggestion or additional feature you want to add in our project?  
   - What critiques do you have with our approach?  
   - Do you think our app has a demographic, including you?  
-  - What are your expectations in branching stories, dice rolls and role-playing?  
-  - Do you think our app has a demographic, including you?
+  - What are your expectations in branching stories, dice rolls and role?
 
 *Prototyping*  
 •⁠  ⁠*Why:* Shows if the idea of this is appealing to RPG Players.  

@@ -31,9 +31,9 @@ export default function SignInPage() {
         
         //Toast success message
         toast.success("✅ Sign in successful! Redirecting to Home...");
-
+        console.log(data);
         setTimeout(() => {
-          router.push(`/Home`);
+          router.push(`/Home/${data.data.user.username}`);
         }, 2000);
         setform({ email: "", password: "" });
       }else{
