@@ -16,6 +16,10 @@ app.use(cookieParser()); //Use for parsing cookies
 
 // Routes
 
+//Story Routes
+import storyRoutes from './routes/story.routes.js';
+app.use('/api/v1/story', storyRoutes);
+
 //User Routes
 import userRoutes from './routes/user.routes.js';
 app.use('/api/v1/user', userRoutes);
