@@ -61,7 +61,9 @@ const loginUser = asyncHandler(async (req, res) => {
     const cookieOptions = {
          //httpOnly and secure options use because this change only in production not in development(frontend cannot access the cookie)
         httpOnly: true,// Prevents client-side access to the cookie 
-        secure:true, // Use secure cookies in production (HTTPS)
+        secure: process.env.NODE_ENV === "production", // Use secure cookies in production (HTTPS)
+        sameSite: "lax",
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
     }
     return res.
     status(200).
@@ -81,7 +83,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     const cookieOptions = {
         //httpOnly and secure options use because this change only in production not in development(frontend cannot access the cookie)
         httpOnly: true, // Prevents client-side access to the cookie 
-        secure: true, // Use secure cookies in production (HTTPS)
+        secure: process.env.NODE_ENV === "production", // Use secure cookies in production (HTTPS)
+        sameSite: "lax",
     }
     return res.
         status(200).
@@ -109,7 +112,9 @@ const generateRefreshToken= asyncHandler(async (req, res) => {
         const cookieOptions = {
             //httpOnly and secure options use because this change only in production not in development(frontend cannot access the cookie)
             httpOnly: true, // Prevents client-side access to the cookie 
-            secure: true, // Use secure cookies in production (HTTPS)
+            secure: process.env.NODE_ENV === "production", // Use secure cookies in production (HTTPS)
+            sameSite: "lax",
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
         }
         return res.
             status(200).
