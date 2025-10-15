@@ -17,7 +17,11 @@
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.1",
     "next": "15.5.2",
+<<<<<<< HEAD
     "next-auth": "^4.24.11",
+=======
+    "package.json": "^2.0.1",
+>>>>>>> 34f250859481fa6db9ef2206a62f93336f382ab4
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-toastify": "^11.0.5"
