@@ -4,6 +4,10 @@ import { motion } from "framer-motion";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {useRouter} from 'next/navigation';
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import axios from "axios";
+
+
 export default function SignInPage() {
   const [form, setform] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -50,12 +54,25 @@ export default function SignInPage() {
     setform({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleLogin = async (credentialResponse) => {
+    try {
+      const res = await axios.post("http://localhost:3000/api/v1/user/google-login", {
+        token: credentialResponse.credential,
+      });
+      console.log("User logged in:", res.data);
+      localStorage.setItem("accessToken", res.data.data.user.accessToken);
+      router.push(`/Home/${res.data.data.user.username}`);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0a0a14] via-[#0b0f1c] to-[#0a0a14] text-white overflow-hidden">
       {/* auth card */}
       <motion.div
         initial={{ opacity: 0, y: 60 }}
-        animate={{ opacity: 1, y: -10 }}
+        animate={{ opacity: 1, y: 10 }}
         transition={{ duration: 1 }}
         className="relative z-10 w-full max-w-md rounded-2xl bg-white/10 p-8 shadow-xl backdrop-blur-xl"
       >
@@ -134,6 +151,25 @@ export default function SignInPage() {
           >
             Sign In
           </motion.button>
+
+           <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+           className="flex justify-center">
+            <span className="text-gray-300">or sign in with</span>
+           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex w-full justify-center mt-2"
+          >
+            <GoogleLogin
+              onSuccess={handleLogin}
+              onError={() => toast.error("⚠️ Google Sign-in failed!")}
+            />
+          </motion.div>
         </form>
       </motion.div>
 

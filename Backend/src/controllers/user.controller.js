@@ -2,7 +2,10 @@ import ApiError     from "../utils/ApiError.js";
 import asyncHandler from "../utils/AsyncHandler.js";
 import ApiResponse  from "../utils/ApiResponse.js";
 import { User }     from "../models/User.models.js";
+import { OAuth2Client } from "google-auth-library";
+import crypto from "crypto";
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateAccessTokenAndRefreshToken=async(userId)=>{
     const user=await User.findById(userId);
@@ -39,6 +42,58 @@ const registerUser = asyncHandler(async (req, res) => {
     await newUser.save();
 
     res.status(201).json(new ApiResponse(true, { _id: newUser._id, username: newUser.username, email: newUser.email }, 'User registered successfully'));
+})
+
+const googleLogin = asyncHandler(async (req, res) => {
+  try {
+    const { token } = req.body; // token from frontend Google sign-in
+
+    // Verify the token with Google
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name } = payload;
+
+    // Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+         const randomPassword = crypto.randomBytes(16).toString("hex");
+      user = await User.create({
+        username: name,
+        email,
+        password: randomPassword, // dummy password
+      });
+    }
+
+    // Generate tokens
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    // Save tokens to DB
+    user.accesstoken = accessToken;
+    user.refreshtoken = refreshToken;
+    await user.save();
+
+    // Set tokens in HTTP-only cookies
+    const cookieOptions = {
+        //httpOnly and secure options use because this change only in production not in development(frontend cannot access the cookie)
+        httpOnly: true, // Prevents client-side access to the cookie 
+        secure: true, // Use secure cookies in production (HTTPS)
+    }
+
+    res
+      .status(200)
+      .cookie("accessToken", accessToken, cookieOptions) // Set access token in HTTP-only cookie
+      .cookie("refreshToken", refreshToken, cookieOptions) // Set refresh token in HTTP-only cookie
+      .json(new ApiResponse(true, { user: { _id: user._id, username: user.username, email: user.email, profilePicture: user.profilePicture, refreshToken, accessToken } }, 'Google login successful'));
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json(new ApiError(500, 'Google login failed'));
+  }
 })
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -122,4 +177,4 @@ const generateRefreshToken= asyncHandler(async (req, res) => {
     }
 })
 
-export { registerUser, loginUser, logoutUser, generateRefreshToken };
+export { registerUser, loginUser, logoutUser, generateRefreshToken, googleLogin };

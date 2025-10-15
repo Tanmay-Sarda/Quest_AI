@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavbarWrapper from "@/component/NavbarWrapper"; // 👈 new client wrapper
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,8 +24,13 @@ export default function RootLayout({ children }) {
       <body
         className="min-h-screen bg-gradient-to-b from-[#0a0a14] via-[#0b0f1c] to-[#0a0a14] text-white"
       >
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
         <NavbarWrapper />
-        <div id="content">{children}</div>
+        <div id="content">
+          
+          {children}
+        </div>
+         </GoogleOAuthProvider>
       </body>
     </html>
   );
