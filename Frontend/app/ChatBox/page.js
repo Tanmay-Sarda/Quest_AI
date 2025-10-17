@@ -2,11 +2,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { Send, Copy } from "lucide-react";
 
 export default function StoryPage() {
   const [prompt, setPrompt] = useState("");
   const [stories, setStories] = useState([]);
   const scrollRef = useRef(null);
+  const inputRef = useRef(null); 
   const router = useRouter();
 
   const handleSend = (e) => {
@@ -22,16 +24,13 @@ export default function StoryPage() {
     setPrompt("");
   };
 
-  // --- UPDATED EXIT HANDLER ---
   const handleExit = () => {
-    const username = localStorage.getItem("username"); // Get username from storage
-    if (username) {
-      router.push(`/Home/${username}`); // Redirect to user's home page
-    } else {
-      // Fallback if username is not found for some reason
-      router.push("/");
-    }
+    router.push("/Home/Meet");
   };
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -39,18 +38,20 @@ export default function StoryPage() {
     }
   }, [stories]);
 
-  // This effect will run once to check if we are continuing a story
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const storyId = params.get("storyId");
+  const renderSendIcon = () => {
+    return <Send className="w-5 h-5 ml-2 inline-block" />;
+  };
 
-    if (storyId) {
-      // You would fetch the existing story/chat history from your backend here
-      console.log("Continuing story with ID:", storyId);
-      // Example: setStories(fetchedStoryHistory);
-      toast.info(`Loading existing story...`);
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(e);
     }
-  }, []);
+  };
 
   return (
     <div className="flex justify-center items-center p-4">
@@ -77,19 +78,31 @@ export default function StoryPage() {
         >
           {stories.length === 0 ? (
             <p className="text-center text-gray-400 mt-4">
-              No stories yet. Start by entering a prompt ✍️
+              No stories yet. Start by entering a prompt ✍
             </p>
           ) : (
             stories.map((s) => (
               <div key={s.id} className="flex flex-col space-y-2">
-                {/* User Prompt */}
-                <div className="self-end bg-indigo-500/30 text-white p-3 rounded-xl max-w-[70%] text-right">
+                <div className="relative self-end bg-indigo-500/30 text-white p-2 rounded-xl max-w-[70%] group">
                   {s.prompt}
+                  <button
+                    onClick={() => handleCopy(s.prompt)}
+                    className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Copy story"
+                  >
+                    <Copy className="w-4 h-4 text-white/70 hover:text-white" />
+                  </button>
                 </div>
 
-                {/* AI Response */}
-                <div className="self-start bg-indigo-800/30 text-white p-3 rounded-xl max-w-[70%]">
+                <div className="relative self-start bg-indigo-800/30 text-white p-2 rounded-xl max-w-[70%] group">
                   {s.response}
+                  <button
+                    onClick={() => handleCopy(s.response)}
+                    className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Copy story"
+                  >
+                    <Copy className="w-4 h-4 text-white/70 hover:text-white" />
+                  </button>
                 </div>
               </div>
             ))
@@ -102,17 +115,19 @@ export default function StoryPage() {
           className="flex items-center gap-2 p-4 border-t border-white/10"
         >
           <input
+            ref={inputRef} 
             type="text"
             placeholder="Enter your story prompt..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={handleKeyPress}
             className="flex-1 rounded-xl bg-white/20 px-4 py-3 text-white placeholder-gray-300 focus:outline-none"
           />
           <button
             type="submit"
             className="rounded-xl bg-indigo-500 px-4 py-3 font-semibold hover:bg-indigo-600 transition"
           >
-            Send
+            Send {renderSendIcon()}
           </button>
         </form>
       </motion.div>
@@ -128,6 +143,17 @@ export default function StoryPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background-color: rgba(255, 255, 255, 0.2);
           border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+          background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+        .custom-scrollbar:hover {
+          scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
         }
       `}</style>
     </div>
