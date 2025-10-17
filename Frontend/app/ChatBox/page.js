@@ -2,11 +2,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+
 export default function StoryPage() {
   const [prompt, setPrompt] = useState("");
   const [stories, setStories] = useState([]);
-  const scrollRef = useRef(null); // ref to scroll container
-  const router=useRouter()
+  const scrollRef = useRef(null);
+  const router = useRouter();
+
   const handleSend = (e) => {
     e.preventDefault();
     if (!prompt.trim()) return;
@@ -20,16 +22,35 @@ export default function StoryPage() {
     setPrompt("");
   };
 
+  // --- UPDATED EXIT HANDLER ---
   const handleExit = () => {
-      router.push('/Home/Meet')
+    const username = localStorage.getItem("username"); // Get username from storage
+    if (username) {
+      router.push(`/Home/${username}`); // Redirect to user's home page
+    } else {
+      // Fallback if username is not found for some reason
+      router.push("/");
+    }
   };
 
-  // Scroll to bottom whenever stories change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [stories]);
+
+  // This effect will run once to check if we are continuing a story
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const storyId = params.get("storyId");
+
+    if (storyId) {
+      // You would fetch the existing story/chat history from your backend here
+      console.log("Continuing story with ID:", storyId);
+      // Example: setStories(fetchedStoryHistory);
+      toast.info(`Loading existing story...`);
+    }
+  }, []);
 
   return (
     <div className="flex justify-center items-center p-4">
@@ -107,18 +128,6 @@ export default function StoryPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background-color: rgba(255, 255, 255, 0.2);
           border-radius: 10px;
-        }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-          background-color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Firefox scrollbar */
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-        }
-        .custom-scrollbar:hover {
-          scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
         }
       `}</style>
     </div>

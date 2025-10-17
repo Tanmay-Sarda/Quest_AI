@@ -50,7 +50,9 @@ export default function StoryForm() {
                 name={field}
                 value={form[field]}
                 onChange={handleChange}
-                placeholder={`Enter ${field === "character" ? "main character" : `story ${field}`}`}
+                placeholder={`Enter ${
+                  field === "character" ? "main character" : `story ${field}`
+                }`}
                 className="w-full rounded-xl bg-white/20 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 hover:bg-white/30 hover:shadow-lg hover:shadow-indigo-500/30"
               />
             </motion.div>

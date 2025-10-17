@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import {useRouter} from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import axios from "axios";
 
@@ -11,28 +11,33 @@ import axios from "axios";
 export default function SignInPage() {
   const [form, setform] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
- const router=useRouter();
-  const handleSubmit = async(e) => {
+  const router = useRouter();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const res=await fetch('http://localhost:3000/api/v1/user/login',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json'
+      const res = await fetch("http://localhost:3000/api/v1/user/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        body:JSON.stringify({
-          email:form.email,
-          password:form.password
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
         }),
         // credentials:'include' // Include cookies in the request
       });
-      const data=await res.json();
-      if(res.status>=200 && res.status<300){
+      const data = await res.json();
+      if (res.status >= 200 && res.status < 300) {
         //set accessToken in localStorage
         console.log("Access Token:", data.data.user.accessToken);
-        localStorage.setItem('accessToken', data.data.user.accessToken);
-        
+        localStorage.setItem("accessToken", data.data.user.accessToken);
+
+        // --- THIS LINE WAS ADDED ---
+        localStorage.setItem("username", data.data.user.username);
+        // --- END OF ADDED LINE ---
+
         //Toast success message
         toast.success("✅ Sign in successful! Redirecting to Home...");
         console.log(data);
@@ -40,13 +45,12 @@ export default function SignInPage() {
           router.push(`/Home/${data.data.user.username}`);
         }, 2000);
         setform({ email: "", password: "" });
-      }else{
-        toast.error("⚠️ "+(data.message || 'Sign in failed'));
+      } else {
+        toast.error("⚠️ " + (data.message || "Sign in failed"));
       }
-
     } catch (error) {
       console.error("Sign in error:", error);
-      toast.error("⚠️Error: "+error.message);
+      toast.error("⚠️Error: " + error.message);
     }
   };
 
@@ -61,18 +65,20 @@ export default function SignInPage() {
       });
       console.log("User logged in:", res.data);
       localStorage.setItem("accessToken", res.data.data.user.accessToken);
+      toast.success("✅ Logged in successfully via Google!");
       router.push(`/Home/${res.data.data.user.username}`);
     } catch (err) {
       console.error(err);
     }
   };
 
+
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0a0a14] via-[#0b0f1c] to-[#0a0a14] text-white overflow-hidden">
       {/* auth card */}
       <motion.div
         initial={{ opacity: 0, y: 60 }}
-        animate={{ opacity: 1, y: 10 }}
+        animate={{ opacity: 1, y: -10 }}
         transition={{ duration: 1 }}
         className="relative z-10 w-full max-w-md rounded-2xl bg-white/10 p-8 shadow-xl backdrop-blur-xl"
       >
@@ -152,13 +158,15 @@ export default function SignInPage() {
             Sign In
           </motion.button>
 
-           <motion.p 
+           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-           className="flex justify-center">
+            className="flex justify-center">
             <span className="text-gray-300">or sign in with</span>
-           </motion.p>
+          </motion.p>
+
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -173,7 +181,7 @@ export default function SignInPage() {
         </form>
       </motion.div>
 
-       {/* Toast notifications */}
+      {/* Toast notifications */}
       <ToastContainer
         position="top-right"
         autoClose={2500}

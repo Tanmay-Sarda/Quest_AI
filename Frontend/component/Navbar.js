@@ -1,58 +1,38 @@
 "use client";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function Navbar({ params }) {
+export default function Navbar() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const routeParams = useParams();
-  const searchParams = useSearchParams();
-  const username = routeParams?.username || searchParams.get("username");
+  const [username, setUsername] = useState(""); // State to hold the username
 
   useEffect(() => {
+    // Check for accessToken and username in localStorage
     const token = localStorage.getItem("accessToken");
+    const user = localStorage.getItem("username"); // Get the stored username
     setIsLoggedIn(!!token);
-  }, []);
-
-  const handleLogout = async () => {
-    
-
-    try{
-      const res=await fetch('http://localhost:3000/api/v1/user/logout',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':`Bearer ${localStorage.getItem('accessToken')}`
-      }
-    })
-      
-    const data=await res.json();
-      if(res.status>=200 && res.status<300){
-        toast.success("✅ Logout successful! Redirecting to Sign In...");
-       
-        setTimeout(() => {
-          setIsLoggedIn(false);
-          localStorage.removeItem("accessToken");
-          router.push('/Sign_in');
-        }, 2000);
-
-      }else{
-        console.log(data);
-        toast.error("⚠️Error: "+data.message)
-      }
-
-    }catch(error){
-      console.error("Logout failed:", error);
-      toast.error("Logout failed. Please try again.");
+    if (user) {
+      setUsername(user); // Set the username in state
     }
+  });
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("username"); // Remove username on logout
+    setTimeout(() => {
+      toast.info("Redirecting to Sign in page...");
+    }, 0);
+    router.push("/Sign_in");
   };
 
   return (
     <nav className="w-full fixed top-0 left-0 bg-black border-b border-purple-500/40 shadow-md shadow-purple-900/50 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        {/* Website Name */}
         <div
           onClick={() => router.push("/")}
           className="text-2xl font-bold cursor-pointer hover:text-indigo-400 transition"
@@ -60,6 +40,7 @@ export default function Navbar({ params }) {
           Quest-AI
         </div>
 
+        {/* Right Side Buttons */}
         <div className="flex gap-4">
           <button
             onClick={() => {
@@ -70,7 +51,6 @@ export default function Navbar({ params }) {
           >
             About Us
           </button>
-
           {!isLoggedIn ? (
             <>
               <button
@@ -94,10 +74,35 @@ export default function Navbar({ params }) {
             </>
           ) : (
             <>
+              {/* --- NEW HOME BUTTON ADDED HERE --- */}
+              <button
+                onClick={() => {
+                  if (username) {
+                    router.push(`/Home/${username}`);
+                  } else {
+                    toast.error("Could not find user, please sign in again.");
+                  }
+                }}
+                className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-lg px-5 py-2.5 text-center me-2 mb-2"
+              >
+                Home
+              </button>
+              {/* --- END OF NEW HOME BUTTON --- */}
+
+              <button
+                onClick={() => {
+                  toast.info("Redirecting to Edit Profile page...");
+                  router.push("/EditProfile");
+                }}
+                className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-lg px-5 py-2.5 text-center me-2 mb-2"
+              >
+                Edit Profile
+              </button>
+
               <button
                 onClick={() => {
                   toast.info("Redirecting to Story Creation page...");
-                  router.push(`/Story_Form/${username}`);
+                  router.push("/Story_Form/Meet");
                 }}
                 className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-lg px-5 py-2.5 text-center me-2 mb-2"
               >
@@ -113,7 +118,7 @@ export default function Navbar({ params }) {
           )}
         </div>
       </div>
-
+      {/* Toast notifications */}
       <ToastContainer
         position="top-right"
         autoClose={2500}
