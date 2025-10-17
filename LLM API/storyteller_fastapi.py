@@ -11,6 +11,11 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
+import os # This should already be there
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # --- 1. FastAPI Setup ---
 app = FastAPI(title="AI Storyteller API")
 
@@ -22,7 +27,7 @@ story_collection = db["stories"]
 
 # --- 3. LLM Initialization ---
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro-latest",
+    model="gemini-2.5-pro",
     temperature=0.9,
     google_api_key=os.environ.get("GOOGLE_API_KEY")
 )

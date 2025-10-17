@@ -5,28 +5,57 @@ import { Story } from '../models/Story.models.js';
 
 
 const createStory = asyncHandler(async (req, res) => {
-  // Logic to create a new story
-  const { title, description, character } = req.body;
-  const owner = req.user?._id;
+    // Get data from the user's request
+    const { title, description, character } = req.body;
+    const ownerId = req.user?._id;
 
-  if (!owner) {
-    return res.status(401).json(new ApiError(401, 'Unauthorized: User not authenticated'));
-  }
+    if (!ownerId) {
+        return res.status(401).json(new ApiError(401, 'Unauthorized: User not authenticated'));
+    }
 
-  if (!title || !description) {
-    return res.status(400).json(new ApiError(false, 'Title and description are required'));
-  }
+    if (!title || !description || !character) {
+        return res.status(400).json(new ApiError(400, 'Title, description, and character name are required'));
+    }
 
-  const newStory = new Story({
-    title,
-    description,
-    ownerid: [{ owner: owner, character: character }],
-    content: [],
-    compelete: false,
-    public: false
-  });
-  await newStory.save();
-  res.status(201).json(new ApiResponse(true, newStory, 'Story created successfully'));
+    try {
+        const fastApiRequestData = {
+            name: title,
+            description: description,
+            owner: {
+                owner: ownerId.toString(),
+                character: character
+            }
+        };
+
+        // Call your FastAPI service to generate the story
+        const aiResponse = await axios.post(`${process.env.FASTAPI_URL}/story/new`, fastApiRequestData);
+        
+        //2. Extract the generated content from the AI response
+        const generatedContent = aiResponse.data?.content; 
+        
+        if (!generatedContent) {
+            // Handle cases where the AI service didn't return content
+            return res.status(500).json(new ApiError(500, 'AI service did not return story content.'));
+        }
+
+        //3. Create and save the new story to your MongoDB database
+        const newStory = await Story.create({
+            title,
+            description,
+            character,
+            owner: ownerId,
+            content: generatedContent, 
+        });
+
+        //4. Send the story that was saved in *your* database back to the user
+        res.status(201).json(new ApiResponse(true, newStory, 'Story created and saved successfully'));
+
+    } catch (error) {
+        console.error("Error creating story:", error.response?.data || error.message);
+        const statusCode = error.response?.status || 500;
+        const message = error.response?.data?.detail || 'Failed to create story via AI service.';
+        return res.status(statusCode).json(new ApiError(statusCode, message));
+    }
 });
 
 const getAllStories = asyncHandler(async (req, res) => {
@@ -75,34 +104,36 @@ const getincomplete = asyncHandler(async (req, res) => {
 
 
 const addpromptResponse = asyncHandler(async (req, res) => {
+    // 1. Get data from the user's request
+    const { story_id } = req.params;
+    const { prompt } = req.body; // The user's action/prompt
+    const userId = req.user?._id; // From verifyJWT middleware
 
-   
-  const {story_id}=req.params;
-   const {owner} = req.user?._id;
-
-    if(!story_id){
-    return res.status(400).json(new ApiError(400, 'Story id is required'));
-  }
-   
-
-   const Check= await Story.findOne({ $and: [ { _id: story_id }, { "ownerid.owner": owner } ] });
-   if(!Check){
-    return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
-   }
-
-    const { prompt,response } = req.body;
     if (!prompt) {
-      return res.status(400).json(new ApiError(400, 'Prompt is required'));
+        return res.status(400).json(new ApiError(400, 'Prompt is required'));
     }
 
-    if (!response) {
-      return res.status(400).json(new ApiError(400, 'Response is required'));
+    try {
+        // 2. Prepare the request body for the FastAPI /story/continue endpoint
+        const fastApiRequestData = {
+            story_id: story_id,
+            user_id: userId.toString(),
+            user_action: prompt
+        };
+
+        // 3. Make the API call to your FastAPI service
+        const response = await axios.post(`${process.env.FASTAPI_URL}/story/continue`, fastApiRequestData);
+
+        // 4. Send the updated story from FastAPI back to the user
+        res.status(200).json(new ApiResponse(true, response.data, 'Story continued successfully'));
+
+    } catch (error) {
+        // Handle potential errors (e.g., story not found in FastAPI)
+        console.error("Error calling FastAPI to continue story:", error.response?.data || error.message);
+        const statusCode = error.response?.status || 500;
+        const message = error.response?.data?.detail || 'Failed to continue story via AI service.';
+        return res.status(statusCode).json(new ApiError(statusCode, message));
     }
-
-    Check.content.push({ prompt, user: owner, response });
-    await Check.save();
-    res.status(200).json(new ApiResponse(true, Check, 'Content added successfully'));
-
 });
 
 const toggleCompleteStatus = asyncHandler(async (req, res) => {
