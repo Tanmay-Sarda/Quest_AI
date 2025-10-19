@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useParams } from "next/navigation";
 
 // Reusable icon component for buttons
 const Icon = ({ path }) => (
@@ -21,6 +22,7 @@ export default function HomePage() {
   const [completedStories, setCompletedStories] = useState([]);
   const [ongoingStories, setOngoingStories] = useState([]);
   const router = useRouter();
+  const { username } = useParams();
 
   // --- Fetch stories when the component mounts ---
   useEffect(() => {

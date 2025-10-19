@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useRouter } from "next/navigation";
 
 export default function StoryForm() {
   const [form, setForm] = useState({
@@ -8,6 +11,7 @@ export default function StoryForm() {
     setting: "",
     character: "",
   });
+  const router = useRouter();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -16,8 +20,9 @@ export default function StoryForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     alert("Story submitted!");
-
+    
     setForm({ title: "", setting: "", character: "" });
+    router.push(`/ChatBox/${12232332}`); // Replace 'newstoryid' with actual story ID after creation
   };
 
   return (
@@ -68,6 +73,17 @@ export default function StoryForm() {
           </motion.button>
         </form>
       </motion.div>
+
+        {/* Toast notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="dark"
+      />
     </div>
   );
 }
