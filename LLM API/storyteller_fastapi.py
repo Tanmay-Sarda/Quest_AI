@@ -1,38 +1,37 @@
-# storyteller_fastapi.py
 import os
 import random
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, AsyncGenerator
 from bson import ObjectId
-import motor.motor_asyncio  # Async MongoDB client
+import motor.motor_asyncio
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-import os # This should already be there
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- 1. FastAPI Setup ---
 app = FastAPI(title="AI Storyteller API")
 
-# --- 2. MongoDB Setup (Async) ---
+# MongoDB Setup
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
 db = client["story_db"]
 story_collection = db["stories"]
 
-# --- 3. LLM Initialization ---
+# LLM with streaming enabled
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-pro",
+    model="gemini-2.0-flash-exp",
     temperature=0.9,
-    google_api_key=os.environ.get("GOOGLE_API_KEY")
+    google_api_key=os.environ.get("GOOGLE_API_KEY"),
+    streaming=True  
 )
 
-# --- 4. Prompt Templates ---
+# Prompt Templates
 setup_prompt = PromptTemplate(
     input_variables=["genre", "setting"],
     template=(
@@ -58,15 +57,10 @@ story_prompt = PromptTemplate(
 setup_chain = setup_prompt | llm | StrOutputParser()
 story_chain = story_prompt | llm | StrOutputParser()
 
-# --- 5. Pydantic Models for Request/Response ---
+# Models
 class Owner(BaseModel):
-    owner: str  # User ObjectId as string
+    owner: str
     character: str
-
-class ContentItem(BaseModel):
-    prompt: str
-    user: str
-    response: str
 
 class NewStoryRequest(BaseModel):
     name: str
@@ -81,13 +75,7 @@ class ContinueStoryRequest(BaseModel):
     user_id: str
     user_action: str
 
-class StoryResponse(BaseModel):
-    story_id: str
-    content: List[ContentItem]
-    complete: bool
-    public: bool
-
-# --- 6. Helper Functions ---
+# Helper Functions
 def generate_random_genre():
     return random.choice(["Fantasy", "Cyberpunk", "Cosmic Horror", "Steampunk", "Mystery"])
 
@@ -98,16 +86,55 @@ def generate_random_setting():
         "the bridge of a derelict starship drifting through the void"
     ])
 
-# --- 7. API Endpoints ---
-@app.post("/story/new", response_model=StoryResponse)
-async def start_new_story(request: NewStoryRequest):
+# Streaming Endpoints
+@app.post("/story/new/stream")
+async def start_new_story_stream(request: NewStoryRequest):
+    """Stream the initial story generation"""
     genre = request.genre.strip() or generate_random_genre()
     setting = request.setting.strip() or generate_random_setting()
 
-    # Generate initial scene
+    async def generate():
+        try:
+            async for chunk in setup_chain.astream({"genre": genre, "setting": setting}):
+                yield chunk
+        except Exception as e:
+            print(f"Error streaming: {e}")
+            yield f"\n\n[Error: {str(e)}]"
+
+    return StreamingResponse(generate(), media_type="text/plain")
+
+@app.post("/story/continue/stream")
+async def continue_story_stream(request: ContinueStoryRequest):
+    """Stream the continued story generation"""
+    story = await story_collection.find_one({"_id": ObjectId(request.story_id)})
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    # Build story context
+    story_so_far = "\n".join([c["response"] for c in story.get("content", [])])
+
+    async def generate():
+        try:
+            async for chunk in story_chain.astream({
+                "story_so_far": story_so_far, 
+                "user_input": request.user_action
+            }):
+                yield chunk
+        except Exception as e:
+            print(f"Error streaming: {e}")
+            yield f"\n\n[Error: {str(e)}]"
+
+    return StreamingResponse(generate(), media_type="text/plain")
+
+# Original non-streaming endpoints (keep for backward compatibility)
+@app.post("/story/new")
+async def start_new_story(request: NewStoryRequest):
+    """Original non-streaming endpoint"""
+    genre = request.genre.strip() or generate_random_genre()
+    setting = request.setting.strip() or generate_random_setting()
+
     initial_scene = setup_chain.invoke({"genre": genre, "setting": setting})
 
-    # Prepare story document
     story_doc = {
         "name": request.name,
         "description": request.description,
@@ -121,10 +148,10 @@ async def start_new_story(request: NewStoryRequest):
         "public": request.public
     }
 
-    # Insert into MongoDB
     result = await story_collection.insert_one(story_doc)
     story_doc["_id"] = str(result.inserted_id)
     story_doc["content"][0]["user"] = str(story_doc["content"][0]["user"])
+    
     return {
         "story_id": story_doc["_id"],
         "content": story_doc["content"],
@@ -132,34 +159,32 @@ async def start_new_story(request: NewStoryRequest):
         "public": story_doc["public"]
     }
 
-@app.post("/story/continue", response_model=StoryResponse)
-async def continue_story_api(request: ContinueStoryRequest):
+@app.post("/story/continue")
+async def continue_story(request: ContinueStoryRequest):
+    """Original non-streaming endpoint"""
     story = await story_collection.find_one({"_id": ObjectId(request.story_id)})
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
 
-    # Build the story so far
     story_so_far = "\n".join([c["response"] for c in story.get("content", [])])
-
-    # Generate next part
     next_scene = story_chain.invoke({"story_so_far": story_so_far, "user_input": request.user_action})
 
-    # Append to MongoDB
     new_content = {
         "prompt": request.user_action,
         "user": ObjectId(request.user_id),
         "response": next_scene
     }
+    
     await story_collection.update_one(
         {"_id": ObjectId(request.story_id)},
         {"$push": {"content": new_content}}
     )
 
-    # Return updated story
     story = await story_collection.find_one({"_id": ObjectId(request.story_id)})
     for c in story["content"]:
         c["user"] = str(c["user"])
     story["_id"] = str(story["_id"])
+    
     return {
         "story_id": story["_id"],
         "content": story["content"],
