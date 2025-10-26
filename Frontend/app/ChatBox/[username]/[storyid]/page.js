@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Send, Copy } from "lucide-react";
+import { useParams } from "next/navigation";
+import { toast,ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function StoryPage() {
   const [prompt, setPrompt] = useState("");
@@ -10,27 +13,105 @@ export default function StoryPage() {
   const scrollRef = useRef(null);
   const inputRef = useRef(null); 
   const router = useRouter();
+  const [loading, setLoading] = useState(false); 
+  const { username,storyid } = useParams();
+  const trimmedStoryId = storyid?.trim();
 
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (!prompt.trim()) return;
+  useEffect(() => {
+     inputRef.current?.focus();
+    const fetchStoryContent = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          toast.error("You must be logged in to access this story.");
+          router.push("/Sign_in");
+        }
+
+        const res= await fetch(
+          `http://localhost:3000/api/v1/story/content/${trimmedStoryId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (res.status>=400 && res.status<500) {
+          throw new Error("Failed to fetch story content");
+        }
+
+        const data = await res.json();
+        const existingContent = data.data?.content || [];
+
+        setStories(
+          existingContent.map((item, index) => ({
+            id: index,
+            prompt: item.prompt,
+            response: item.response,
+          }))
+        );
+
+
+      } catch (error) {
+        console.error("Error fetching story content:", error);
+        toast.error("Error:" + error.message);
+      }
+    };
+
+    fetchStoryContent();
+  }, []); 
+
+ const handleSend = async (e) => {
+  e.preventDefault();
+
+  if (!prompt.trim() || !storyid) return;
+  setLoading(true);
+
+  try {
+    const token = localStorage.getItem("accessToken"); // get token from storage
+
+    const response = await fetch(
+      `http://localhost:3000/api/v1/story/addcontent/${trimmedStoryId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, //send JWT in header
+        },
+        credentials: "include", // ✅ allows sending JWT cookie
+        body: JSON.stringify({ prompt }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Failed to continue story");
+    }
+
+    const aiResponse =
+      data?.data?.content ||
+      data?.data?.response ||
+      "No AI response received.";
 
     const newStory = {
       id: Date.now(),
       prompt,
-      response: `Generated story for: "${prompt}"`,
+      response: aiResponse,
     };
-    setStories([...stories, newStory]);
+
+    setStories((prev) => [...prev, newStory]);
     setPrompt("");
-  };
+  } catch (err) {
+    console.error("Error sending prompt:", err);
+    toast.error(`Error: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleExit = () => {
-    router.push("/Home/Meet");
+    router.push(`/Home/${username}`);
   };
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -156,6 +237,15 @@ export default function StoryPage() {
           scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
         }
       `}</style>
+      <ToastContainer
+              position="top-right"
+              autoClose={2500}
+              hideProgressBar={false}
+              closeOnClick
+              pauseOnHover
+              draggable
+              theme="dark"
+            />
     </div>
   );
 }

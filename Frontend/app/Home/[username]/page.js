@@ -71,9 +71,16 @@ export default function HomePage() {
 
   // --- Handler for continuing a story ---
   const handleContinueStory = (storyId) => {
+
+    if (!storyId) {
+      toast.error("Story ID is missing.");
+      console.error("storyId is undefined", storyId);
+      return;
+    }
+
     toast.info("Continuing your adventure...");
-    // Pass story ID to the chatbox, for example via query params
-    router.push(`/ChatBox?storyId=${storyId}`);
+    // FIXED: Use dynamic route
+    router.push(`/ChatBox/${username}/${storyId}`);
   };
 
   // --- Handler for deleting a story ---
@@ -82,7 +89,7 @@ export default function HomePage() {
     if (window.confirm("Are you sure you want to delete this story?")) {
       try {
         const res = await fetch(
-          `http://localhost:3000/api/v1/stories/${storyId}`,
+          `http://localhost:3000/api/v1/story/${storyId}`,
           {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
@@ -166,7 +173,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex justify-end mt-4">
                   <button
-                    onClick={() => handleDeleteStory(story.id, "completed")}
+                    onClick={() => handleDeleteStory(story._id, "completed")}
                     className="text-red-400 hover:text-red-300 p-2 rounded-full transition-colors bg-red-500/10 hover:bg-red-500/20"
                   >
                     <Icon path="M6 18L18 6M6 6l12 12" />
@@ -217,13 +224,13 @@ export default function HomePage() {
                 </div>
                 <div className="flex justify-end items-center gap-3 mt-4">
                   <button
-                    onClick={() => handleContinueStory(story.id)}
+                    onClick={() => handleContinueStory(story._id)} // changed 
                     className="text-green-400 hover:text-green-300 p-2 rounded-full transition-colors bg-green-500/10 hover:bg-green-500/20"
                   >
                     <Icon path="M12 4.5v15m7.5-7.5h-15" />
                   </button>
                   <button
-                    onClick={() => handleDeleteStory(story.id, "ongoing")}
+                    onClick={() => handleDeleteStory(story._id, "ongoing")}
                     className="text-red-400 hover:text-red-300 p-2 rounded-full transition-colors bg-red-500/10 hover:bg-red-500/20"
                   >
                     <Icon path="M6 18L18 6M6 6l12 12" />

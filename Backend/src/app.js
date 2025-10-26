@@ -5,10 +5,10 @@ import cors from 'cors';
 const app = express();
 
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:3001", // your frontend URL
+  origin:"http://localhost:3001", // your frontend URL
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"],
 }));
 
 
