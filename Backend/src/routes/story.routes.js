@@ -1,9 +1,9 @@
 import { createStory, getAllStories,getcomplete,getincomplete,deleteStory, addpromptResponse,toggleCompleteStatus,getStoryContent } from '../controllers/story.controller.js';
 import express, { Router } from 'express';
-const router=Router();
-import {verifyJWT} from '../middleware/auth.middleware.js';
+const router = Router();
+import { verifyJWT } from '../middleware/auth.middleware.js';
 
-//All routes are protected
+// All routes are protected
 router.use(verifyJWT);
 router.post('/create', createStory);
 router.get('/all', getAllStories);
