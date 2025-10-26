@@ -16,6 +16,25 @@ const createStory = asyncHandler(async (req, res) => {
     if (!title || !description || !character) {
         return res.status(400).json(new ApiError(400, 'Title, description, and character name are required'));
     }
+ 
+    // temp
+     const ownerData = [
+    {
+      owner: ownerId,
+      character
+    }
+  ];
+     
+     // 4️⃣ Placeholder content (matches content schema)   TEMP
+  const generatedContent = [
+    {
+      prompt: "Initial story creation",
+      response: "This is a placeholder story content.",
+      user: ownerId
+    }
+  ];
+
+
 
     try {
         const fastApiRequestData = {
@@ -28,7 +47,7 @@ const createStory = asyncHandler(async (req, res) => {
         };
 
         // Call your FastAPI service to generate the story
-        const aiResponse = await axios.post(`${process.env.FASTAPI_URL}/story/new`, fastApiRequestData);
+     /*    const aiResponse = await axios.post(`${process.env.FASTAPI_URL}/story/new`, fastApiRequestData);
         
         //2. Extract the generated content from the AI response
         const generatedContent = aiResponse.data?.content; 
@@ -36,14 +55,14 @@ const createStory = asyncHandler(async (req, res) => {
         if (!generatedContent) {
             // Handle cases where the AI service didn't return content
             return res.status(500).json(new ApiError(500, 'AI service did not return story content.'));
-        }
+        } */
 
         //3. Create and save the new story to your MongoDB database
         const newStory = await Story.create({
             title,
             description,
             character,
-            owner: ownerId,
+             ownerid: [{ owner: ownerId, character: character }],
             content: generatedContent, 
         });
 

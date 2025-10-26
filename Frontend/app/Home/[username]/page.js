@@ -35,23 +35,26 @@ export default function HomePage() {
       try {
         // Fetch ongoing stories
         const ongoingRes = await fetch(
-          "http://localhost:3000/api/v1/stories?status=ongoing",
+          "http://localhost:3000/api/v1/story/incomplete",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+        console.log("Ongoing status:", ongoingRes.status);
         if (ongoingRes.ok) {
           const ongoingData = await ongoingRes.json();
+          console.log("Ongoing data:", ongoingData);
           setOngoingStories(ongoingData.data || []);
         }
 
         // Fetch completed stories
         const completedRes = await fetch(
-          "http://localhost:3000/api/v1/stories?status=completed",
+          "http://localhost:3000/api/v1/story/complete",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
         if (completedRes.ok) {
           const completedData = await completedRes.json();
           setCompletedStories(completedData.data || []);
@@ -146,7 +149,7 @@ export default function HomePage() {
           ) : (
             completedStories.map((story) => (
               <motion.div
-                key={story.id}
+                key={story._id}
                 className="p-6 rounded-2xl bg-gradient-to-b from-[#141422] to-[#0f0f1a] border border-[#1e1e2f] flex flex-col justify-between"
               >
                 <div>
@@ -197,7 +200,7 @@ export default function HomePage() {
           ) : (
             ongoingStories.map((story) => (
               <motion.div
-                key={story.id}
+                key={story._id}
                 className="p-6 rounded-2xl bg-gradient-to-b from-[#141422] to-[#0f0f1a] border border-[#1e1e2f] flex flex-col justify-between"
               >
                 <div>
