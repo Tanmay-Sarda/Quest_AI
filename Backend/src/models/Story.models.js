@@ -21,7 +21,7 @@ const storySchema = new mongoose.Schema(
             }
         ],
         // content: [contentSchema],
-        compelete: { type: Boolean, default: false },
+        complete: { type: Boolean, default: false },
         public: { type: Boolean, default: false }
     }, { timestamps: true }
 )

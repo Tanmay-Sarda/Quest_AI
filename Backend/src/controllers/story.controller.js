@@ -81,9 +81,9 @@ const getcomplete = asyncHandler(async (req, res) => {
   const story = await Story.find({
     $and: [
       { "ownerid.owner": owner },
-      { compelete: true }
+      { complete: true }
     ]
-  }).select('-ownerid -prompt -response -compelete');
+  }).select('-ownerid -prompt -response -complete');
 
   return res.status(200).json(new ApiResponse(200, story, 'Complete story fetch succesflly'))
 })
@@ -97,9 +97,9 @@ const getincomplete = asyncHandler(async (req, res) => {
   const story = await Story.find({
     $and: [
       { "ownerid.owner": owner },
-      { compelete: false }
+      { complete: false }
     ]
-  }).select('-ownerid -prompt -response -compelete');
+  }).select('-ownerid -prompt -response -complete');
 
   return res.status(200).json(new ApiResponse(200, story, 'Incomplete story fetch succesflly'))
 
@@ -142,7 +142,7 @@ const getStoryContent = asyncHandler(async (req, res) => {
     return res.status(400).json(new ApiError(400, 'Story id is required'));
   }
 
-  const story = await Story.findOne({ $and: [{ _id: trimmedStoryId }, { "ownerid.owner": owner }] }).select('-ownerid -title -description -compelete -public');
+  const story = await Story.findOne({ $and: [{ _id: trimmedStoryId }, { "ownerid.owner": owner }] }).select('-ownerid -title -description -complete -public');
 
   if (!story) {
     return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
@@ -183,47 +183,6 @@ const addpromptResponse = asyncHandler(async (req, res) => {
     const message = error.response?.data?.detail || 'Failed to continue story via AI service.';
     return res.status(statusCode).json(new ApiError(statusCode, message));
   }
-});
-
-const getAllStories = asyncHandler(async (req, res) => {
-    const owner = req.user?._id;
-    if (!owner) {
-        return res.status(401).json(new ApiError(401, 'Unauthorized: User not authenticated'));
-    }
-
-    const stories = await Story.find({
-        "ownerid": { $elemMatch: { owner: owner } }
-    }).select('-ownerid');
-    
-    res.status(200).json(new ApiResponse(true, stories, 'Stories fetched successfully'));
-});
-
-const getComplete = asyncHandler(async (req, res) => {
-    const owner = req.user?._id;
-    if (!owner) {
-        return res.status(403).json(new ApiError(403, 'Login is required'));
-    }
-
-    const stories = await Story.find({
-        "ownerid": { $elemMatch: { owner: owner } },
-        complete: true
-    }).select('-ownerid');
-
-    return res.status(200).json(new ApiResponse(200, stories, 'Complete stories fetched successfully'));
-});
-
-const getIncomplete = asyncHandler(async (req, res) => {
-    const owner = req.user?._id;
-    if (!owner) {
-        return res.status(403).json(new ApiError(403, 'Login is required'));
-    }
-
-    const stories = await Story.find({
-        "ownerid": { $elemMatch: { owner: owner } },
-        complete: false
-    }).select('-ownerid');
-
-    return res.status(200).json(new ApiResponse(200, stories, 'Incomplete stories fetched successfully'));
 });
 
 const toggleCompleteStatus = asyncHandler(async (req, res) => {
