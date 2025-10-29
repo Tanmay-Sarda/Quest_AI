@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 
 export default function SignUpPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -35,6 +37,21 @@ export default function SignUpPage() {
       setTimeout(() => toast.remove(), 500);
     }, duration);
   };
+
+  const handleLogin = async (credentialResponse) => {
+    try {
+      const res = await axios.post("http://localhost:3000/api/v1/user/google-login", {
+        token: credentialResponse.credential,
+      });
+      console.log("User logged in:", res.data);
+      sessionStorage.setItem("accessToken", res.data.data.user.accessToken);
+      showToast("✅ Logged in successfully via Google!");
+      router.push(`/Home/${res.data.data.user.username}`);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -153,6 +170,12 @@ export default function SignUpPage() {
             </div>
 
             <button type="submit" className="form-button">[ SIGNUP ]</button>
+             
+             <p className="option">Or sign in using</p>
+            <GoogleLogin
+              onSuccess={handleLogin}
+              onError={() => toast.error("⚠️ Google Sign-in failed!")}
+            />
           </form>
         </div>
       </div>

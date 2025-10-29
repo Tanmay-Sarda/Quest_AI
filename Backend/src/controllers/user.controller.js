@@ -184,34 +184,32 @@ const generateRefreshToken= asyncHandler(async (req, res) => {
 
 const  updateUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id; // From verifyJWT middleware
-  const { username, newPassword, currentPassword } = req.body;
+  const { oldPassword,newUsername,newPassword } = req.body;
 
   //  Validate required fields
-  if (!currentPassword) {
-    throw new ApiError(400, "Current password is required.");
+  if (!oldPassword) {
+    return res.status(400).json(new ApiError(400, "Current password is required to update profile."));
   }
 
   //  Find the user
   const user = await User.findById(userId);
   if (!user) {
-    throw new ApiError(404, "User not found.");
+    return res.status(404).json(new ApiError(404, "User not found."));
   }
 
   //  Check if current password is correct
-  const isvalid = await user.isPasswordCorrect(currentPassword);
+  const isvalid = await user.isPasswordCorrect(oldPassword);
   if(!isvalid)
   {
-    return res.status(401).json(new ApiResponse(401,"Invalid Password"));
+    return res.status(401).json(new ApiError(401, "Current password is incorrect."));
   }
   //  Update fields conditionally
-  if (username) user.username = username;
+  if (newUsername) user.username = newUsername;
   if(newPassword) user.password = newPassword;
   //  Save the user
   await user.save();
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Profile updated successfully."));
+  res.status(200).json(new ApiResponse(200, { username: user.username, email: user.email }, "Profile updated successfully."));
 });
 
 export { registerUser, loginUser, logoutUser, generateRefreshToken, googleLogin ,  updateUserProfile};

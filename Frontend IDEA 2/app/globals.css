@@ -23,9 +23,11 @@ body {
 }
 
 #content {
+  padding-top: 60px; /* To avoid overlap with fixed header */
   width: 100%;
   min-height: 100vh;
   box-sizing: border-box;
+  padding-bottom: 10px;
 }
 
 /* Scanline overlay */
@@ -334,4 +336,9 @@ footer {
 .logout-btn:hover {
   background: #ff4d4d;
   color: white;
+}
+
+
+.option {
+  text-align: center;
 }

@@ -8,8 +8,10 @@
     "start": "next start"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.12.2",
     "framer-motion": "^12.23.12",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.548.0",
     "mongoose": "^8.18.1",
     "next": "15.5.2",
     "package.json": "^2.0.1",

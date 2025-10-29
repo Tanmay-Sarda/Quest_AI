@@ -3,13 +3,13 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import asyncHandler from '../utils/AsyncHandler.js';
 import { Story } from '../models/Story.models.js';
-import axios from "axios";
 import mongoose from 'mongoose';
 
 
 const createStory = asyncHandler(async (req, res) => {
-    const { title, description, character } = req.body;
-    const ownerId = req.user?._id;
+  console.log("createStory called");
+  const { title, description, character } = req.body;
+  const ownerId = req.user?._id;
 
   if (!ownerId) {
     return res.status(401).json(new ApiError(401, 'Unauthorized: User not authenticated'));
@@ -67,7 +67,10 @@ const getAllStories = asyncHandler(async (req, res) => {
     return res.status(401).json(new ApiError(false, 'Unauthorized: User not authenticated'));
   }
 
+
   const story = await Story.find({ "ownerid.owner": owner }).select('-ownerid -prompt -response ');
+
+
   res.status(200).json(new ApiResponse(true, story, 'Stories fetched successfully'));
 })
 
@@ -78,14 +81,29 @@ const getcomplete = asyncHandler(async (req, res) => {
     return res.status(403).json(new ApiError(403, 'Login is require to do this functionality'));
   }
 
-  const story = await Story.find({
+  const stories = await Story.find({
     $and: [
       { "ownerid.owner": owner },
       { complete: true }
     ]
-  }).select('-ownerid -prompt -response -complete');
+  }).select("-prompt -response -complete");
 
-  return res.status(200).json(new ApiResponse(200, story, 'Complete story fetch succesflly'))
+  // Attach the owner's character to each story
+  const result = stories.map((story) => {
+    // find the matching ownerid entry
+    const ownerEntry = story.ownerid.find((entry) =>
+      entry.owner.equals(owner)
+    );
+
+    // return story + character
+    return {
+      ...story.toObject(),
+      character: ownerEntry ? ownerEntry.character : null,
+    };
+  })
+
+  return res.status(200).json(new ApiResponse(200, result, 'Complete story fetch succesflly'))
+
 })
 
 const getincomplete = asyncHandler(async (req, res) => {
@@ -99,9 +117,23 @@ const getincomplete = asyncHandler(async (req, res) => {
       { "ownerid.owner": owner },
       { complete: false }
     ]
-  }).select('-ownerid -prompt -response -complete');
+  }).select(' -prompt -response -complete');
 
-  return res.status(200).json(new ApiResponse(200, story, 'Incomplete story fetch succesflly'))
+  // Attach the owner's character to each story
+  const result = story.map((story) => {
+    // find the matching ownerid entry
+    const ownerEntry = story.ownerid.find((entry) =>
+      entry.owner.equals(owner)
+    );
+
+    // return story + character
+    return {
+      ...story.toObject(),
+      character: ownerEntry ? ownerEntry.character : null,
+    };
+  })
+
+  return res.status(200).json(new ApiResponse(200, result, 'Complete story fetch succesflly'))
 
 })
 // ---deleting a story ----
@@ -122,15 +154,13 @@ const deleteStory = asyncHandler(async (req, res) => {
     "ownerid.owner": ownerId // Check ownership
   });
 
-  console.log("Found story:", story);
-
 
   if (!story) {
     return res.status(404).json(new ApiError(404, "Story not found or you are not the owner"));
   }
 
   await story.deleteOne();
-  return res.status(200).json(new ApiResponse(true, null, "Story deleted successfully"));
+  return res.status(201).json(new ApiResponse(201, null, "Story deleted successfully"));
 });
 
 const getStoryContent = asyncHandler(async (req, res) => {
@@ -153,7 +183,7 @@ const getStoryContent = asyncHandler(async (req, res) => {
 const addpromptResponse = asyncHandler(async (req, res) => {
   console.log("addpromptResponse called");
   // 1. Get data from the user's request
-  const { story_id} = req.params;
+  const { story_id } = req.params;
   const trimmedStoryId = story_id?.trim();                      // problem ---
   const { prompt } = req.body; // The user's action/prompt
   const userId = req.user?._id; // From verifyJWT middleware
@@ -186,28 +216,28 @@ const addpromptResponse = asyncHandler(async (req, res) => {
 });
 
 const toggleCompleteStatus = asyncHandler(async (req, res) => {
-    const { story_id } = req.params;
-    const owner = req.user?._id;
+  const { story_id } = req.params;
+  const owner = req.user?._id;
 
-    if (!story_id) {
-        return res.status(400).json(new ApiError(400, 'Story id is required'));
-    }
+  if (!story_id) {
+    return res.status(400).json(new ApiError(400, 'Story id is required'));
+  }
 
-    const story = await Story.findOne({
-        _id: story_id,
-        "ownerid": { $elemMatch: { owner: owner } }
-    });
-    
-    if (!story) {
-        return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
-    }
+  const story = await Story.findOne({
+    _id: story_id,
+    "ownerid": { $elemMatch: { owner: owner } }
+  });
 
-    story.complete = !story.complete;
-    await story.save();
-    
-    res.status(200).json(new ApiResponse(true, story, `Story marked as ${story.complete ? 'complete' : 'incomplete'}`));
+  if (!story) {
+    return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
+  }
+
+  story.complete = !story.complete;
+  await story.save();
+
+  res.status(200).json(new ApiResponse(true, story, `Story marked as ${story.complete ? 'complete' : 'incomplete'}`));
 });
 
-export { createStory, getAllStories, getcomplete, getincomplete, deleteStory, addpromptResponse, toggleCompleteStatus ,getStoryContent};
+export { createStory, getAllStories, getcomplete, getincomplete, deleteStory, addpromptResponse, toggleCompleteStatus, getStoryContent };
 
 

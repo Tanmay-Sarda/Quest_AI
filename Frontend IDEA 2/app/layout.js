@@ -2,6 +2,7 @@ import { VT323 } from "next/font/google";
 import "./globals.css";
 import NavbarWrapper from "@/component/NavbarWrapper";
 import DynamicFooter from "./DynamicFooter";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const vt323 = VT323({
   variable: "--font-vt323",
@@ -29,10 +30,12 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className={vt323.variable}>
-        <NavbarWrapper />
+      <body className={`${vt323.variable} relative `}>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+        <NavbarWrapper  />
         <div id="content">{children}</div>
         <DynamicFooter />
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

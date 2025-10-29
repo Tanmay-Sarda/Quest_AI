@@ -47,7 +47,7 @@ export default function DynamicFooter() {
       id="footer"
       style={{
         position: "absolute",
-        bottom: "20px",
+        bottom: "5px",
         width: "100%",
         textAlign: "center",
         color: "rgba(255, 255, 255, 0.4)",

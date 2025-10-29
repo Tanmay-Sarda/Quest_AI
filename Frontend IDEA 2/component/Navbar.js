@@ -1,16 +1,17 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import EditProfile from "../component/EditProfile"; 
+import EditProfile from "../component/EditProfile";
+
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const { username } = useParams();
 
- 
   useEffect(() => {
     const token = sessionStorage.getItem("accessToken");
     setIsLoggedIn(!!token);
@@ -20,6 +21,7 @@ export default function Navbar() {
     sessionStorage.removeItem("accessToken");
     setIsLoggedIn(false);
     alert("🔓 You have been logged out.");
+
     router.push("/Sign_in");
   };
 
@@ -27,6 +29,8 @@ export default function Navbar() {
     <>
       <header
         style={{
+          position: "fixed",
+          top: 0,
           width: "100%",
           position: "fixed",
           top: 0,
@@ -46,7 +50,7 @@ export default function Navbar() {
           src="/QuestLogo.jpeg"
           alt="Quest AI Logo"
           className="h-[70px] cursor-pointer hover:scale-105 transition-transform duration-200"
-          onClick={() => router.push(isLoggedIn ? "/Home/user" : "/Sign_in")}
+          onClick={() => router.push(isLoggedIn ? `/Home/${username}` : "/Sign_in")}
         />
 
         {/* Navigation */}
@@ -59,16 +63,17 @@ export default function Navbar() {
             flexGrow: 1,
           }}
         >
-          <button
-            className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-            onClick={() => router.push("/About")}
-          >
-            [ ABOUT ]
-          </button>
 
           {/* When NOT logged in */}
           {!isLoggedIn && (
             <>
+              <button
+                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                onClick={() => router.push("/About")}
+              >
+                [ ABOUT ]
+              </button>
+
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
                 onClick={() => router.push("/")}
@@ -89,19 +94,19 @@ export default function Navbar() {
             <>
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={() => router.push("/Home/user")}
+                onClick={() => router.push(`/Home/${username}`)}
               >
                 [ HOME ]
               </button>
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={() => router.push("/StoryForm")}
+                onClick={() => router.push(`/StoryForm/${username}`)}
               >
                 [ CREATE STORY ]
               </button>
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={() => setShowEditProfile(true)}
+                onClick={() => router.push(`/Edit/${username}`)}
               >
                 [ EDIT PROFILE ]
               </button>
