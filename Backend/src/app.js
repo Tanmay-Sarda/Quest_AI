@@ -5,9 +5,12 @@ import cors from 'cors';
 const app = express();
 
 app.use(cors({
-    origin:process.env.CORS_ORIGIN || 'http://localhost:3001',
-    credentials: true,
-}))
+  origin:"http://localhost:3001", // your frontend URL
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"],
+}));
+
 
 app.use(express.json({limit:'20kb'})); //Use for parsing JSON bodies
 app.use(express.urlencoded({extended:true, limit:'20kb'})); //Use for parsing URL-encoded bodies

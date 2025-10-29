@@ -58,6 +58,7 @@ export default function EditProfilePage() {
       const data = await res.json();
 
       if (res.ok) {
+        console.log(`Profile updated successfully! Status code: ${res.status}`);
         toast.success("✅ Profile updated successfully! Please sign in again.");
         localStorage.removeItem("accessToken"); // Log user out for security
         setTimeout(() => {

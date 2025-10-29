@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useParams } from "next/navigation";
 
 // Reusable icon component for buttons
 const Icon = ({ path }) => (
@@ -21,6 +22,7 @@ export default function HomePage() {
   const [completedStories, setCompletedStories] = useState([]);
   const [ongoingStories, setOngoingStories] = useState([]);
   const router = useRouter();
+  const { username } = useParams();
 
   // --- Fetch stories when the component mounts ---
   useEffect(() => {
@@ -33,23 +35,26 @@ export default function HomePage() {
       try {
         // Fetch ongoing stories
         const ongoingRes = await fetch(
-          "http://localhost:3000/api/v1/stories?status=ongoing",
+          "http://localhost:3000/api/v1/story/incomplete",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+        console.log("Ongoing status:", ongoingRes.status);
         if (ongoingRes.ok) {
           const ongoingData = await ongoingRes.json();
+          console.log("Ongoing data:", ongoingData);
           setOngoingStories(ongoingData.data || []);
         }
 
         // Fetch completed stories
         const completedRes = await fetch(
-          "http://localhost:3000/api/v1/stories?status=completed",
+          "http://localhost:3000/api/v1/story/complete",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
         if (completedRes.ok) {
           const completedData = await completedRes.json();
           setCompletedStories(completedData.data || []);
@@ -66,9 +71,16 @@ export default function HomePage() {
 
   // --- Handler for continuing a story ---
   const handleContinueStory = (storyId) => {
+
+    if (!storyId) {
+      toast.error("Story ID is missing.");
+      console.error("storyId is undefined", storyId);
+      return;
+    }
+
     toast.info("Continuing your adventure...");
-    // Pass story ID to the chatbox, for example via query params
-    router.push(`/ChatBox?storyId=${storyId}`);
+    // FIXED: Use dynamic route
+    router.push(`/ChatBox/${username}/${storyId}`);
   };
 
   // --- Handler for deleting a story ---
@@ -77,7 +89,7 @@ export default function HomePage() {
     if (window.confirm("Are you sure you want to delete this story?")) {
       try {
         const res = await fetch(
-          `http://localhost:3000/api/v1/stories/${storyId}`,
+          `http://localhost:3000/api/v1/story/${storyId}`,
           {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
@@ -144,7 +156,7 @@ export default function HomePage() {
           ) : (
             completedStories.map((story) => (
               <motion.div
-                key={story.id}
+                key={story._id}
                 className="p-6 rounded-2xl bg-gradient-to-b from-[#141422] to-[#0f0f1a] border border-[#1e1e2f] flex flex-col justify-between"
               >
                 <div>
@@ -161,7 +173,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex justify-end mt-4">
                   <button
-                    onClick={() => handleDeleteStory(story.id, "completed")}
+                    onClick={() => handleDeleteStory(story._id, "completed")}
                     className="text-red-400 hover:text-red-300 p-2 rounded-full transition-colors bg-red-500/10 hover:bg-red-500/20"
                   >
                     <Icon path="M6 18L18 6M6 6l12 12" />
@@ -195,7 +207,7 @@ export default function HomePage() {
           ) : (
             ongoingStories.map((story) => (
               <motion.div
-                key={story.id}
+                key={story._id}
                 className="p-6 rounded-2xl bg-gradient-to-b from-[#141422] to-[#0f0f1a] border border-[#1e1e2f] flex flex-col justify-between"
               >
                 <div>
@@ -212,13 +224,13 @@ export default function HomePage() {
                 </div>
                 <div className="flex justify-end items-center gap-3 mt-4">
                   <button
-                    onClick={() => handleContinueStory(story.id)}
+                    onClick={() => handleContinueStory(story._id)} // changed 
                     className="text-green-400 hover:text-green-300 p-2 rounded-full transition-colors bg-green-500/10 hover:bg-green-500/20"
                   >
                     <Icon path="M12 4.5v15m7.5-7.5h-15" />
                   </button>
                   <button
-                    onClick={() => handleDeleteStory(story.id, "ongoing")}
+                    onClick={() => handleDeleteStory(story._id, "ongoing")}
                     className="text-red-400 hover:text-red-300 p-2 rounded-full transition-colors bg-red-500/10 hover:bg-red-500/20"
                   >
                     <Icon path="M6 18L18 6M6 6l12 12" />

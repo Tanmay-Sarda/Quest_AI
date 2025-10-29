@@ -3,26 +3,27 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { useParams } from "next/navigation";
 export default function Navbar() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState(""); // State to hold the username
+  const {username} = useParams();
+  const [decodedUsername, setDecodedUsername] = useState("");
+
 
   useEffect(() => {
     // Check for accessToken and username in localStorage
     const token = localStorage.getItem("accessToken");
-    const user = localStorage.getItem("username"); // Get the stored username
     setIsLoggedIn(!!token);
-    if (user) {
-      setUsername(user); // Set the username in state
+    if (username) {
+      // Decode in case it contains special characters like %40
+      setDecodedUsername(decodeURIComponent(username));
     }
   });
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem("accessToken");
-    localStorage.removeItem("username"); // Remove username on logout
     setTimeout(() => {
       toast.info("Redirecting to Sign in page...");
     }, 0);
@@ -78,7 +79,7 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   if (username) {
-                    router.push(`/Home/${username}`);
+                    router.push(`/Home/${decodedUsername}`);
                   } else {
                     toast.error("Could not find user, please sign in again.");
                   }
@@ -92,7 +93,7 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   toast.info("Redirecting to Edit Profile page...");
-                  router.push("/EditProfile");
+                  router.push( `/EditProfile/${decodedUsername}`);
                 }}
                 className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-lg px-5 py-2.5 text-center me-2 mb-2"
               >
@@ -102,7 +103,7 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   toast.info("Redirecting to Story Creation page...");
-                  router.push("/Story_Form/Meet");
+                  router.push( `/Story_Form/${decodedUsername}`);
                 }}
                 className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-lg px-5 py-2.5 text-center me-2 mb-2"
               >

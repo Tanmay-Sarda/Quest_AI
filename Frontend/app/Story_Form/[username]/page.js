@@ -1,24 +1,64 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 export default function StoryForm() {
   const [form, setForm] = useState({
     title: "",
     setting: "",
     character: "",
   });
-
+  const router = useRouter();
+  const { username } = useParams();
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert("Story submitted!");
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  toast.info("Story is being created...");
 
+  try {
+    const token = localStorage.getItem("accessToken"); // get token from storage
+
+    const payload = {
+      title: form.title,
+      description: form.setting, // map setting → description
+      character: form.character,
+    };
+
+    const res = await fetch("http://localhost:3000/api/v1/story/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, //send JWT in header
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Failed to save story");
+    }
+
+    const data = await res.json();
+
+    const newStoryId = data.data?._id; // because backend sends story in data field
+
+
+    toast.success("Story created successfully!");
     setForm({ title: "", setting: "", character: "" });
-  };
+     console .log("Navigating to story page with ID:",`/ChatBox/${username}/${newStoryId}` );
+     router.push(`/ChatBox/${username}/${newStoryId}`);
+
+  } catch (error) {
+    console.error("Error saving story:", error);
+    toast.error(`Error: ${error.message}`);
+  }
+};
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0a0a14] via-[#0b0f1c] to-[#0a0a14] text-white overflow-hidden">
@@ -68,6 +108,17 @@ export default function StoryForm() {
           </motion.button>
         </form>
       </motion.div>
+
+        {/* Toast notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="dark"
+      />
     </div>
   );
 }
