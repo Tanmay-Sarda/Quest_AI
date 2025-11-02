@@ -291,9 +291,8 @@ footer {
 
 #chat-form {
   display: flex;
-  padding-top: 20px;
+  padding-top: 2px;
   border-top: 1px dashed var(--border-color);
-  gap: 15px;
   align-items: center;
 }
 

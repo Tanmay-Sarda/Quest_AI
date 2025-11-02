@@ -19,6 +19,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     sessionStorage.removeItem("accessToken");
+    sessionStorage.removeItem("username");
     setIsLoggedIn(false);
     alert("🔓 You have been logged out.");
 
