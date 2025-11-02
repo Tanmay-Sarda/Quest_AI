@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 export default function StoryForm() {
@@ -15,6 +15,14 @@ export default function StoryForm() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  useEffect(() => {
+    if (!sessionStorage.getItem("accessToken")) {
+      showToast("User not authenticated");
+      setTimeout(() => { router.push('/Sign_in') }, 2000);
+      return;
+    }
+  }, [])
 
   // Toast notification function
   const showToast = (message, duration = 2500) => {

@@ -235,12 +235,10 @@ const addpromptResponse = asyncHandler(async (req, res) => {
     if (!updatedStory) {
       return res.status(404).json(new ApiError(404, 'Story not found after update'));
     }
-
+    console.log("Story continued successfully");
+    console.log(updatedStory.content);
     res.status(200).json(new ApiResponse(true, {
-      _id: updatedStory._id,
-      title: updatedStory.title,
-      content: updatedStory.content,
-      complete: updatedStory.complete
+    content: updatedStory.content,
     }, 'Story continued successfully'));
 
   } catch (error) {

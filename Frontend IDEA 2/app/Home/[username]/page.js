@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DeleteStory from "./DeleteStory";
-import { ToastContainer,toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import { useParams } from "next/navigation";
 export default function HomePage() {
   const [completedStories, setCompletedStories] = useState([]);
   const [ongoingStories, setOngoingStories] = useState([]);
   const router = useRouter();
-  const {username}=useParams()
+  const { username } = useParams()
 
 
   // Toast notification function
@@ -26,49 +26,49 @@ export default function HomePage() {
 
 
   const cancelDelete = () => setStoryToDelete(null);
- 
+
   const handledelete = (story, type) => {
 
-    let bool=confirm("Are you sure you want to delete this story?");
-    if(!bool) return;
-     
-    try{
-      const token=sessionStorage.getItem("accessToken");
+    let bool = confirm("Are you sure you want to delete this story?");
+    if (!bool) return;
 
-      if(!token){
+    try {
+      const token = sessionStorage.getItem("accessToken");
+
+      if (!token) {
         showToast("User not authenticated");
         router.push('/Sign_in');
         return;
       }
 
-      const res=fetch(`http://localhost:3000/api/v1/story/${story._id}`,{
-        method:"DELETE",
-        headers:{
-          Authorization:`Bearer ${token}`
+      const res = fetch(`http://localhost:3000/api/v1/story/${story._id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
         }
       });
-      
+
       console.log(res);
-      if(res.status<200 || res.status>=300){
+      if (res.status < 200 || res.status >= 300) {
         showToast("Failed to delete story");
         return;
       }
       showToast("Story deleted successfully");
 
       // Refresh stories after deletion
-      if(type==="completed"){
-        setCompletedStories(completedStories.filter(s=>s._id!==story._id));
-      }else{
-        setOngoingStories(ongoingStories.filter(s=>s._id!==story._id));
+      if (type === "completed") {
+        setCompletedStories(completedStories.filter(s => s._id !== story._id));
+      } else {
+        setOngoingStories(ongoingStories.filter(s => s._id !== story._id));
       }
-    }catch(err){
+    } catch (err) {
       console.log(err);
-      showToast("Error: ",err.message);
+      showToast("Error: ", err.message);
       return;
     }
   }
 
-  
+
   const StoryCard = ({ story, type }) => (
     <div
       className="terminal-border relative"
@@ -120,64 +120,70 @@ export default function HomePage() {
     </div>
   );
 
-   useEffect(() => {
-     complete();
-      ongoing();
-    
-   },[] )
+  useEffect(() => {
 
-   const complete=async () =>{
-     const token=sessionStorage.getItem("accessToken");
+    if (!sessionStorage.getItem("accessToken")) {
+      showToast("User not authenticated");
+      setTimeout(() => { router.push('/Sign_in') }, 2000);
+      return;
+    }
+    complete();
+    ongoing();
 
-     if(!token){
+  }, [])
+
+  const complete = async () => {
+    const token = sessionStorage.getItem("accessToken");
+
+    if (!token) {
       showToast("User not authenticated");
       router.push('/Sign_in');
       return;
-     }
-    try{
-       const completedRes = await fetch(
-          "http://localhost:3000/api/v1/story/complete",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (completedRes.ok) {
-          const completedData = await completedRes.json();
-          setCompletedStories(completedData.data || []);
+    }
+    try {
+      const completedRes = await fetch(
+        "http://localhost:3000/api/v1/story/complete",
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
-    }catch(err){
+      );
+
+      if (completedRes.ok) {
+        const completedData = await completedRes.json();
+        setCompletedStories(completedData.data || []);
+      }
+    } catch (err) {
       console.log(err);
       showToast("Error fetching Complete stories");
     }
-   }
+  }
 
-   const ongoing=async () =>{
-     const token=sessionStorage.getItem("accessToken");
-      if(!token){
+  const ongoing = async () => {
+    const token = sessionStorage.getItem("accessToken");
+    if (!token) {
       showToast("User not authenticated");
       router.push('/Sign_in');
       return;
-     }
-    try{
-       const ongoingRes = await fetch(
-          "http://localhost:3000/api/v1/story/incomplete",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (ongoingRes.ok) {
-          const ongoingData = await ongoingRes.json();
-          console.log(ongoingData);
-          setOngoingStories(ongoingData.data || []);
+    }
+    try {
+      const ongoingRes = await fetch(
+        "http://localhost:3000/api/v1/story/incomplete",
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
-    }catch(err){
+      );
+      if (ongoingRes.ok) {
+        const ongoingData = await ongoingRes.json();
+        console.log(ongoingData);
+        setOngoingStories(ongoingData.data || []);
+      }
+    } catch (err) {
       console.log(err);
       showToast("Error fetching Ongoing stories");
     }
-    }
+  }
 
-   
+
 
   return (
     <div
@@ -258,7 +264,7 @@ export default function HomePage() {
         </div>
       </div>
 
-     
+
     </div>
   );
 }

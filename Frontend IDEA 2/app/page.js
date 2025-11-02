@@ -12,6 +12,12 @@ export default function SignUpPage() {
 
   // Typewriter animation for the heading
   useEffect(() => {
+
+     if(sessionStorage.getItem("accessToken")) {
+      router.push(`/Home/${sessionStorage.getItem("username")}`);
+      return;
+    }
+
     const text = "BAEGIN YOUR JOURNEY";
     let i = 0;
     const interval = setInterval(() => {

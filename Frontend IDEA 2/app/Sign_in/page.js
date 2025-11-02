@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import axios from "axios";
@@ -8,6 +8,12 @@ export default function SignInPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (sessionStorage.getItem("accessToken")) {
+      router.push(`/Home/${sessionStorage.getItem("username")}`);
+    }
+  }, [])
 
   // Toast notification function
   const showToast = (message, duration = 2500) => {
@@ -21,7 +27,7 @@ export default function SignInPage() {
       setTimeout(() => toast.remove(), 500);
     }, duration);
   };
-  
+
   const handleLogin = async (credentialResponse) => {
     try {
       const res = await axios.post("http://localhost:3000/api/v1/user/google-login", {
@@ -29,6 +35,7 @@ export default function SignInPage() {
       });
       console.log("User logged in:", res.data);
       sessionStorage.setItem("accessToken", res.data.data.user.accessToken);
+      sessionStorage.setItem("username", res.data.data.user.username);
       showToast("✅ Logged in successfully via Google!");
       router.push(`/Home/${res.data.data.user.username}`);
     } catch (err) {
@@ -51,6 +58,7 @@ export default function SignInPage() {
       if (res.ok) {
         // Store token in memory instead of localStorage
         sessionStorage.setItem("accessToken", data.data.user.accessToken);
+        sessionStorage.setItem("username", data.data.user.username);
         showToast("✅ Sign in successful! Redirecting...");
         setTimeout(() => router.push(`/Home/${data.data.user.username}`), 2000);
         setForm({ email: "", password: "" });

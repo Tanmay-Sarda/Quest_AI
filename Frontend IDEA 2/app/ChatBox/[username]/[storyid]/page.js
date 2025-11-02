@@ -1,21 +1,21 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { useRouter,useParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Send, Copy } from "lucide-react";
-import { toast,ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function StoryPage() {
-   const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState("");
   const [stories, setStories] = useState([]);
   const scrollRef = useRef(null);
-  const inputRef = useRef(null); 
+  const inputRef = useRef(null);
   const router = useRouter();
-  const [loading, setLoading] = useState(false); 
-  const { username,storyid } = useParams();
+  const [loading, setLoading] = useState(false);
+  const { username, storyid } = useParams();
   const trimmedStoryId = storyid?.trim();
 
-   // Toast notification function
+  // Toast notification function
   const showToast = (message, duration = 2500) => {
     const toast = document.createElement("div");
     toast.className = "toast show";
@@ -29,7 +29,14 @@ export default function StoryPage() {
   };
 
   useEffect(() => {
-     inputRef.current?.focus();
+
+    if (!sessionStorage.getItem("accessToken")) {
+      showToast("User not authenticated");
+      setTimeout(() => { router.push('/Sign_in') }, 2000);
+      return;
+    }
+    
+    inputRef.current?.focus();
     const fetchStoryContent = async () => {
       try {
         const token = localStorage.getItem("accessToken");
@@ -38,14 +45,14 @@ export default function StoryPage() {
           router.push("/Sign_in");
         }
 
-        const res= await fetch(
+        const res = await fetch(
           `http://localhost:3000/api/v1/story/content/${trimmedStoryId}`,
           {
-            headers: { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`},
+            headers: { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` },
           }
         );
 
-        if (res.status>=400 && res.status<500) {
+        if (res.status >= 400 && res.status < 500) {
           showToast("⚠️ " + `Client Error: ${res.statusText}`);
         }
 
@@ -68,56 +75,51 @@ export default function StoryPage() {
     };
 
     fetchStoryContent();
-  }, []); 
+  }, []);
 
- const handleSend = async (e) => {
-  e.preventDefault();
+  const handleSend = async (e) => {
+    e.preventDefault();
 
-  if (!prompt.trim() || !storyid) return;
-  setLoading(true);
+    if (!prompt.trim() || !storyid) return;
+    setLoading(true);
 
-  try {
-    const token = sessionStorage.getItem('accessToken') // get token from storage
+    try {
+      const token = sessionStorage.getItem('accessToken') // get token from storage
 
-    const response = await fetch(
-      `http://localhost:3000/api/v1/story/addcontent/${trimmedStoryId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, //send JWT in header
-        },
-        credentials: "include", // ✅ allows sending JWT cookie
-        body: JSON.stringify({ prompt }),
+      const response = await fetch(
+        `http://localhost:3000/api/v1/story/addcontent/${trimmedStoryId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, //send JWT in header
+          },
+          credentials: "include", // ✅ allows sending JWT cookie
+          body: JSON.stringify({ prompt }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(`Error: ${data.message || 'Failed to send prompt'}`);
       }
-    );
 
-    const data = await response.json();
 
-    if (!response.ok) {
-      showToast(`Error: ${data.message || 'Failed to send prompt'}`);
+
+      setStories(data.data.content.map((item, index) => ({
+        id: index,
+        prompt: item.prompt,
+        response: item.response,
+      })));
+      setPrompt("");
+    } catch (err) {
+      console.error("Error sending prompt:", err);
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-
-    const aiResponse =
-      data?.data?.content ||
-      data?.data?.response ||
-      "No AI response received.";
-
-    const newStory = {
-      id: Date.now(),
-      prompt,
-      response: aiResponse,
-    };
-
-    setStories((prev) => [...prev, newStory]);
-    setPrompt("");
-  } catch (err) {
-    console.error("Error sending prompt:", err);
-    toast.error(`Error: ${err.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   const handleExit = () => {
@@ -146,7 +148,7 @@ export default function StoryPage() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen w-full p-0 box-border">
+    <div className="flex flex-col items-center min-h-screen w-full p-0 box-border z-500">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-black flex justify-end items-center px-10 z-10">
         <button onClick={handleExit} className="form-button-exit">
@@ -155,7 +157,7 @@ export default function StoryPage() {
       </div>
 
       {/* Chat Box */}
-      <div className="mt-20 w-[95%] flex flex-col flex-grow border-[6px] border-white/70 p-4 overflow-hidden h-[80vh] box-border">
+      <div className="mt-20 w-[95%] flex flex-col flex-grow border-[6px] border-white/70 p-4 overflow-hidden h-[90vh] box-border">
         <div className="flex flex-col flex-grow border-[3px] border-white/50 p-2 overflow-hidden">
           {/* Messages */}
           <div
@@ -172,22 +174,22 @@ export default function StoryPage() {
                 <div key={s.id} className="flex flex-col gap-2">
                   <div className="message user-message relative group">{s.prompt}
                     <button
-                    onClick={() => handleCopy(s.prompt)}
-                    className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Copy story"
-                  >
-                    <Copy className="w-4 h-4 text-white/70 hover:text-white" />
-                  </button>
+                      onClick={() => handleCopy(s.prompt)}
+                      className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Copy story"
+                    >
+                      <Copy className="w-4 h-4 text-white/70 hover:text-white" />
+                    </button>
                   </div>
                   <div className="message ai-message relative group">{s.response}
-                   <button
-                    onClick={() => handleCopy(s.response)}
-                    className="absolute bottom-[-18px] right-2 opacity-0
+                    <button
+                      onClick={() => handleCopy(s.response)}
+                      className="absolute bottom-[-18px] right-2 opacity-0
                      group-hover:opacity-100 transition-opacity"
-                    title="Copy story"
-                  >
-                    <Copy className="w-4 h-4 text-white hover:text-white" />
-                  </button> 
+                      title="Copy story"
+                    >
+                      <Copy className="w-4 h-4 text-white hover:text-white" />
+                    </button>
                   </div>
                 </div>
               ))
@@ -195,19 +197,24 @@ export default function StoryPage() {
           </div>
 
           {/* Input */}
-          <form id="chat-form" onSubmit={handleSend} className="flex mt-2 w-full">
-            <input
-              id="chat-input"
-              type="text"
+          <div onClick={() => handleSend} className=" flex flex-row w-full text-center border-t-1 border-dashed
+           border-t-white/50 pt-2 mt-2" >
+
+            <textarea
+              ref={inputRef}
+              // enter send the message, shift + enter for new line
+              onKeyDown={handleKeyPress}
               placeholder="> Enter your action..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="w-[90%] p-2 rounded-l bg-transparent border-b-2 border-white/30 text-white outline-none text-xl"
+              className="w-[93%] max-h-40 p-2 resize-none overflow-y-auto rounded bg-transparent text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              rows={1}
             />
-            <button type="submit" className="form-button rounded-r">
+
+            <button type="submit" className="">
               <span>[ SEND ]</span>
             </button>
-          </form>
+          </div>
 
 
 
