@@ -1,14 +1,18 @@
 import os
 import random
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from dotenv import load_dotenv
 
-# --- 1. Initialize LLM (using Gemini) ---
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro-latest",
+load_dotenv()
+
+
+# --- LLM Setup ---
+llm = ChatGroq(
+    model="llama-3.3-70b-versatile",  # Use a current, supported model
     temperature=0.9,
-    google_api_key=os.environ.get("GOOGLE_API_KEY") # Recommended: Use environment variables
+    groq_api_key=os.environ.get("GROQ_API_KEY")
 )
 
 # --- 2. Define Prompt Templates ---
@@ -39,9 +43,22 @@ story_prompt = PromptTemplate(
     )
 )
 
+# Character-only response prompt 
+character_prompt = PromptTemplate(
+    input_variables=["character_name", "story_so_far", "user_input"],
+    template=(
+        "You are {character_name}, a character in the following story.\n\n"
+        "Here is the current story context:\n{story_so_far}\n\n"
+        "The user (another character) has said or done:\n{user_input}\n\n"
+        "Now respond only as {character_name} would**, staying true to their tone and knowledge.\n"
+        "Do not narrate, describe surroundings, or control other characters — just speak as {character_name}.\n"
+    )
+)
+
 # --- 3. Create Chains ---
 setup_chain = setup_prompt | llm | StrOutputParser()
 story_chain = story_prompt | llm | StrOutputParser()
+character_chain = character_prompt | llm | StrOutputParser()
 
 
 # --- 4. Define Backend Functions ---
@@ -93,9 +110,46 @@ def continue_story(story_so_far: str, user_action: str, dialect: str) -> str:
         "dialect": dialect
     })
 
+def character_reply(character_name: str, story: str, user_input: str) -> str:
+    """
+    Generates an in-character response (AI replies as a specific character only).
+    """
+    if not character_name.strip():
+        return "Error: Character name required."
+
+    print(f"--- LOG: {character_name} responding in-character ---")
+    return character_chain.invoke({
+        "character_name": character_name,
+        "story_so_far": story,
+        "user_input": user_input
+    })
+
 
 # --- 5. Main Execution Block ---
 # This script is intended to be imported as a module into a web server (e.g., Flask, FastAPI).
 # The functions above will be called by your server's API endpoints.
 if __name__ == "__main__":
-    pass
+    print("Welcome to the AI Dungeon!\n")
+
+    # Step 1: Gather initial inputs
+    genre = input("Enter a genre: ").strip()
+    setting = input("Enter a setting: ").strip()
+    dialect = input("Enter a dialect/accent: ").strip()
+
+    # Step 2: Generate the opening scene
+    story = start_new_story(genre, setting, dialect)
+    print("\n--- STORY START ---")
+    print(story)
+    print("-------------------\n")
+
+    # Step 3: Interactive story loop
+    while True:
+        user_action = input("What will you do? (type 'quit' to exit): ").strip()
+
+        if user_action.lower() in ["quit", "exit"]:
+            print("\n👋 End of the story!")
+            break
+
+        # Generate next part of the story
+        story = continue_story(story, user_action, dialect)
+        print("\n" + story + "\n")
