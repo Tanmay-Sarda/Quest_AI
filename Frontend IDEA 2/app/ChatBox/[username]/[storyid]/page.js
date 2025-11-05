@@ -46,7 +46,7 @@ export default function StoryPage() {
         }
 
         const res = await fetch(
-          `http://localhost:3000/api/v1/story/content/${trimmedStoryId}`,
+          `${process.env.NEXT_PUBLIC_HOST}/story/content/${trimmedStoryId}`,
           {
             headers: { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` },
           }
@@ -87,7 +87,7 @@ export default function StoryPage() {
       const token = sessionStorage.getItem('accessToken') // get token from storage
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/story/addcontent/${trimmedStoryId}`,
+        `${process.env.process.env.NEXT_PUBLIC_HOST}/story/addcontent/${trimmedStoryId}`,
         {
           method: "POST",
           headers: {

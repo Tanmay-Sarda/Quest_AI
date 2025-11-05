@@ -30,7 +30,7 @@ export default function SignInPage() {
 
   const handleLogin = async (credentialResponse) => {
     try {
-      const res = await axios.post("http://localhost:3000/api/v1/user/google-login", {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_HOST}/user/google-login`, {
         token: credentialResponse.credential,
       });
       console.log("User logged in:", res.data);
@@ -47,7 +47,7 @@ export default function SignInPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3000/api/v1/user/login", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

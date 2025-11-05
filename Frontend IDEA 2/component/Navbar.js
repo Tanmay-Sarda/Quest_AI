@@ -3,7 +3,6 @@
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditProfile from "../component/EditProfile";
-
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -14,44 +13,61 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const { username } = useParams();
+  const [characterName, setCharacterName] = useState("");
 
   useEffect(() => {
     const token = sessionStorage.getItem("accessToken");
     setIsLoggedIn(!!token);
   }, [pathname]);
 
-  // load notifications count (simple example: read from sessionStorage)
   useEffect(() => {
-    const stored = sessionStorage.getItem("notificationsCount");
-    setNotificationsCount(stored ? parseInt(stored, 10) : 0);
-  }, [pathname, isLoggedIn]);
+    fetchNotifications();
+  }, [isLoggedIn]);
+
+  // load notifications count (simple example: read from sessionStorage)
+  // useEffect(() => {
+  //   const stored = sessionStorage.getItem("notificationsCount");
+  //   setNotificationsCount(stored ? parseInt(stored, 10) : 0);
+  // }, [pathname, isLoggedIn]);
 
   // load notifications list when panel opens
-  useEffect(() => {
-    if (!showNotificationsPanel) return;
-    try {
-      const raw = sessionStorage.getItem("notifications");
-      const parsed = raw ? JSON.parse(raw) : [];
-      setNotifications(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      setNotifications([]);
-    }
-  }, [showNotificationsPanel]);
+  // useEffect(() => {
+  //   if (!showNotificationsPanel) return;
+  //   try {
+  //     const raw = sessionStorage.getItem("notifications");
+  //     const parsed = raw ? JSON.parse(raw) : [];
+  //     setNotifications(Array.isArray(parsed) ? parsed : []);
+  //   } catch {
+  //     setNotifications([]);
+  //   }
+  // }, [showNotificationsPanel]);
 
   // lock body scroll & handle ESC to close panel
-  useEffect(() => {
-    if (showNotificationsPanel) {
-      document.body.style.overflow = "hidden";
-      const onKey = (e) => {
-        if (e.key === "Escape") setShowNotificationsPanel(false);
-      };
-      document.addEventListener("keydown", onKey);
-      return () => {
-        document.body.style.overflow = "";
-        document.removeEventListener("keydown", onKey);
-      };
-    }
-  }, [showNotificationsPanel]);
+  // useEffect(() => {
+  //   if (showNotificationsPanel) {
+  //     document.body.style.overflow = "hidden";
+  //     const onKey = (e) => {
+  //       if (e.key === "Escape") setShowNotificationsPanel(false);
+  //     };
+  //     document.addEventListener("keydown", onKey);
+  //     return () => {
+  //       document.body.style.overflow = "";
+  //       document.removeEventListener("keydown", onKey);
+  //     };
+  //   }
+  // }, [showNotificationsPanel]);
+
+  const showToast = (message, duration = 2500) => {
+    const toast = document.createElement("div");
+    toast.className = "toast show";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 500);
+    }, duration);
+  };
 
   const handleLogout = () => {
     sessionStorage.removeItem("accessToken");
@@ -67,33 +83,22 @@ export default function Navbar() {
     setShowNotificationsPanel((s) => !s);
   };
 
-  const handleViewAll = () => {
-    setShowNotificationsPanel(false);
-    router.push(`/Notifications/${username}`);
-  };
 
-  const markAllRead = () => {
-    // example: clear count and list
-    sessionStorage.setItem("notificationsCount", "0");
-    sessionStorage.setItem("notifications", JSON.stringify([]));
-    setNotificationsCount(0);
-    setNotifications([]);
-  };
 
   // Fetch notifications from backend
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/notifications', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/notification/`, {
         headers: {
           'Authorization': `Bearer ${sessionStorage.getItem("accessToken")}`
         }
       });
       const data = await response.json();
-      
+
       if (data.success) {
         setNotifications(data.data);
-        setNotificationsCount(data.data.filter(n => n.status === 0).length);
+        setNotificationsCount(data.data.length);
       }
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
@@ -109,9 +114,9 @@ export default function Navbar() {
   }, [isLoggedIn, showNotificationsPanel]);
 
   // Handle notification actions
-  const handleNotificationAction = async (notificationId, accept, fromUserId, storyId, character = "") => {
+  const handleNotificationAction = async (notificationId, accept, character = "") => {
     try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/notification/delete/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -119,9 +124,6 @@ export default function Navbar() {
         },
         body: JSON.stringify({
           accept,
-          fromUserId,
-          storyId,
-          toUser: sessionStorage.getItem("userId"),
           character
         })
       });
@@ -129,9 +131,11 @@ export default function Navbar() {
       if (response.ok) {
         // Refresh notifications
         fetchNotifications();
+        router.push(`/Home/${username}`); // Refresh the page to reflect changes
       }
     } catch (error) {
       console.error("Failed to handle notification:", error);
+      showToast("⚠️ An error occurred while processing the notification.");
     }
   };
 
@@ -159,7 +163,7 @@ export default function Navbar() {
         <div className="flex justify-between items-start mb-2">
           <div>
             <p className="font-medium">
-              {notification.fromUser?.username || "Unknown User"}
+              {notification.fromUser?.email || "Unknown User"}
             </p>
             <p className="text-sm text-gray-400">
               Story: {notification.story_id?.title || "Unknown Story"}
@@ -180,8 +184,6 @@ export default function Navbar() {
               onClick={() => handleNotificationAction(
                 notification._id,
                 true,
-                notification.fromUser._id,
-                notification.story_id._id,
                 characterName
               )}
               className="px-3 py-1 bg-green-600 rounded hover:bg-green-700"
@@ -192,14 +194,26 @@ export default function Navbar() {
               onClick={() => handleNotificationAction(
                 notification._id,
                 false,
-                notification.fromUser._id,
-                notification.story_id._id
               )}
               className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
             >
               Reject
             </button>
           </div>
+        )}
+
+        {notification.status !== 0 && (
+          //delete this notification 
+          <button
+            onClick={() => handleNotificationAction(
+              notification._id,
+              null,
+
+            )}
+            className="mt-3 px-3 py-1 bg-gray-600 rounded hover:bg-gray-700"
+          >
+            Delete
+          </button>
         )}
       </div>
     );
@@ -249,20 +263,30 @@ export default function Navbar() {
             <>
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={() => router.push("/About")}
+                onClick={() => 
+                  {showToast("⏳ Redirecting to About page...");
+                  setTimeout(() => {router.push("/About")}, 1000)}
+                }
               >
                 [ ABOUT ]
               </button>
 
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={() => router.push("/")}
+                onClick={() => 
+                  {showToast("⏳ Redirecting to Signup page...");
+                  setTimeout(() => {router.push("/")}, 1000)}
+                }
               >
                 [ SIGNUP ]
               </button>
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={() => router.push("/Sign_in")}
+                onClick={() =>
+                  {showToast("⏳ Redirecting to Signin page...");
+                  setTimeout(() => {router.push("/Sign_in")}, 1000)
+                  }
+                }
               >
                 [ SIGNIN ]
               </button>
@@ -274,26 +298,54 @@ export default function Navbar() {
             <>
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={() => router.push(`/Home/${username}`)}
+                onClick={() =>
+                {
+                  showToast("⏳ Redirecting to Home page...");
+                  setTimeout(() => {router.push(`/Home/${username}`)}, 1000)
+                }
+                }
               >
                 [ HOME ]
               </button>
 
               <button
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={() => router.push(`/StoryForm/${username}`)}
+                onClick={() => 
+                {
+                  showToast("⏳ Redirecting to Create Story page...");
+                  setTimeout(() => {router.push(`/Create/${username}`)}, 1000)
+                }
+                }
               >
                 [ CREATE STORY ]
               </button>
+              <button
+                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                onClick={() => 
+                  {showToast("⏳ Redirecting to Edit Profile page...");
+                  setTimeout(() => {router.push(`/Edit/${username}`)}, 1000)}
+                }
+              >
+                [ EDIT PROFILE ]
+              </button>
+              <button
+                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                onClick={()=>{
+                  showToast("⏳ Logging out...");
+                  setTimeout(() => {handleLogout()}, 1000)
+                }}
+              >
+                [ LOGOUT ]
+              </button>
 
-              {/* Moved Notifications button to the end */}
+               {/* Notifications button */}
               <button
                 onClick={handleNotificationsClick}
                 style={{
                   position: "relative",
                   padding: "6px 10px",
                   borderRadius: "6px",
-                  background: "transparent", 
+                  background: "transparent",
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -326,33 +378,6 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
-
-              {/* Profile Button moved to the end */}
-              <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center"
-                onClick={() => router.push(`/Edit/${username}`)}
-                title="Edit Profile"
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  viewBox="0 0 24 24" 
-                  fill="currentColor" 
-                  className="w-5 h-5"
-                >
-                  <path 
-                    fillRule="evenodd" 
-                    d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" 
-                    clipRule="evenodd" 
-                  />
-                </svg>
-              </button>
-
-              <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
-                onClick={handleLogout}
-              >
-                [ LOGOUT ]
-              </button>
             </>
           )}
         </nav>
@@ -382,7 +407,7 @@ export default function Navbar() {
               top: 0,
               right: 0,
               height: "100vh",
-              width: 360,
+              width: 400,
               maxWidth: "100%",
               background: "#0b0b0b",
               color: "#fff",
@@ -396,22 +421,10 @@ export default function Navbar() {
           >
             <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
-                <strong style={{ fontSize: 16 }}>Notifications</strong>
+                <h2 style={{ fontSize: 20 }}>Notifications</h2>
                 <div style={{ fontSize: 12, color: "#aaa" }}>{notificationsCount} unread</div>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <button
-                  onClick={markAllRead}
-                  style={{
-                    background: "transparent",
-                    color: "#39FF14",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 13,
-                  }}
-                >
-                  Mark all
-                </button>
                 <button
                   onClick={() => setShowNotificationsPanel(false)}
                   aria-label="Close notifications"
@@ -438,42 +451,6 @@ export default function Navbar() {
               ) : (
                 notifications.map(notification => renderNotificationContent(notification))
               )}
-            </div>
-
-            <div style={{ padding: 12, borderTop: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <button
-                onClick={() => {
-                  // quick action example: go to latest notification's page if exists
-                  if (notificationsList[0]?.link) {
-                    router.push(notificationsList[0].link);
-                    setShowNotificationsPanel(false);
-                  }
-                }}
-                style={{
-                  background: "transparent",
-                  color: "#39FF14",
-                  border: "1px solid rgba(57,255,20,0.12)",
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                }}
-              >
-                Open latest
-              </button>
-
-              <button
-                onClick={handleViewAll}
-                style={{
-                  background: "#39FF14",
-                  color: "#000",
-                  border: "none",
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                }}
-              >
-                View all
-              </button>
             </div>
           </aside>
         </>

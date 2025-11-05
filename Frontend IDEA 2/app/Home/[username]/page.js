@@ -81,6 +81,37 @@ export default function HomePage() {
 
   const addUser=async(e)=>{
     e.preventDefault();
+    const token = sessionStorage.getItem("accessToken");
+
+    if (!token) {
+      showToast("User not authenticated");
+      router.push('/Sign_in');
+      return;
+    }
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/notification/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          email: email,
+          story_id: story_id
+        })
+      });
+      if(!res.ok){
+        const data = await res.json();
+        showToast("⚠️ " + (data.message || "Failed to add user"));
+        return;
+      }
+      showToast("✅ Notification sent successfully to the user!");
+      setemail("");
+      setdisplay(false);
+    } catch (err) {
+      console.log(err);
+      showToast("Error: ", err.message);
+    }
   }
 
 

@@ -46,11 +46,12 @@ export default function SignUpPage() {
 
   const handleLogin = async (credentialResponse) => {
     try {
-      const res = await axios.post("http://localhost:3000/api/v1/user/google-login", {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_HOST}/user/google-login`, {
         token: credentialResponse.credential,
       });
       console.log("User logged in:", res.data);
       sessionStorage.setItem("accessToken", res.data.data.user.accessToken);
+      sessionStorage.setItem("username", res.data.data.user.username);
       showToast("✅ Logged in successfully via Google!");
       router.push(`/Home/${res.data.data.user.username}`);
     } catch (err) {
@@ -73,7 +74,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/v1/user/register", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
