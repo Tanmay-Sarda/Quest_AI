@@ -150,6 +150,18 @@ const getincomplete = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, result, 'Incomplete stories fetched successfully'));
 });
 
+const getpublicstories = asyncHandler(async (req, res) => {
+  try {
+  const stories = await Story.find({ public: true })
+    .select('-ownerid')
+    .sort({ createdAt: -1 });
+  res.status(200).json(new ApiResponse(true, stories, 'Public stories fetched successfully'));
+  } catch (error) {
+    console.error("Error fetching public stories:", error);
+    return res.status(500).json(new ApiError(500, 'Failed to fetch public stories.'));
+  } 
+});
+
 const deleteStory = asyncHandler(async (req, res) => {
   const storyId = req.params.storyId?.trim();
   const ownerId = req.user?._id;

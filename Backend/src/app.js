@@ -27,4 +27,8 @@ app.use('/api/v1/story', storyRoutes);
 import userRoutes from './routes/user.routes.js';
 app.use('/api/v1/user', userRoutes);
 
+//Notification Routes
+import notificationRoutes from './routes/notification.routes.js';
+app.use('/api/v1/notification', notificationRoutes);
+
 export default app;
