@@ -34,3 +34,20 @@ Develop a new and improved frontend, introduce **compression** and **dialect cha
 3. **Completed Backend and API Integration**
    - Successfully integrated FastAPI backend with frontend modules.
    - Established seamless data flow between UI, backend, and LLM API.
+
+---
+
+### Sprint 3 Backlog (Remaining + New Tasks)
+1. *Refining New Frontend Theme*
+   - Polish colors, typography, and layout for improved visual design.
+   - Add responsive elements for mobile and desktop compatibility.
+
+2. *Syncing Storyteller and FastAPI Integration*
+   - Ensure synchronization between the storytelling flow and FastAPI endpoints.
+   - Optimize API calls and reduce latency for smoother user experience.
+
+3. *Planning for Sprint 4*
+   - Define new personalization and analytics features based on feedback.
+   - Prepare the roadmap for the next sprint’s development and testing phase.
+
+---
