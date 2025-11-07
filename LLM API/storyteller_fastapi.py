@@ -50,11 +50,12 @@ setup_prompt = PromptTemplate(
     input_variables=["title", "description", "character", "dialect"],
     template=(
         "You are a creative AI Dungeon Master speaking in {dialect} and starting a new adventure. "
-        "Always write in that dialect’s tone, word choice, and rhythm. "
+        "Always write in that dialect's tone, word choice, and rhythm. "
         "Story Title: {title}\n"
+        "Story Genre: {genre}\n"
         "Story Description: {description}\n"
         "Main Character: {character}\n\n"
-        "Create an engaging opening scene for this story. "
+        "Create an engaging opening scene for this {genre} story. "
         "Describe the world and introduce the character '{character}' in a compelling way. "
         "Address the player directly as 'You'. Keep it to 2-4 paragraphs. "
         "End with a situation that prompts action."
@@ -70,9 +71,9 @@ story_prompt = PromptTemplate(
         "The player is '{character}', the main character. "
         "Describe the consequences of their actions and the evolving world. "
         "Keep responses grounded in the established story. Don't take actions for the player.\n\n"
-        "**Story So Far:**\n{story_so_far}\n\n"
-        "**{character}'s Action:** {user_input}\n\n"
-        "**What happens next?** (2-4 sentences, ending with a prompt for the next move)"
+        "*Story So Far:*\n{story_so_far}\n\n"
+        "{character}'s Action:** {user_input}\n\n"
+        "*What happens next?* (2-4 sentences, ending with a prompt for the next move)"
     )
 )
 
@@ -82,9 +83,9 @@ summary_prompt = PromptTemplate(
         "You are a story summarizer. Condense the following 'New Story Chunk' into the 'Existing Summary' "
         "while preserving key events, characters, and plot points. The result should be a single, coherent summary. "
         "Keep the tone of the original story. If the existing summary is empty, just summarize the new chunk.\n\n"
-        "**Existing Summary:**\n{existing_summary}\n\n"
-        "**New Story Chunk to Add:**\n{new_chunk}\n\n"
-        "**Updated, Coherent Summary:**"
+        "*Existing Summary:*\n{existing_summary}\n\n"
+        "*New Story Chunk to Add:*\n{new_chunk}\n\n"
+        "*Updated, Coherent Summary:*"
     )
 )
 
@@ -112,6 +113,7 @@ class NewStoryRequest(BaseModel):
     name: str
     description: str
     owner: Owner
+    genre: Optional[str] = None
     # Dialect is no longer sent by the client
 
 class ContinueStoryRequest(BaseModel):
@@ -218,7 +220,7 @@ async def continue_story_api(request: ContinueStoryRequest):
                 {
                     "$set": {
                         "summary": existing_summary,
-                        "content": remaining_recent_content # Save the *trimmed* content list
+                        "content": remaining_recent_content # Save the trimmed content list
                     }
                 }
             )
@@ -230,9 +232,9 @@ async def continue_story_api(request: ContinueStoryRequest):
         # Combine summary and recent events for the final context
         story_so_far = ""
         if existing_summary:
-            story_so_far += f"**Story Summary So Far:**\n{existing_summary}\n\n"
+            story_so_far += f"*Story Summary So Far:*\n{existing_summary}\n\n"
         
-        story_so_far += f"**Recent Events:**\n{formatted_recent_content}"
+        story_so_far += f"*Recent Events:*\n{formatted_recent_content}"
 
         # --- 8. Generate next scene (using await .ainvoke) ---
         next_scene = await story_chain.ainvoke({
@@ -255,7 +257,7 @@ async def continue_story_api(request: ContinueStoryRequest):
         )
 
         # --- 10. Return updated story ---
-        # Fetch the *final* state of the story after all updates
+        # Fetch the final state of the story after all updates
         updated_story = await story_collection.find_one({"_id": story_oid})
         
         content_list = []
