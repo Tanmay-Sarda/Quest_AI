@@ -5,7 +5,7 @@ import DeleteStory from "./DeleteStory";
 import { ToastContainer, toast } from "react-toastify";
 import { useParams } from "next/navigation";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUserPlus } from '@fortawesome/free-solid-svg-icons'
+import { faUserPlus, faTrash,faPlay} from '@fortawesome/free-solid-svg-icons'
 // import { byPrefixAndName } from '@fortawesome/fontawesome-svg-core/import.macro'
 export default function HomePage() {
   const [completedStories, setCompletedStories] = useState([]);
@@ -73,13 +73,13 @@ export default function HomePage() {
     }
   }
 
-  const addEmail=(id)=>{
+  const addEmail = (id) => {
     console.log("Adding email for story id:", id);
     setstory_id(id);
     setdisplay(true);
   }
 
-  const addUser=async(e)=>{
+  const addUser = async (e) => {
     e.preventDefault();
     const token = sessionStorage.getItem("accessToken");
 
@@ -100,7 +100,7 @@ export default function HomePage() {
           story_id: story_id
         })
       });
-      if(!res.ok){
+      if (!res.ok) {
         const data = await res.json();
         showToast("⚠️ " + (data.message || "Failed to add user"));
         return;
@@ -117,8 +117,8 @@ export default function HomePage() {
 
   const StoryCard = ({ story, type }) => (
     <div
-      className="terminal-border relative"
-      style={{ transition: "all 0.3s ease", paddingRight: "50px" }}
+      className="terminal-border relative grid grid-cols-1 gap-3 items-center bg-[#3c3b3b]"
+      style={{ transition: "all 0.3s ease"}}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 255, 255, 0.15)";
         e.currentTarget.style.transform = "scale(1.02)";
@@ -128,50 +128,49 @@ export default function HomePage() {
         e.currentTarget.style.transform = "scale(1)";
       }}
     >
-      <div className="terminal-content">
-        <h3
-          style={{ color: "#e5e5e5", fontSize: "1.3rem", marginBottom: "10px" }}
-        >
-          {story.title}
-        </h3>
-        <p style={{ color: "#999", fontSize: "1rem", marginBottom: "10px" }}>
-          {story.description}
-        </p>
-        <span
-          style={{ color: "#777", fontSize: "0.95rem", fontStyle: "italic" }}
-        >
-          You play as: <span style={{ color: "#ccc" }}>{story.character}</span>
-        </span>
-
+      <div className="terminal-content flex bg-[#262626]">
+        <div>
+          <div>
+            <span className="text-gray-500">Title: </span>{story.title}
+          </div>
+          <div>
+            <span className="text-gray-500">Description: </span>{story.description}
+          </div>
+          <div>
+            <span className="text-gray-500">Character: </span>{story.character}
+          </div>
+        </div>
         {/* Buttons */}
-        <div className="absolute top-2 right-2 flex gap-2">
-          <button
-            className="text-red-500 hover:text-red-600 text-lg transition-all duration-200 hover:scale-125"
-            onClick={() => {
-              handledelete(story, type);
-            }}
-          >
-            🗑
-          </button>
 
+        <div className=" absolute right-5 top-4 flex gap-2">
           <button
             className="text-white-500 hover:text-white-100 text-lg transition-all duration-200 hover:scale-125"
             onClick={() => {
               addEmail(`${story._id}`);
             }}
           >
-          {/* Add User icon */}
-            <FontAwesomeIcon icon={faUserPlus} />
+            {/* Add User icon */}
+            <FontAwesomeIcon className="text-xl" icon={faUserPlus} />
           </button>
-          
+          <button
+            className="text-red-500 hover:text-red-600 text-lg transition-all duration-200 hover:scale-125"
+            onClick={() => {
+              handledelete(story, type);
+            }}
+          >
+            <FontAwesomeIcon className="text-xl" icon={faTrash} />
+          </button>
+
+
           {type === "ongoing" && (
             <button
               className="text-green-500 hover:text-green-600 text-lg transition-all duration-200 hover:scale-125"
               onClick={() => router.push(`/ChatBox/${username}/${story._id}`)}
             >
-              ▶
+              <FontAwesomeIcon className="text-xl" icon={faPlay} />
             </button>
           )}
+
         </div>
       </div>
     </div>
@@ -255,29 +254,29 @@ export default function HomePage() {
         boxSizing: "border-box",
         width: "100%",
       }}
-    > 
-     {/* Box that take the email as a add user smae design of sign in form*/}
-     {display &&  <div className="z-10 absolute bottom-10 terminal-border" style={{ maxWidth: "700px" }}>
+    >
+      {/* Box that take the email as a add user smae design of sign in form*/}
+      {display && <div className="z-10 absolute bottom-10 terminal-border" style={{ maxWidth: "700px" }}>
         <div className="terminal-content">
           {/* <div className="flex  w-full justify-between"> */}
           <h2 className="terminal-title">Enter The Email Of The User</h2>
           <button
-                  onClick={() => setdisplay(false)}
-                  aria-label="Close notifications"
-                  style={{
-                    position: "absolute",
-                    right: 20,
-                    top: 10,
-                    background: "transparent",
-                    border: "none",
-                    color: "#ccc",
-                    fontSize: 30,
-                    cursor: "pointer",
-                  }}
-                >
-                  ×
-                </button>
-                {/* </div> */}
+            onClick={() => setdisplay(false)}
+            aria-label="Close notifications"
+            style={{
+              position: "absolute",
+              right: 20,
+              top: 10,
+              background: "transparent",
+              border: "none",
+              color: "#ccc",
+              fontSize: 30,
+              cursor: "pointer",
+            }}
+          >
+            ×
+          </button>
+          {/* </div> */}
           <form onSubmit={addUser}>
             <div className="form-row">
               <label htmlFor="title">Email :</label>
@@ -292,7 +291,7 @@ export default function HomePage() {
               />
             </div>
 
-            
+
 
             <button type="submit" className="form-button">
               [ Add User ]

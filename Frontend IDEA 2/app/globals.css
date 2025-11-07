@@ -134,7 +134,6 @@ header nav a:hover { color: #fff; }
   border-color: var(--border-color);
   border-style: dashed; 
   padding: 30px;
-  background: var(--terminal-bg);
   width: 100%;
   box-sizing: border-box;
 }
@@ -155,7 +154,7 @@ header nav a:hover { color: #fff; }
 form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
 .form-row {
@@ -206,11 +205,13 @@ form {
 
 .form-button-exit {
   border-color: #39FF14;
+  padding: 4px;
+  border-radius: 6px;
   cursor: pointer;
 }
 .form-button-exit:hover {
-  background: #8B0000;
-  color: #ccc;
+  color: #be0909;
+  background-color: rgb(59, 58, 58);
   border-color: #8B0000;
 }
 

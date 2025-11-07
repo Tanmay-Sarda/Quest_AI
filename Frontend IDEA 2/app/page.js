@@ -175,14 +175,15 @@ export default function SignUpPage() {
                 )}
               </div>
             </div>
-
-            <button type="submit" className="form-button">[ SIGNUP ]</button>
              
-             <p className="option">Or sign in using</p>
+             <div className="flex flex-col">
+            <button type="submit " className="form-button">[ SIGNUP ]</button>
+             <p className="option ">Or sign in using</p>
             <GoogleLogin
               onSuccess={handleLogin}
               onError={() => toast.error("⚠️ Google Sign-in failed!")}
             />
+            </div>
           </form>
         </div>
       </div>

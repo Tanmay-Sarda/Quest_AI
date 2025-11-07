@@ -3,6 +3,8 @@
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditProfile from "../component/EditProfile";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBell } from '@fortawesome/free-solid-svg-icons';
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -239,6 +241,7 @@ export default function Navbar() {
           borderBottom: "1px dashed rgba(255,255,255,0.3)",
         }}
       >
+      
         {/* Logo */}
         <img
           src="/QuestLogo.jpeg"
@@ -353,7 +356,7 @@ export default function Navbar() {
                 className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
               >
                 {/* bell emoji as icon (replace with SVG/icon if desired) */}
-                🔔
+                <FontAwesomeIcon icon={faBell} />
                 {notificationsCount > 0 && (
                   <span
                     style={{

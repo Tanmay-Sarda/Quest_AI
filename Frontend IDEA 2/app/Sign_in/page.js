@@ -139,7 +139,8 @@ export default function SignInPage() {
                 )}
               </div>
             </div>
-
+            
+            <div className="flex flex-col">
             <button type="submit" className="form-button">[ SIGNIN ]</button>
 
             <p className="option">Or sign in using</p>
@@ -147,6 +148,7 @@ export default function SignInPage() {
               onSuccess={handleLogin}
               onError={() => toast.error("⚠️ Google Sign-in failed!")}
             />
+            </div>
           </form>
         </div>
       </div>

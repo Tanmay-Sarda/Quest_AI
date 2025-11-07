@@ -87,7 +87,7 @@ export default function StoryPage() {
       const token = sessionStorage.getItem('accessToken') // get token from storage
 
       const response = await fetch(
-        `${process.env.process.env.NEXT_PUBLIC_HOST}/story/addcontent/${trimmedStoryId}`,
+        `${process.env.NEXT_PUBLIC_HOST}/story/addcontent/${trimmedStoryId}`,
         {
           method: "POST",
           headers: {
@@ -169,10 +169,10 @@ export default function StoryPage() {
               <div className="message ai-message">
                 Welcome, adventurer! Your story begins. What is your first action?
               </div>
-            ) : (
+            ) : ( 
               stories.map((s) => (
                 <div key={s.id} className="flex flex-col gap-2">
-                  <div className="message user-message relative group">{s.prompt}
+                  <div className="message user-message relative group mb-2 rounded-2xl">{s.prompt}
                     <button
                       onClick={() => handleCopy(s.prompt)}
                       className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -181,7 +181,7 @@ export default function StoryPage() {
                       <Copy className="w-4 h-4 text-white/70 hover:text-white" />
                     </button>
                   </div>
-                  <div className="message ai-message relative group">{s.response}
+                  <div className="message ai-message relative group rounded-2xl mb-2">{s.response}
                     <button
                       onClick={() => handleCopy(s.response)}
                       className="absolute bottom-[-18px] right-2 opacity-0
@@ -193,12 +193,14 @@ export default function StoryPage() {
                   </div>
                 </div>
               ))
-            )}
+            )
+            }
+
           </div>
 
           {/* Input */}
           <div onClick={() => handleSend} className=" flex flex-row w-full text-center border-t-1 border-dashed
-           border-t-white/50 pt-2 mt-2" >
+           border-t-white/50 pt-2 mt-2 gap-2" >
 
             <textarea
               ref={inputRef}
@@ -207,11 +209,11 @@ export default function StoryPage() {
               placeholder="> Enter your action..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="w-[93%] max-h-40 p-2 resize-none overflow-y-auto rounded bg-transparent text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-[93%] max-h-40 p-2 resize-none overflow-y-auto rounded bg-transparent text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-800"
               rows={1}
             />
 
-            <button type="submit" className="">
+            <button type="submit " className="text-2xl">
               <span>[ SEND ]</span>
             </button>
           </div>
