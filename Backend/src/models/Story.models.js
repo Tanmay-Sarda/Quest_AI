@@ -7,6 +7,7 @@ const storySchema = new mongoose.Schema(
     {
         title: { type: String,required: true },
         description: { type:String, required: true },
+        genre: { type: String, required: false },
         ownerid: [
             new mongoose.Schema({
                 owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
