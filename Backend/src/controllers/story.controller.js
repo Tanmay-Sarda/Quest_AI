@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 
 const createStory = asyncHandler(async (req, res) => {
   console.log("createStory called");
-  const { title, description, character } = req.body;
+  const { title, description, character, genre } = req.body;
   const ownerId = req.user?._id;
 
   if (!ownerId) {
@@ -27,7 +27,8 @@ const createStory = asyncHandler(async (req, res) => {
       owner: {
         owner: ownerId.toString(),
         character: character
-      }
+      },
+      genre: genre || undefined  
     };
 
     const aiResponse = await axios.post(`${process.env.FASTAPI_URL}/story/new`, fastApiRequestData);
@@ -41,6 +42,7 @@ const createStory = asyncHandler(async (req, res) => {
     const newStory = await Story.create({
       title,
       description,
+      genre: genre || undefined,  
       ownerid: [{ owner: ownerId, character: character }],
       content: [{
         prompt: `Starting scene for ${title}`,
@@ -56,6 +58,7 @@ const createStory = asyncHandler(async (req, res) => {
       _id: newStory._id,
       title: newStory.title,
       description: newStory.description,
+      genre: newStory.genre,
       character: character,
       content: newStory.content,
       complete: newStory.complete,
@@ -90,6 +93,7 @@ const getAllStories = asyncHandler(async (req, res) => {
       _id: story._id,
       title: story.title,
       description: story.description,
+      genre: story.genre,
       character: ownerEntry ? ownerEntry.character : null,
       complete: story.complete,
       createdAt: story.createdAt,
@@ -210,6 +214,7 @@ const getStoryContent = asyncHandler(async (req, res) => {
     _id: story._id,
     title: story.title,
     description: story.description,
+    genre: story.genre,
     character: ownerEntry ? ownerEntry.character : null,
     content: story.content,
     complete: story.complete,
