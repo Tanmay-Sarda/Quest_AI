@@ -16,21 +16,38 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- FastAPI Setup ---
-app = FastAPI(title="AI Storyteller APIDB Setup ---
+app = FastAPI(title="AI Storyteller API")
+
+# --- MongoDB Setup ---
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
-db = client["test"]  # Changed from "story_db" to "test"
+db = client["test"]
 story_collection = db["stories"]
 
+# --- LLM Setup ---
 llm = ChatGroq(
-    model="Llama3 70b", 
+    model="llama3-70b-8192",  # Use a current, supported model
     temperature=0.9,
     groq_api_key=os.environ.get("GROQ_API_KEY")
 )
 
 # --- Prompt Templates ---
+
+# 1. NEW Dialect Generation Prompt
+dialect_prompt = PromptTemplate(
+    input_variables=["description"],
+    template=(
+        "You are a linguistic expert. Analyze the following story description and determine the most fitting narrator dialect. "
+        "Your response must be ONLY the name of the dialect (e.g., 'British English', '1920s hard-boiled detective', 'Cyberpunk street slang'). "
+        "Do not add any preamble or explanation.\n\n"
+        "Story Description: {description}\n\n"
+        "Appropriate Dialect:"
+    )
+)
+
+# 2. Story Setup Prompt (uses the generated dialect)
 setup_prompt = PromptTemplate(
-    input_variables=["title", "description", "character"],
+    input_variables=["title", "description", "character", "dialect"],
     template=(
         "You are a creative AI Dungeon Master speaking in {dialect} and starting a new adventure. "
         "Always write in that dialect's tone, word choice, and rhythm. "
@@ -45,10 +62,12 @@ setup_prompt = PromptTemplate(
     )
 )
 
+# 3. Story Continuation Prompt (uses the saved dialect)
 story_prompt = PromptTemplate(
-    input_variables=["story_so_far", "user_input", "character"],
+    input_variables=["story_so_far", "user_input", "character", "dialect"],
     template=(
-        "You are a Dungeon Master continuing an interactive story. "
+        "You are a Dungeon Master continuing an interactive story, speaking in {dialect}. "
+        "Your narration must stay in {dialect}, and every response should feel authentic to that dialect. "
         "The player is '{character}', the main character. "
         "Describe the consequences of their actions and the evolving world. "
         "Keep responses grounded in the established story. Don't take actions for the player.\n\n"
@@ -74,14 +93,24 @@ summary_prompt = PromptTemplate(
 dialect_chain = dialect_prompt | llm | StrOutputParser()
 setup_chain = setup_prompt | llm | StrOutputParser()
 story_chain = story_prompt | llm | StrOutputParser()
+summary_chain = summary_prompt | llm | StrOutputParser()
 
-# --- Pydantic Models (FIXED to match Node.js schema) ---
+# --- Helper Function ---
+def format_story_chunk(content_list: List[dict]) -> str:
+    """Helper to format a list of content dicts into a string."""
+    return "\n".join([
+        f"{c.get('prompt', 'Scene')}: {c.get('response', '')}"
+        for c in content_list
+    ])
+
+
+# --- Pydantic Models ---
 class Owner(BaseModel):
     owner: str
     character: str
 
 class NewStoryRequest(BaseModel):
-    name: str  # This is 'title' in your schema
+    name: str
     description: str
     owner: Owner
     genre: Optional[str] = None
@@ -92,51 +121,61 @@ class ContinueStoryRequest(BaseModel):
     user_id: str
     user_action: str
 
-class ContentItem(BaseModel):
-    prompt: str
-    user: str
-    response: str
+# ... (other models like ContentItem, StoryResponse) ...
 
-class StoryResponse(BaseModel):
-    story_id: str
-    title: str
-    description: str
-    character: str
-    content: List[ContentItem]
-    complete: bool
 
 # --- API Endpoints ---
 @app.post("/story/new")
 async def start_new_story(request: NewStoryRequest):
-    """Generate initial story content and return it (Node.js will save to DB)"""
+    """Generate initial story content AND dialect"""
     try:
-        # Generate initial scene using title, description, and character
+        # 1. Call the new dialect_chain first
+        dialect = dialect_chain.invoke({
+            "description": request.description
+        })
+        dialect = dialect.strip().strip('""') # Clean up output
+        print(f"--- LOG: Generated dialect: {dialect} ---")
+        
+        # 2. Generate initial scene using the new dialect
         initial_scene = setup_chain.invoke({
             "title": request.name,
             "description": request.description,
-            "character": request.owner.character
+            "character": request.owner.character,
+            "dialect": dialect  # Use the generated dialect
         })
 
-        # Return just the generated content
-        # Node.js controller will handle saving to MongoDB
+        # 3. Return content AND dialect
         return {
             "content": initial_scene,
-            "character": request.owner.character
+            "character": request.owner.character,
+            "dialect": dialect  # Return dialect so Node.js can save it
         }
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating story: {str(e)}")
 
 
 @app.post("/story/continue")
 async def continue_story_api(request: ContinueStoryRequest):
-    """Continue existing story and update MongoDB in 'test' database"""
+    """Continue existing story, summarize if needed, and update MongoDB."""
     try:
-        # Fetch story from 'test' database
-        story = await story_collection.find_one({"_id": ObjectId(request.story_id)})
+        # --- 1. & 2. Validate IDs ---
+        try:
+            story_oid = ObjectId(request.story_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail=f"Invalid story_id format: {request.story_id}")
+    
+        try:
+            user_oid = ObjectId(request.user_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail=f"Invalid user_id format: {request.user_id}")
+
+        # --- 3. Fetch story ---
+        story = await story_collection.find_one({"_id": story_oid})
         if not story:
             raise HTTPException(status_code=404, detail="Story not found")
 
-        # Find the user's character name
+        # --- 4. & 5. Get Character and Dialect ---
         character = None
         for owner_entry in story.get("ownerid", []):
             if str(owner_entry.get("owner")) == request.user_id:
@@ -201,18 +240,19 @@ async def continue_story_api(request: ContinueStoryRequest):
         next_scene = await story_chain.ainvoke({
             "story_so_far": story_so_far,
             "user_input": request.user_action,
-            "character": character
+            "character": character,
+            "dialect": dialect
         })
 
-        # Append to MongoDB in 'test' database
+        # --- 9. Append new action+response to MongoDB ---
         new_content = {
             "prompt": request.user_action,
-            "user": ObjectId(request.user_id),
+            "user": user_oid,
             "response": next_scene
         }
         
         await story_collection.update_one(
-            {"_id": ObjectId(request.story_id)},
+            {"_id": story_oid},
             {"$push": {"content": new_content}}
         )
 
@@ -220,7 +260,6 @@ async def continue_story_api(request: ContinueStoryRequest):
         # Fetch the final state of the story after all updates
         updated_story = await story_collection.find_one({"_id": story_oid})
         
-        # Format response
         content_list = []
         for c in updated_story.get("content", []):
             content_list.append({
@@ -234,15 +273,20 @@ async def continue_story_api(request: ContinueStoryRequest):
             "title": updated_story.get("title", ""),
             "description": updated_story.get("description", ""),
             "character": character,
-            "content": content_list,
-            "complete": updated_story.get("complete", False)
+            "content": content_list, # This is now just the recent content
+            "summary": updated_story.get("summary", ""), # Also return the summary
+            "complete": updated_story.get("complete", False),
+            "dialect": dialect
         }
+    
     except HTTPException:
-        raise
+        raise # Re-raise known errors (like 400s and 404s)
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error continuing story: {str(e)}")
-
-
+        print(f"--- UNHANDLED ERROR IN /story/continue ---")
+        traceback.print_exc() 
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+    
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "database": "test"}
