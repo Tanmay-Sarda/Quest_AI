@@ -126,8 +126,6 @@ def character_reply(character_name: str, story: str, user_input: str) -> str:
 
 
 # --- 5. Main Execution Block ---
-# This script is intended to be imported as a module into a web server (e.g., Flask, FastAPI).
-# The functions above will be called by your server's API endpoints.
 if __name__ == "__main__":
     print("Welcome to the AI Dungeon!\n")
 
