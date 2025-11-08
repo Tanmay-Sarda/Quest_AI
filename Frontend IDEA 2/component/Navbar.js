@@ -316,7 +316,7 @@ export default function Navbar() {
                 onClick={() => 
                 {
                   showToast("⏳ Redirecting to Create Story page...");
-                  setTimeout(() => {router.push(`/Create/${username}`)}, 1000)
+                  setTimeout(() => {router.push(`/Story_Form/${username}`)}, 1000)
                 }
                 }
               >
