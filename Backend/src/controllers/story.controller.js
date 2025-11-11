@@ -33,6 +33,7 @@ const createStory = asyncHandler(async (req, res) => {
 
     const aiResponse = await axios.post(`${process.env.FASTAPI_URL}/story/new`, fastApiRequestData);
     const generatedContent = aiResponse.data?.content;
+    const dialect = aiResponse.data?.dialect;
 
     if (!generatedContent) {
       return res.status(500).json(new ApiError(500, 'AI service did not return story content.'));
@@ -42,7 +43,8 @@ const createStory = asyncHandler(async (req, res) => {
     const newStory = await Story.create({
       title,
       description,
-      genre: genre || undefined,  
+      genre: genre || undefined,
+      dialect: dialect,
       ownerid: [{ owner: ownerId, character: character }],
       content: [{
         prompt: `Starting scene for ${title}`,
@@ -53,7 +55,7 @@ const createStory = asyncHandler(async (req, res) => {
       public: false
     });
 
-    // 3. Return the saved story
+    // Return the saved story
     res.status(201).json(new ApiResponse(true, {
       _id: newStory._id,
       title: newStory.title,
@@ -205,7 +207,6 @@ const getStoryContent = asyncHandler(async (req, res) => {
     return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
   }
 
-  // Get character for this owner
   const ownerEntry = story.ownerid?.find((entry) =>
     entry.owner.equals(owner)
   );

@@ -25,7 +25,7 @@ export default function StoryForm() {
     toast.info("Story is being created...");
 
     try {
-      const token = localStorage.getItem("accessToken"); // get token from storage
+      const token = sessionStorage.getItem("accessToken"); // get token from storage
 
       const payload = {
         title: form.title,
@@ -34,7 +34,7 @@ export default function StoryForm() {
         genre: form.genre, // include genre
       };
 
-      const res = await fetch("http://localhost:3000/api/v1/story/create", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/story/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,6 +99,7 @@ export default function StoryForm() {
                 onChange={handleChange}
                 placeholder={field.placeholder}
                 className="w-full rounded-xl bg-white/20 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 hover:bg-white/30 hover:shadow-lg hover:shadow-indigo-500/30"
+                required
               />
             </motion.div>
           ))}
