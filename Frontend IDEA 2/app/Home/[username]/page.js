@@ -349,8 +349,8 @@ export default function HomePage() {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(300px, 1fr))",
+                      //Only one column for now
+                      gridTemplateColumns: "1fr",
                       gap: "20px",
                       marginTop: "15px",
                     }}

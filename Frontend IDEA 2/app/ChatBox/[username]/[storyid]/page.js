@@ -80,7 +80,7 @@ export default function StoryPage() {
   const handleSend = async (e) => {
     e.preventDefault();
 
-    if (!prompt.trim() || !storyid) return;
+    if (!prompt.trim() || !storyid || loading) return;
     setLoading(true);
 
     try {
@@ -199,8 +199,8 @@ export default function StoryPage() {
           </div>
 
           {/* Input */}
-          <div onClick={() => handleSend} className=" flex flex-row w-full text-center border-t-1 border-dashed
-           border-t-white/50 pt-2 mt-2 gap-2" >
+          <div className=" flex flex-row w-full text-center border-t-1 border-dashed
+           border-t-white/50 pt-2 mt-2" >
 
             <textarea
               ref={inputRef}
@@ -209,12 +209,18 @@ export default function StoryPage() {
               placeholder="> Enter your action..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="w-[93%] max-h-40 p-2 resize-none overflow-y-auto rounded bg-transparent text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-800"
+              className="w-[91%] max-h-40 p-2 resize-none overflow-y-auto rounded bg-transparent text-green-500 border border-gray-500 focus:outline-none"
               rows={1}
+              disabled={loading}
             />
 
-            <button type="submit " className="text-2xl">
-              <span>[ SEND ]</span>
+            <button 
+              type="submit" 
+              onClick={handleSend}
+              disabled={loading || !prompt.trim()}
+              className="form-button"
+            >
+              <span>{loading ? "[ O ]" : "[ SEND ]"}</span>
             </button>
           </div>
 
