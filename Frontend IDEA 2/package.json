@@ -19,7 +19,7 @@
     "lucide-react": "^0.548.0",
     "mongoose": "^8.18.1",
     "next": "15.5.2",
-    "package.json": "^2.0.1",
+    "package.json": "^0.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-toastify": "^11.0.5"

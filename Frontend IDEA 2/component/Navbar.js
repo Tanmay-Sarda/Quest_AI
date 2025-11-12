@@ -1,19 +1,45 @@
 "use client";
 
 import { useRouter, usePathname, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import EditProfile from "../component/EditProfile";
+import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell } from '@fortawesome/free-solid-svg-icons';
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showEditProfile, setShowEditProfile] = useState(false);
+  // Profile modal removed; using a rounded profile icon button instead
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showProfilePanel, setShowProfilePanel] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const img = sessionStorage.getItem("profileImage");
+      if (img) setProfileImage(img);
+    }
+  }, []);
+
+  const handleProfileFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      try {
+        sessionStorage.setItem("profileImage", dataUrl);
+      } catch (err) {
+        console.warn("Failed to store profile image in sessionStorage", err);
+      }
+      setProfileImage(dataUrl);
+      showToast("✅ Profile picture updated");
+    };
+    reader.readAsDataURL(file);
+  };
   const { username } = useParams();
   const [characterName, setCharacterName] = useState("");
 
@@ -333,65 +359,34 @@ export default function Navbar() {
               >
                 [ CREATE STORY ]
               </button>
-              <button
-                className="form-button rounded-sm p-1"
-                onClick={() => {
-                  showToast("⏳ Redirecting to Edit Profile page...");
-                  setTimeout(() => { router.push(`/Edit/${username}`) }, 1000)
-                }
-                }
-              >
-                [ EDIT PROFILE ]
-              </button>
-              <button
-                className="form-button rounded-sm p-1"
-                onClick={() => {
-                  showToast("⏳ Logging out...");
-                  setTimeout(() => { handleLogout() }, 1000)
-                }}
-              >
-                [ LOGOUT ]
-              </button>
+              {/* Top-level logout and notifications buttons removed; use profile panel instead */}
 
-              {/* Notifications button */}
+              {/* Profile avatar button (GitHub/Google-like) - placed at far right */}
               <button
-                onClick={handleNotificationsClick}
-                style={{
-                  position: "relative",
-                  padding: "6px 10px",
-                  borderRadius: "6px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
+                onClick={() => {
+                  // Toggle profile panel; ensure notifications panel is closed
+                  setShowProfilePanel(s => !s);
+                  setShowNotificationsPanel(false);
                 }}
-                title="Notifications"
-                className="form-button rounded-sm p-1"
+                title="Profile"
+                aria-label="Profile"
+                className="ml-1 rounded-full w-10 h-10 flex items-center justify-center border border-white/10 shadow-sm hover:scale-105 transition-transform duration-150 overflow-hidden bg-gray-900"
+                style={{ minWidth: 40 }}
               >
-                {/* bell emoji as icon (replace with SVG/icon if desired) */}
-                <FontAwesomeIcon icon={faBell} />
-                {notificationsCount > 0 && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: -6,
-                      right: -6,
-                      minWidth: 18,
-                      height: 18,
-                      padding: "0 5px",
-                      background: "#ff3b30",
-                      color: "#fff",
-                      borderRadius: 9,
-                      fontSize: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      lineHeight: 1,
-                    }}
-                    aria-label={`${notificationsCount} unread notifications`}
-                  >
-                    {notificationsCount}
-                  </span>
-                )}
+                {(() => {
+                  if (typeof window !== "undefined") {
+                    const img = sessionStorage.getItem("profileImage");
+                    if (img) {
+                      return <img src={img} alt="Profile" className="w-full h-full object-cover" />;
+                    }
+                    const storedName = sessionStorage.getItem("username") || username || "U";
+                    const initial = storedName.charAt(0).toUpperCase();
+                    return (
+                      <span className="text-2xl font-extrabold text-white" style={{ userSelect: "none", lineHeight: 1 }}>{initial}</span>
+                    );
+                  }
+                  return <span className="text-sm font-semibold text-white">U</span>;
+                })()}
               </button>
             </>
           )}
@@ -471,10 +466,54 @@ export default function Navbar() {
         </>
       )}
 
-      {/* ✅ Edit Profile Modal */}
-      {showEditProfile && (
-        <EditProfile closeModal={() => setShowEditProfile(false)} />
+      {/* Profile side panel + backdrop */}
+      {showProfilePanel && (
+        <>
+          <div
+            onClick={() => setShowProfilePanel(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1001 }}
+            aria-hidden="true"
+          />
+
+          <aside
+            role="dialog"
+            aria-label="Profile"
+            className="fixed top-0 right-0 h-auto w-80 max-w-full bg-[#0b0b0b] text-white z-[1002] shadow-xl transform transition-transform duration-200 flex flex-col"
+          >
+            <div style={{ padding: 20, borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <div style={{ width: 56, height: 56, borderRadius: 9999, overflow: "hidden", background: "#111", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {profileImage ? (
+                    <img src={profileImage} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    (() => {
+                      if (typeof window !== "undefined") {
+                        const storedName = sessionStorage.getItem("username") || username || "U";
+                        return <span style={{ color: "#fff", fontWeight: 800, fontSize: 26 }}>{storedName.charAt(0).toUpperCase()}</span>;
+                      }
+                      return <span style={{ color: "#fff", fontWeight: 700, fontSize: 20 }}>U</span>;
+                    })()
+                  )}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700 }}>{sessionStorage.getItem("username") || username || "User"}</div>
+                  <div style={{ fontSize: 12, color: "#aaa" }}>{sessionStorage.getItem("email") || ""}</div>
+                </div>
+              </div>
+              <button onClick={() => setShowProfilePanel(false)} style={{ background: "transparent", border: "none", color: "#ccc", fontSize: 20, cursor: "pointer" }} aria-label="Close profile">×</button>
+            </div>
+
+            <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+              <button onClick={() => { setShowProfilePanel(false); showToast("⏳ Redirecting to Edit Profile..."); setTimeout(() => router.push(`/Edit/${username}`), 300); }} className="px-3 py-2 text-left rounded cursor-pointer transition-colors duration-150 hover:text-green-500 hover:font-semibold focus:outline-none">Edit Profile</button>
+              <button onClick={() => { setShowProfilePanel(false); setShowNotificationsPanel(true); }} className="px-3 py-2 text-left rounded cursor-pointer transition-colors duration-150 hover:text-green-500 hover:font-semibold focus:outline-none">Notifications</button>
+              <button onClick={() => { setShowProfilePanel(false); showToast("⏳ Logging out..."); setTimeout(() => handleLogout(), 400); }} className="px-3 py-2 text-left rounded cursor-pointer transition-colors duration-150 hover:text-green-500 hover:font-semibold focus:outline-none">Logout</button>
+            </div>
+
+          </aside>
+        </>
       )}
+
+      {/* EditProfile modal removed; navigation to /Edit handled by profile button */}
     </>
   );
 }
