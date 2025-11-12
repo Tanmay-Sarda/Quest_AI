@@ -25,7 +25,7 @@ export default function StoryForm() {
     toast.info("Story is being created...");
 
     try {
-      const token = sessionStorage.getItem("accessToken"); // get token from storage
+      const token = localStorage.getItem("accessToken"); // get token from storage
 
       const payload = {
         title: form.title,
@@ -34,11 +34,11 @@ export default function StoryForm() {
         genre: form.genre, // include genre
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/story/create`, {
+      const res = await fetch("http://localhost:3000/api/v1/story/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, //send JWT in header
+          Authorization: `Bearer ${token}`, // send JWT in header
         },
         body: JSON.stringify(payload),
       });
@@ -63,23 +63,36 @@ export default function StoryForm() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0a0a14] via-[#0b0f1c] to-[#0a0a14] text-white overflow-hidden">
+    <div
+      className="relative min-h-screen flex items-start justify-center text-white overflow-hidden"
+      style={{
+        backgroundColor: "#060606",
+        backgroundImage:
+          "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), repeating-linear-gradient(transparent, transparent 2px, rgba(255,255,255,0.01) 3px)",
+        backgroundSize: "100% 3px, 100% 6px",
+        paddingTop: 100,
+      }}
+    >
       <motion.div
         initial={{ opacity: 0, y: 60 }}
         animate={{ opacity: 1, y: -10 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full max-w-lg bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg p-8"
+        className="w-full max-w-2xl bg-transparent p-8"
       >
         <motion.h2
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-2xl font-bold text-center mb-6"
+          className="text-3xl font-extrabold text-center mb-6 tracking-wide uppercase"
+          style={{ color: "#e6e6e6" }}
         >
-          Create Your Story
+          User Dashboard
         </motion.h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-6">
+          <div className="border border-dashed border-white/10 rounded-lg p-6">
+            <h3 className="text-center uppercase tracking-widest text-2xl mb-4 text-white/80 font-bold">Create Your Story</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
           {[
             { name: "title", placeholder: "Enter story title" },
             { name: "setting", placeholder: "Enter story setting" },
@@ -99,20 +112,21 @@ export default function StoryForm() {
                 onChange={handleChange}
                 placeholder={field.placeholder}
                 className="w-full rounded-xl bg-white/20 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 hover:bg-white/30 hover:shadow-lg hover:shadow-indigo-500/30"
-                required
               />
             </motion.div>
           ))}
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="submit"
-            className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold hover:bg-indigo-700 transition"
-          >
-            Save Story
-          </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="mt-6 form-button w-full text-lg tracking-widest"
+              >
+                [ SAVE CHANGES ]
+              </motion.button>
         </form>
+          </div>
+        </div>
       </motion.div>
 
       {/* Toast notifications */}
