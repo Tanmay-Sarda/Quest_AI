@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Send, Copy } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { set } from "mongoose";
 
 export default function StoryPage() {
   const [prompt, setPrompt] = useState("");
@@ -13,7 +14,11 @@ export default function StoryPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { username, storyid } = useParams();
-  const trimmedStoryId = storyid?.trim();
+  //In stroy Id at the end space and then true or false for public or private
+  const trimmedStoryId = storyid.split("%20")[0]; 
+  const isPublic = storyid.split("%20")[1] === "True";
+
+  console.log("Trimmed Story ID:", trimmedStoryId);
 
   // Toast notification function
   const showToast = (message, duration = 2500) => {
@@ -30,7 +35,7 @@ export default function StoryPage() {
 
   useEffect(() => {
 
-    if (!sessionStorage.getItem("accessToken")) {
+    if (!sessionStorage.getItem("accessToken") && !isPublic) {
       showToast("User not authenticated");
       setTimeout(() => { router.push('/Sign_in') }, 2000);
       return;
@@ -40,7 +45,7 @@ export default function StoryPage() {
     const fetchStoryContent = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        if (!token) {
+        if (!token && !isPublic) {
           toast.error("You must be logged in to access this story.");
           router.push("/Sign_in");
         }
@@ -123,6 +128,10 @@ export default function StoryPage() {
 
 
   const handleExit = () => {
+    if(isPublic){
+      router.push(`/Public_Story`);
+      return;
+    }
     router.push(`/Home/${username}`);
   };
 
@@ -147,6 +156,44 @@ export default function StoryPage() {
     }
   };
 
+  const handleComplete = async () => {
+    let a=confirm("Are you sure you want to mark this story as complete?") ;
+
+    if(!a){
+      return;
+    }
+
+    let b=confirm("Once marked complete, you will be not again change in the story.") ;
+    if(!b){
+      return;
+    }
+
+    try {
+      const token = sessionStorage.getItem('accessToken'); // get token from storage
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_HOST}/story/toggle-complete/${trimmedStoryId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, //send JWT in header
+          },
+        }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(`Error: ${data.message || 'Failed to toggle complete status'}`);
+        return;
+      }
+      showToast(data.message || 'Story status updated successfully!');
+      setTimeout(() => { router.push(`/Home/${username}`); }, 1500);
+    } catch (err) {
+      console.error("Error toggling complete status:", err);
+      toast.error(`Error: ${err.message}`);
+    } 
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen w-full p-0 box-border z-500">
       {/* Header */}
@@ -154,6 +201,12 @@ export default function StoryPage() {
         <button onClick={handleExit} className="form-button-exit">
           <span>[ EXIT ]</span>
         </button>
+        
+        {!isPublic &&( <button onClick={handleComplete} className="form-button-com">
+          <span>[ COMPLETE ]</span>
+        </button>
+        )
+   }
       </div>
 
       {/* Chat Box */}
@@ -199,7 +252,7 @@ export default function StoryPage() {
           </div>
 
           {/* Input */}
-          <div className=" flex flex-row w-full text-center border-t-1 border-dashed
+         {!isPublic &&( <div className=" flex flex-row w-full text-center border-t-1 border-dashed
            border-t-white/50 pt-2 mt-2" >
 
             <textarea
@@ -222,7 +275,8 @@ export default function StoryPage() {
             >
               <span>{loading ? "[ O ]" : "[ SEND ]"}</span>
             </button>
-          </div>
+          </div>)
+}
 
 
 

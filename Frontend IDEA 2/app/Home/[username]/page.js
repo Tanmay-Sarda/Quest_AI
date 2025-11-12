@@ -5,7 +5,7 @@ import DeleteStory from "./DeleteStory";
 import { ToastContainer, toast } from "react-toastify";
 import { useParams } from "next/navigation";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUserPlus, faTrash,faPlay} from '@fortawesome/free-solid-svg-icons'
+import { faUserPlus, faTrash,faPlay,faLockOpen,faLock} from '@fortawesome/free-solid-svg-icons'
 // import { byPrefixAndName } from '@fortawesome/fontawesome-svg-core/import.macro'
 export default function HomePage() {
   const [completedStories, setCompletedStories] = useState([]);
@@ -114,6 +114,35 @@ export default function HomePage() {
     }
   }
 
+ 
+  const changeAccess = async (story_id) => {
+    const token = sessionStorage.getItem("accessToken");
+    if (!token) {
+      showToast("User not authenticated");
+      router.push('/Sign_in');
+      return;
+    }
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/story/changeaccess/${story_id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        showToast("⚠️ " + (data.message || "Failed to change access"));
+        return;
+      }
+      showToast("✅ Story access changed successfully!");
+      // Refresh stories
+      complete();
+    } catch (err) {
+      console.log(err);
+      showToast("Error: ", err.message);
+    }
+  }
 
   const StoryCard = ({ story, type }) => (
     <div
@@ -129,8 +158,8 @@ export default function HomePage() {
       }}
     >
       <div className="terminal-content flex bg-[#262626]">
-        <div className="flex flex-col">
-          <div className=" flex gap-2  justify-center">
+        <div className="flex flex-col w-full">
+          <div className=" flex gap-2  justify-center ">
             <p className="text-2xl font-mediium text-green-500">{story.title}</p>
           </div>
           <div className="flex gap-2">
@@ -146,8 +175,10 @@ export default function HomePage() {
 
         <div className=" absolute right-5 top-4 flex gap-2">
           <button
+            title="Add User"
             className="text-white-500 hover:text-white-100 text-lg transition-all duration-200 hover:scale-125"
             onClick={() => {
+              showToast("Opening add user dialog...");
               addEmail(`${story._id}`);
             }}
           >
@@ -155,8 +186,10 @@ export default function HomePage() {
             <FontAwesomeIcon className="text-xl" icon={faUserPlus} />
           </button>
           <button
+            title="Delete Story"
             className="text-red-500 hover:text-red-600 text-lg transition-all duration-200 hover:scale-125"
             onClick={() => {
+              showToast("Deleting story...");
               handledelete(story, type);
             }}
           >
@@ -166,10 +199,38 @@ export default function HomePage() {
 
           {type === "ongoing" && (
             <button
+              title="Continue Story"
               className="text-green-500 hover:text-green-600 text-lg transition-all duration-200 hover:scale-125"
-              onClick={() => router.push(`/ChatBox/${username}/${story._id}`)}
+              onClick={() => 
+              { showToast("Loading ChatBox...");
+                router.push(`/ChatBox/${username}/${story._id} False`)}}
             >
               <FontAwesomeIcon className="text-xl" icon={faPlay} />
+            </button>
+          )}
+          
+          
+          {type === "completed" && story.public && (
+            <button
+              title="Private to Public Story"
+              className="text-blue-500 hover:text-blue-600 text-lg transition-all duration-200 hover:scale-125"
+              onClick={()=> 
+                {showToast("Changing story access...");
+                  changeAccess(story._id)}}
+            >
+              <FontAwesomeIcon icon={faLockOpen} />
+            </button>
+          )}
+
+          {type === "completed" && !story.public && (
+            <button
+            title="Private to Public Story"
+              className="text-blue-500 hover:text-blue-600 text-lg transition-all duration-200 hover:scale-125"
+              onClick={()=> {
+                showToast("Changing story access...");
+                changeAccess(story._id)}}
+            >
+              <FontAwesomeIcon icon={faLock} />
             </button>
           )}
 

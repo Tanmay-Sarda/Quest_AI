@@ -157,15 +157,27 @@ const getincomplete = asyncHandler(async (req, res) => {
 });
 
 const getpublicstories = asyncHandler(async (req, res) => {
-  try {
-  const stories = await Story.find({ public: true })
-    .select('-ownerid')
-    .sort({ createdAt: -1 });
-  res.status(200).json(new ApiResponse(true, stories, 'Public stories fetched successfully'));
-  } catch (error) {
-    console.error("Error fetching public stories:", error);
-    return res.status(500).json(new ApiError(500, 'Failed to fetch public stories.'));
-  } 
+   
+  const stories = await Story.find({
+    public: true
+  }).select('-prompt -response').populate('ownerid.owner', 'email').sort({ createdAt: -1 });
+  
+  const result = stories.map((story) => {
+    const ownerEntry = story.ownerid[0]; // Get the first owner entry
+    return {
+      ...story.toObject(),
+      character: ownerEntry ? ownerEntry.character : null,
+      email: ownerEntry ? ownerEntry.owner.email : null,
+    };
+  });
+
+  //remove ownerid from result
+  result.forEach(story => {
+    delete story.ownerid;
+  });
+
+
+  return res.status(200).json(new ApiResponse(200, result, 'Public stories fetched successfully'));
 });
 
 const deleteStory = asyncHandler(async (req, res) => {
@@ -192,7 +204,6 @@ const deleteStory = asyncHandler(async (req, res) => {
 const getStoryContent = asyncHandler(async (req, res) => {
   const { story_id } = req.params;
   const trimmedStoryId = story_id?.trim();
-  const owner = req.user?._id;
 
   if (!trimmedStoryId) {
     return res.status(400).json(new ApiError(400, 'Story id is required'));
@@ -200,23 +211,18 @@ const getStoryContent = asyncHandler(async (req, res) => {
 
   const story = await Story.findOne({
     _id: trimmedStoryId,
-    "ownerid.owner": owner
   }).select('-ownerid');
 
   if (!story) {
     return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
   }
 
-  const ownerEntry = story.ownerid?.find((entry) =>
-    entry.owner.equals(owner)
-  );
 
   res.status(200).json(new ApiResponse(true, {
     _id: story._id,
     title: story.title,
     description: story.description,
     genre: story.genre,
-    character: ownerEntry ? ownerEntry.character : null,
     content: story.content,
     complete: story.complete,
     public: story.public
@@ -293,6 +299,37 @@ const toggleCompleteStatus = asyncHandler(async (req, res) => {
   }, `Story marked as ${story.complete ? 'complete' : 'incomplete'}`));
 });
 
+const changeAccess = asyncHandler(async (req, res) => {
+  const { story_id } = req.params;
+  const owner = req.user?._id;
+
+  if (!story_id) {
+    return res.status(400).json(new ApiError(400, 'Story id is required'));
+  }
+
+  const story = await Story.findOne({
+    _id: story_id,
+    "ownerid.owner": owner
+  });
+
+  if(!story) {
+    return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
+  }
+
+  //Check the owner always the first entry
+  if(!story.ownerid[0].owner.equals(owner)) {
+    return res.status(403).json(new ApiError(403, 'Only the main owner can change access'));
+  }
+
+  story.public = !story.public;
+  await story.save();
+
+  res.status(200).json(new ApiResponse(true, {
+    _id: story._id,
+    public: story.public
+  }, `Story access changed to ${story.public ? 'public' : 'private'}`));
+});
+
 export {
   createStory,
   getAllStories,
@@ -301,5 +338,7 @@ export {
   deleteStory,
   addpromptResponse,
   toggleCompleteStatus,
-  getStoryContent
+  getStoryContent,
+  getpublicstories,
+  changeAccess
 };

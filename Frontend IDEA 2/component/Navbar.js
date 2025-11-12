@@ -241,7 +241,7 @@ export default function Navbar() {
           borderBottom: "1px dashed rgba(255,255,255,0.3)",
         }}
       >
-      
+
         {/* Logo */}
         <img
           src="/QuestLogo.jpeg"
@@ -266,9 +266,10 @@ export default function Navbar() {
             <>
               <button
                 className="form-button rounded-sm p-1"
-                onClick={() => 
-                  {showToast("⏳ Redirecting to About page...");
-                  setTimeout(() => {router.push("/About")}, 1000)}
+                onClick={() => {
+                  showToast("⏳ Redirecting to About page...");
+                  setTimeout(() => { router.push("/About") }, 1000)
+                }
                 }
               >
                 [ ABOUT ]
@@ -276,19 +277,20 @@ export default function Navbar() {
 
               <button
                 className="form-button rounded-sm p-1"
-                onClick={() => 
-                  {showToast("⏳ Redirecting to Signup page...");
-                  setTimeout(() => {router.push("/")}, 1000)}
+                onClick={() => {
+                  showToast("⏳ Redirecting to Signup page...");
+                  setTimeout(() => { router.push("/") }, 1000)
+                }
                 }
               >
                 [ SIGNUP ]
               </button>
               <button
                 className="form-button rounded-sm p-1"
-                onClick={() =>
-                  {showToast("⏳ Redirecting to Signin page...");
-                  setTimeout(() => {router.push("/Sign_in")}, 1000)
-                  }
+                onClick={() => {
+                  showToast("⏳ Redirecting to Signin page...");
+                  setTimeout(() => { router.push("/Sign_in") }, 1000)
+                }
                 }
               >
                 [ SIGNIN ]
@@ -296,15 +298,25 @@ export default function Navbar() {
             </>
           )}
 
+          <button
+            className="form-button rounded-sm p-1"
+            onClick={() => {
+              showToast("⏳ Redirecting to Public Story page...");
+              setTimeout(() => { router.push(`/Public_Story`) }, 1000)
+            }
+            }
+          >
+            [ Public Stories ]
+          </button>
+
           {/* When logged in */}
           {isLoggedIn && (
             <>
               <button
                 className="form-button rounded-sm p-1"
-                onClick={() =>
-                {
+                onClick={() => {
                   showToast("⏳ Redirecting to Home page...");
-                  setTimeout(() => {router.push(`/Home/${username}`)}, 1000)
+                  setTimeout(() => { router.push(`/Home/${username}`) }, 1000)
                 }
                 }
               >
@@ -313,10 +325,9 @@ export default function Navbar() {
 
               <button
                 className="form-button rounded-sm p-1"
-                onClick={() => 
-                {
+                onClick={() => {
                   showToast("⏳ Redirecting to Create Story page...");
-                  setTimeout(() => {router.push(`/Story_Form/${username}`)}, 1000)
+                  setTimeout(() => { router.push(`/Story_Form/${username}`) }, 1000)
                 }
                 }
               >
@@ -324,24 +335,25 @@ export default function Navbar() {
               </button>
               <button
                 className="form-button rounded-sm p-1"
-                onClick={() => 
-                  {showToast("⏳ Redirecting to Edit Profile page...");
-                  setTimeout(() => {router.push(`/Edit/${username}`)}, 1000)}
+                onClick={() => {
+                  showToast("⏳ Redirecting to Edit Profile page...");
+                  setTimeout(() => { router.push(`/Edit/${username}`) }, 1000)
+                }
                 }
               >
                 [ EDIT PROFILE ]
               </button>
               <button
                 className="form-button rounded-sm p-1"
-                onClick={()=>{
+                onClick={() => {
                   showToast("⏳ Logging out...");
-                  setTimeout(() => {handleLogout()}, 1000)
+                  setTimeout(() => { handleLogout() }, 1000)
                 }}
               >
                 [ LOGOUT ]
               </button>
 
-               {/* Notifications button */}
+              {/* Notifications button */}
               <button
                 onClick={handleNotificationsClick}
                 style={{
