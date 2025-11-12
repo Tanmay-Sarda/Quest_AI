@@ -129,15 +129,17 @@ export default function HomePage() {
       }}
     >
       <div className="terminal-content flex bg-[#262626]">
-        <div>
-          <div>
-            <span className="text-gray-500">Title: </span>{story.title}
+        <div className="flex flex-col">
+          <div className=" flex gap-2  justify-center">
+            <p className="text-2xl font-mediium text-green-500">{story.title}</p>
           </div>
-          <div>
-            <span className="text-gray-500">Description: </span>{story.description}
+          <div className="flex gap-2">
+            <h2 className="text-gray-500">Description: </h2>
+            <p>{story.description}</p>
           </div>
-          <div>
-            <span className="text-gray-500">Character: </span>{story.character}
+          <div className="flex gap-2">
+            <h2 className="text-gray-500">Character: </h2>
+            <p> {story.character} </p>
           </div>
         </div>
         {/* Buttons */}

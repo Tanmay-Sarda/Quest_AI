@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${vt323.variable} relative `}>
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID} >
         <NavbarWrapper  />
         <div id="content">{children}</div>
         <DynamicFooter />

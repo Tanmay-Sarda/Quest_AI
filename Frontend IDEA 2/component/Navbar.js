@@ -265,7 +265,7 @@ export default function Navbar() {
           {!isLoggedIn && (
             <>
               <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                className="form-button rounded-sm p-1"
                 onClick={() => 
                   {showToast("⏳ Redirecting to About page...");
                   setTimeout(() => {router.push("/About")}, 1000)}
@@ -275,7 +275,7 @@ export default function Navbar() {
               </button>
 
               <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                className="form-button rounded-sm p-1"
                 onClick={() => 
                   {showToast("⏳ Redirecting to Signup page...");
                   setTimeout(() => {router.push("/")}, 1000)}
@@ -284,7 +284,7 @@ export default function Navbar() {
                 [ SIGNUP ]
               </button>
               <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                className="form-button rounded-sm p-1"
                 onClick={() =>
                   {showToast("⏳ Redirecting to Signin page...");
                   setTimeout(() => {router.push("/Sign_in")}, 1000)
@@ -300,7 +300,7 @@ export default function Navbar() {
           {isLoggedIn && (
             <>
               <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                className="form-button rounded-sm p-1"
                 onClick={() =>
                 {
                   showToast("⏳ Redirecting to Home page...");
@@ -312,7 +312,7 @@ export default function Navbar() {
               </button>
 
               <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                className="form-button rounded-sm p-1"
                 onClick={() => 
                 {
                   showToast("⏳ Redirecting to Create Story page...");
@@ -323,7 +323,7 @@ export default function Navbar() {
                 [ CREATE STORY ]
               </button>
               <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                className="form-button rounded-sm p-1"
                 onClick={() => 
                   {showToast("⏳ Redirecting to Edit Profile page...");
                   setTimeout(() => {router.push(`/Edit/${username}`)}, 1000)}
@@ -332,7 +332,7 @@ export default function Navbar() {
                 [ EDIT PROFILE ]
               </button>
               <button
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                className="form-button rounded-sm p-1"
                 onClick={()=>{
                   showToast("⏳ Logging out...");
                   setTimeout(() => {handleLogout()}, 1000)
@@ -353,7 +353,7 @@ export default function Navbar() {
                   cursor: "pointer",
                 }}
                 title="Notifications"
-                className="transition-all duration-200 text-[#ccc] hover:text-[#39FF14] text-xl tracking-wide hover:scale-110"
+                className="form-button rounded-sm p-1"
               >
                 {/* bell emoji as icon (replace with SVG/icon if desired) */}
                 <FontAwesomeIcon icon={faBell} />
