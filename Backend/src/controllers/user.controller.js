@@ -4,7 +4,7 @@ import ApiResponse  from "../utils/ApiResponse.js";
 import { User }     from "../models/User.models.js";
 import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
-
+import { uploadCloudinary,deleteCloudinary } from "../utils/cloudanary.js";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateAccessTokenAndRefreshToken=async(userId)=>{
@@ -184,8 +184,25 @@ const generateRefreshToken= asyncHandler(async (req, res) => {
 
 const  updateUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id; // From verifyJWT middleware
-  const { oldPassword,newUsername,newPassword } = req.body;
+  const { oldPassword,newUsername,newPassword} = req.body;
 
+  // If a new profile picture is uploaded, handle the upload to Cloudinary  
+  if (req.file) {
+    try {
+        // Upload new profile picture to Cloudinary
+        const uploadResult = await uploadCloudinary(req.file.path);
+        // Delete old profile picture from Cloudinary if it exists
+        const user = await User.findById(userId);
+        if (user.profilePicture) {
+            await deleteCloudinary(user.profilePicture);
+        }
+        // Update user's profile picture URL
+        user.profilePicture = uploadResult.secure_url;
+        await user.save();
+    } catch (error) {
+        return res.status(500).json(new ApiError(500, "Failed to upload profile picture"));
+    }
+  }
   //  Validate required fields
   if (!oldPassword) {
     return res.status(400).json(new ApiError(400, "Current password is required to update profile."));

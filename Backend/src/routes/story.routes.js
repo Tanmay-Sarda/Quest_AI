@@ -2,7 +2,6 @@ import { createStory, getAllStories,getcomplete,getincomplete,deleteStory, addpr
 import express, { Router } from 'express';
 const router = Router();
 import { verifyJWT } from '../middleware/auth.middleware.js';
-
 router.get('/publicstories', getpublicstories);
 router.get('/content/:story_id', getStoryContent);
 

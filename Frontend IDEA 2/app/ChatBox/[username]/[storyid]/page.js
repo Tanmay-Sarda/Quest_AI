@@ -44,12 +44,6 @@ export default function StoryPage() {
     inputRef.current?.focus();
     const fetchStoryContent = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token && !isPublic) {
-          toast.error("You must be logged in to access this story.");
-          router.push("/Sign_in");
-        }
-
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_HOST}/story/content/${trimmedStoryId}`,
           {
