@@ -24,6 +24,7 @@
     "lucide-react": "^0.548.0",
     "mongoose": "^8.19.1",
     "multer": "^2.0.2",
+    "nodemailer": "^7.0.10",
     "prettier": "^3.6.2",
     "react-toastify": "^11.0.5"
   },

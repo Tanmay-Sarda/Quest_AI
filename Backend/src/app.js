@@ -31,4 +31,8 @@ app.use('/api/v1/user', userRoutes);
 import notificationRoutes from './routes/notification.routes.js';
 app.use('/api/v1/notification', notificationRoutes);
 
+//Auth Routes
+import authRoutes from './routes/auth.routes.js';
+app.use('/api/v1/auth', authRoutes);
+
 export default app;
