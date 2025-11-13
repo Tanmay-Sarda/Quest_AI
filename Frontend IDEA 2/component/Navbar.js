@@ -15,10 +15,14 @@ export default function Navbar() {
   const [loading, setLoading] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
+  const [username, setusername] = useState("")
   const fileInputRef = useRef(null);
+  const [characterName, setCharacterName] = useState("");
 
   useEffect(() => {
+
     if (typeof window !== "undefined") {
+      setusername(sessionStorage.getItem("username"));
       const img = sessionStorage.getItem("profileImage");
       if (img) setProfileImage(img);
     }
@@ -40,8 +44,6 @@ export default function Navbar() {
     };
     reader.readAsDataURL(file);
   };
-  const { username } = useParams();
-  const [characterName, setCharacterName] = useState("");
 
   useEffect(() => {
     const token = sessionStorage.getItem("accessToken");
@@ -370,7 +372,7 @@ export default function Navbar() {
                 }}
                 title="Profile"
                 aria-label="Profile"
-                className="ml-1 rounded-full w-10 h-10 flex items-center justify-center border border-white/10 shadow-sm hover:scale-105 transition-transform duration-150 overflow-hidden bg-gray-900"
+                className="ml-1 rounded-full w-10 h-10 flex items-center justify-center border border-white/10 shadow-sm hover:scale-105 transition-transform duration-150 overflow-hidden bg-[#504747]"
                 style={{ minWidth: 40 }}
               >
                 {(() => {
@@ -482,7 +484,7 @@ export default function Navbar() {
           >
             <div style={{ padding: 20, borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ width: 56, height: 56, borderRadius: 9999, overflow: "hidden", background: "#111", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 56, height: 56, borderRadius: 9999, overflow: "hidden", background: "#504747", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {profileImage ? (
                     <img src={profileImage} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
