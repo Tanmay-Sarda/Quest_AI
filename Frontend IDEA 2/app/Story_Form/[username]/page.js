@@ -25,7 +25,7 @@ export default function StoryForm() {
     toast.info("Story is being created...");
 
     try {
-      const token = localStorage.getItem("accessToken"); // get token from storage
+      const token = sessionStorage.getItem("accessToken"); // get token from storage
 
       const payload = {
         title: form.title,
@@ -34,7 +34,7 @@ export default function StoryForm() {
         genre: form.genre, // include genre
       };
 
-      const res = await fetch("http://localhost:3000/api/v1/story/create", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/story/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export default function StoryForm() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to save story");
+
       }
 
       const data = await res.json();
