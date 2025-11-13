@@ -1,0 +1,8 @@
+langchain_google_genai
+langchain_core
+bson
+fastapi
+dotenv
+motor
+langchain_groq
+uvicorn
