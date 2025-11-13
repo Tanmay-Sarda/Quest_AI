@@ -189,10 +189,10 @@ export default function StoryPage() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen w-full p-0 box-border z-500">
+    <div className="flex flex-col absolute top-0 items-center h-full w-full pb-1 box-border z-500">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-black flex justify-end items-center px-10 z-10">
-        <button onClick={handleExit} className="form-button-exit">
+      <div className="flex w-full flex-row-reverse mr-15">
+      <button onClick={handleExit} className="form-button-exit">
           <span>[ EXIT ]</span>
         </button>
         
@@ -201,10 +201,10 @@ export default function StoryPage() {
         </button>
         )
    }
-      </div>
-
+   </div>
       {/* Chat Box */}
-      <div className="mt-20 w-[95%] flex flex-col flex-grow border-[6px] border-white/70 p-4 overflow-hidden h-[90vh] box-border">
+      <div className="mt-2 w-[95%] flex flex-col flex-grow border-[6px] border-white/70 p-4 overflow-hidden h-[100vh] box-border">
+  
         <div className="flex flex-col flex-grow border-[3px] border-white/50 p-2 overflow-hidden">
           {/* Messages */}
           <div
@@ -270,11 +270,7 @@ export default function StoryPage() {
               <span>{loading ? "[ O ]" : "[ SEND ]"}</span>
             </button>
           </div>)
-}
-
-
-
-
+         }
         </div>
       </div>
     </div>

@@ -155,7 +155,7 @@ export default function HomePage() {
 
   const StoryCard = ({ story, type }) => (
     <div
-      className="terminal-border relative grid grid-cols-1 gap-3 items-center bg-[#3c3b3b]"
+      className="terminal-border min-h-[200px] h-auto  grid grid-cols-1 gap-3 items-center bg-[#3c3b3b]"
       style={{ transition: "all 0.3s ease" }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 255, 255, 0.15)";
@@ -166,7 +166,7 @@ export default function HomePage() {
         e.currentTarget.style.transform = "scale(1)";
       }}
     >
-      <div className="terminal-content flex bg-[#262626]">
+      <div className="terminal-content relative h-fit min-h-[180px] flex bg-[#262626]">
         <div className="flex flex-col w-full">
           <div className=" flex gap-2  justify-center ">
             <p className="text-2xl font-mediium text-green-500">
@@ -174,12 +174,12 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <h2 className="text-gray-500">Description: </h2>
-            <p>{story.description}</p>
-          </div>
-          <div className="flex gap-2">
             <h2 className="text-gray-500">Character: </h2>
             <p> {story.character} </p>
+          </div>
+          <div className="flex gap-2">
+            <h2 className="text-gray-500">Description: </h2>
+            <p className='max-h-[100px] overflow-auto'>{story.description}</p>
           </div>
         </div>
         {/* Buttons */}
