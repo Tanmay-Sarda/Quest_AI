@@ -51,7 +51,7 @@ const page = () => {
     };
     const StoryCard = ({ story, type }) => (
         <div
-            className="terminal-border relative grid grid-cols-1 gap-3 items-center bg-[#3c3b3b]"
+            className="terminal-border min-h-[300px] h-auto  grid grid-cols-1 gap-3 items-center bg-[#3c3b3b]"
             style={{ transition: "all 0.3s ease" }}
             onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 255, 255, 0.15)";
@@ -62,14 +62,10 @@ const page = () => {
                 e.currentTarget.style.transform = "scale(1)";
             }}
         >
-            <div className="terminal-content flex bg-[#262626]">
+            <div className="terminal-content relative h-fit min-h-[280px] flex bg-[#262626]">
                 <div className="flex flex-col w-full">
                     <div className=" flex gap-2  justify-center ">
                         <p className="text-2xl font-mediium text-green-500">{story.title}</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <h2 className="text-gray-500">Description: </h2>
-                        <p>{story.description}</p>
                     </div>
                     <div className="flex gap-2">
                         <h2 className="text-gray-500">Owner: </h2>
@@ -78,6 +74,10 @@ const page = () => {
                     <div className="flex gap-2">
                         <h2 className="text-gray-500">Character: </h2>
                         <p> {story.character} </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <h2 className="text-gray-500">Description: </h2>
+                        <p className='max-h-[100px] overflow-auto'>{story.description}</p>
                     </div>
                 </div>
                 {/* Buttons */}
@@ -104,7 +104,7 @@ const page = () => {
         <div>
             <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-b from-[#0a0a14] via-[#0b0f1c] to-[#0a0a14] text-white p-5">
                 <h1 className="text-4xl font-bold mb-8 mt-10">Public Stories</h1>
-                <div className="grid grid-cols-2 gap-6 w-full max-w-7xl">
+                <div className="grid grid-cols-2 h-fit pb-5 gap-6 w-full max-w-7xl">
                     {publicstories.length === 0 ? (
                         <p className="text-center col-span-full">No public stories available.</p>
                     ) : (
