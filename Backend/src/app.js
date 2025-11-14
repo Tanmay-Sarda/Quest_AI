@@ -5,7 +5,7 @@ import cors from 'cors';
 const app = express();
 
 app.use(cors({
-  origin:  "http://localhost:3001", // your frontend URL
+  origin:  process.env.CORS_ORIGIN, // your frontend URL
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"],
