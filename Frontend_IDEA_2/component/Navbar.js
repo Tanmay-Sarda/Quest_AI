@@ -334,7 +334,7 @@ export default function Navbar() {
             }
             }
           >
-            [ Public Stories ]
+            [ PUBLIC STORIES ]
           </button>
 
           {/* When logged in */}
