@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react"; 
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function OTPPage() {
@@ -9,11 +9,11 @@ export default function OTPPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
-
-  useEffect(() => {
-    const first = document.getElementById("otp-0");
-    if (first) first.focus();
-  }, []);
+  const mode = searchParams.get("mode") || "signup"; // signup or login
+  
+  const pendingSignup = JSON.parse(
+    sessionStorage.getItem("pendingSignup") || "{}"
+  );  
 
   const showToast = (message, duration = 2500) => {
     const toast = document.createElement("div");
@@ -65,27 +65,52 @@ export default function OTPPage() {
 
     setLoading(true);
 
+    // SELECT CORRECT VERIFY ENDPOINT 
+    const verifyUrl =
+      mode === "login"
+        ? `${process.env.NEXT_PUBLIC_HOST}/auth/verify-login-otp`
+        : `${process.env.NEXT_PUBLIC_HOST}/auth/verify-signup-otp`;
+
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_HOST}/user/verify-otp`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp: otpCode }),
-        }
-      );
+      const res = await fetch(verifyUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          otp: otpCode,
+          username: mode === "signup" ? pendingSignup.username : undefined,
+          password: mode === "signup" ? pendingSignup.password : undefined   
+        }),
+      });
 
       const data = await res.json();
 
       if (res.ok) {
-        showToast("🎉 OTP verified! Please log in.");
-        setTimeout(() => router.push("/login"), 1500);
+        // changed behavior depending on mode
+        if (mode === "signup") {
+          sessionStorage.removeItem("pendingSignup");
+
+          // SIGNUP FLOW → redirect to login
+          showToast(" Signup successful! Please log in.");
+          setTimeout(() => router.push("/Sign_in"), 1500); 
+        } else {
+          // LOGIN FLOW → store tokens and redirect to user's Home 
+          try {
+            sessionStorage.setItem("accessToken", data.data.user.accessToken);
+            sessionStorage.setItem("username", data.data.user.username);
+          } catch (err) {
+            console.warn("sessionStorage unavailable:", err);
+          }
+
+          showToast(" Login successful!");
+          setTimeout(() => router.push(`/Home/${data.data.user.username}`), 1500);
+        }
       } else {
         showToast("⚠ " + (data.message || "OTP verification failed"));
       }
     } catch (error) {
       console.error("OTP verification error:", error);
-      showToast("⚠ Error: " + error.message);
+      showToast("⚠ Error: " + (error.message || "Something went wrong"));
     } finally {
       setLoading(false);
     }
@@ -94,27 +119,30 @@ export default function OTPPage() {
   const handleResendOtp = async () => {
     setLoading(true);
 
+    //  changed resend endpoints to auth/send-login-otp or auth/send-signup-otp
+    const resendUrl =
+      mode === "login"
+        ? `${process.env.NEXT_PUBLIC_HOST}/auth/send-login-otp`
+        : `${process.env.NEXT_PUBLIC_HOST}/auth/send-signup-otp`;
+
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_HOST}/user/resend-otp`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const res = await fetch(resendUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
       const data = await res.json();
 
       if (res.ok) {
-        showToast("📩 OTP resent to your email");
-        setOtp(Array(6).fill(""));
+        showToast(" OTP resent to your email"); // message wording
+        setOtp(Array(6).fill("")); //  clear inputs after resend
       } else {
         showToast("⚠ " + (data.message || "Failed to resend OTP"));
       }
     } catch (error) {
       console.error("Resend OTP error:", error);
-      showToast("⚠ Error: " + error.message);
+      showToast("⚠ Error: " + (error.message || "Something went wrong"));
     } finally {
       setLoading(false);
     }

@@ -37,23 +37,28 @@ const generateAndSendOtp = async (email) => {
 const verifyOtp = async (email, enteredOtp) => {
   const otpEntry = await Otp.findOne({ email });
 
-  if (!otpEntry) throw new ApiError(400, "OTP not found or expired");
+  if (!otpEntry) return { ok: false, message: "OTP not found or expired" };
+
+  if (otpEntry.attempts >= 5) {
+    await Otp.deleteOne({ email });
+    return { ok: false, message: "Too many incorrect attempts. Please request a new OTP." };
+  }
 
   if (otpEntry.expiresAt < Date.now()) {
     await Otp.deleteOne({ email });
-    throw new ApiError(400, "OTP expired");
+    return { ok: false, message: "OTP expired" };
   }
 
   const valid = await bcrypt.compare(enteredOtp, otpEntry.otpHash);
   if (!valid) {
     otpEntry.attempts++;
     await otpEntry.save();
-    throw new ApiError(400, "Invalid OTP");
+    return { ok: false, message: "Invalid OTP" };
   }
 
   // If correct, delete OTP entry
   await Otp.deleteOne({ email });
-  return true;
+  return { ok: true };
 };
 
 /****************************************
@@ -75,7 +80,11 @@ export const sendSignupOTP = asyncHandler(async (req, res) => {
 export const verifySignupOTP = asyncHandler(async (req, res) => {
   const { username, email, password, profilePicture, otp } = req.body;
 
-  await verifyOtp(email, otp);
+  const result = await verifyOtp(email, otp);
+
+  if (!result.ok) {
+    return res.status(400).json(new ApiError(400, result.message));
+  }
 
   // after OTP success → call registerUser()
   req.body = { username, email, password, profilePicture };
@@ -101,7 +110,11 @@ export const sendLoginOTP = asyncHandler(async (req, res) => {
 export const verifyLoginOTP = asyncHandler(async (req, res) => {
   const { email, password, otp } = req.body;
 
-  await verifyOtp(email, otp);
+  const result = await verifyOtp(email, otp);
+
+  if (!result.ok) {
+    return res.status(400).json(new ApiError(400, result.message));
+  }
 
   // after OTP success → call loginUser()
   req.body = { email, password };

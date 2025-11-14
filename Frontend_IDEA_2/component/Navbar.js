@@ -51,6 +51,8 @@ export default function Navbar() {
   }, [pathname]);
 
   useEffect(() => {
+    const token = sessionStorage.getItem("accessToken");
+    if (!token) return;     
     fetchNotifications();
   }, [isLoggedIn]);
 
@@ -117,6 +119,10 @@ export default function Navbar() {
 
   // Fetch notifications from backend
   const fetchNotifications = async () => {
+
+    const token = sessionStorage.getItem("accessToken");
+    if (!token || token.trim() === "") return; 
+
     try {
       setLoading(true);
       const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/notification/`, {
@@ -139,6 +145,8 @@ export default function Navbar() {
 
   useEffect(() => {
     if (isLoggedIn && showNotificationsPanel) {
+      const token = sessionStorage.getItem("accessToken");
+      if (!token) return;
       fetchNotifications();
     }
   }, [isLoggedIn, showNotificationsPanel]);

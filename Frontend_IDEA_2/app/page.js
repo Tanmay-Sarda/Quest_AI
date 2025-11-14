@@ -74,7 +74,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/register`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/auth/send-signup-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -86,8 +86,19 @@ export default function SignUpPage() {
 
       const data = await res.json();
       if (res.ok) {
-        showToast("✅ Registration successful! Redirecting...");
-        setTimeout(() => router.push("/Sign_in"), 2000);
+        showToast("OTP sent to your email! Redirecting ");
+        sessionStorage.setItem(
+          "pendingSignup",
+          JSON.stringify({
+            username: form.name,
+            email: form.email,
+            password: form.password,
+          })
+        );
+
+        // REDIRECT TO OTP PAGE WITH PARAMETERS
+        router.push(`/Otp_page?mode=signup&email=${encodeURIComponent(form.email)}`);
+        // ------------------------------------------------------------
       } else {
         showToast(`⚠️ Error: ${data.message}`);
       }
