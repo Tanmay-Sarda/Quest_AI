@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function SignUpPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -10,14 +10,15 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [typedText, setTypedText] = useState("");
 
-  // Typewriter animation for the heading
+  // Typewriter animation removed, static text used instead
   useEffect(() => {
-
-     if(sessionStorage.getItem("accessToken")) {
+    if (sessionStorage.getItem("accessToken")) {
       router.push(`/Home/${sessionStorage.getItem("username")}`);
       return;
     }
 
+    // ❌ Commented out original typewriter animation
+    /*
     const text = "BAEGIN YOUR JOURNEY";
     let i = 0;
     const interval = setInterval(() => {
@@ -29,6 +30,10 @@ export default function SignUpPage() {
       }
     }, 80);
     return () => clearInterval(interval);
+    */
+
+    // ✔ Static text
+    setTypedText("BEGIN YOUR JOURNEY");
   }, []);
 
   // Toast notification function
@@ -46,19 +51,22 @@ export default function SignUpPage() {
 
   const handleLogin = async (credentialResponse) => {
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_HOST}/user/google-login`, {
-        token: credentialResponse.credential,
-      });
-      console.log("User logged in:", res.data);
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_HOST}/user/google-login`,
+        {
+          token: credentialResponse.credential,
+        }
+      );
+
       sessionStorage.setItem("accessToken", res.data.data.user.accessToken);
       sessionStorage.setItem("username", res.data.data.user.username);
+
       showToast("✅ Logged in successfully via Google!");
       router.push(`/Home/${res.data.data.user.username}`);
     } catch (err) {
       console.error(err);
     }
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,7 +82,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/auth/send-signup-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -85,20 +93,10 @@ export default function SignUpPage() {
       });
 
       const data = await res.json();
-      if (res.ok) {
-        showToast("OTP sent to your email! Redirecting ");
-        sessionStorage.setItem(
-          "pendingSignup",
-          JSON.stringify({
-            username: form.name,
-            email: form.email,
-            password: form.password,
-          })
-        );
 
-        // REDIRECT TO OTP PAGE WITH PARAMETERS
-        router.push(`/Otp_page?mode=signup&email=${encodeURIComponent(form.email)}`);
-        // ------------------------------------------------------------
+      if (res.ok) {
+        showToast("✅ Registration successful! Redirecting...");
+        setTimeout(() => router.push("/Sign_in"), 2000);
       } else {
         showToast(`⚠️ Error: ${data.message}`);
       }
@@ -108,26 +106,23 @@ export default function SignUpPage() {
     }
   };
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   return (
-    <div style={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      minHeight: "100vh",
-      padding: "20px",
-      boxSizing: "border-box",
-      width: "100%"
-    }}>
-      <div className="terminal-border" style={{ maxWidth: "700px" }}>
+    <div className="flex flex-col items-center justify-center min-h-screen w-full px-4 sm:px-6 md:px-10">
+      <div className="terminal-border w-full max-w-[700px]">
         <div className="terminal-content">
-          <h2 className="terminal-title">{typedText || "BEGIN YOUR JOURNEY"}</h2>
+          <h2 className="terminal-title text-center text-3xl sm:text-4xl">
+            {typedText || "BEGIN YOUR JOURNEY"}
+          </h2>
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-row">
-              <label htmlFor="name">NAME :</label>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
+            {/* NAME */}
+            <div className="form-row flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <label htmlFor="name" className="sm:w-[120px]">
+                NAME :
+              </label>
               <input
                 id="name"
                 type="text"
@@ -138,8 +133,11 @@ export default function SignUpPage() {
               />
             </div>
 
-            <div className="form-row">
-              <label htmlFor="email">EMAIL :</label>
+            {/* EMAIL */}
+            <div className="form-row flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <label htmlFor="email" className="sm:w-[120px]">
+                EMAIL :
+              </label>
               <input
                 id="email"
                 type="email"
@@ -150,9 +148,12 @@ export default function SignUpPage() {
               />
             </div>
 
-            <div className="form-row">
-              <label htmlFor="password">PASS :</label>
-              <div style={{ flexGrow: 1, position: "relative" }}>
+            {/* PASSWORD */}
+            <div className="form-row flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <label htmlFor="password" className="sm:w-[120px]">
+                PASS :
+              </label>
+              <div className="relative w-full">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -160,46 +161,39 @@ export default function SignUpPage() {
                   value={form.password}
                   onChange={handleChange}
                   required
-                  style={{ width: "100%" }}
+                  className="w-full"
                 />
                 {form.password && (
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: "absolute",
-                      right: "8px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      fontSize: "0.9rem",
-                      color: "#888",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      transition: "color 0.3s"
-                    }}
-                    onMouseOver={(e) => e.target.style.color = "#ccc"}
-                    onMouseOut={(e) => e.target.style.color = "#888"}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
                   >
                     {showPassword ? "HIDE" : "SHOW"}
                   </button>
                 )}
               </div>
             </div>
-             
-             <div className="flex flex-col">
-            <button type="submit " className="form-button">[ SIGNUP ]</button>
-             <p className="option ">Or sign in using</p>
-            <GoogleLogin
-              onSuccess={handleLogin}
-              onError={() => toast.error("⚠️ Google Sign-in failed!")}
-            />
+
+            {/* BUTTON + GOOGLE LOGIN */}
+            <div className="flex flex-col items-center gap-4 mt-4">
+              <button type="submit" className="form-button hover:scale-105">
+                [ SIGNUP ]
+              </button>
+
+              <p className="option text-center">Or sign in using</p>
+
+              {/* Centered Google button */}
+              <div className="flex justify-center w-full">
+                <GoogleLogin
+                  onSuccess={handleLogin}
+                  onError={() => showToast("⚠️ Google Sign-in failed!")}
+                />
+              </div>
             </div>
           </form>
         </div>
       </div>
-
-
     </div>
   );
 }

@@ -10,7 +10,7 @@ import {
   faLockOpen,
   faLock,
 } from "@fortawesome/free-solid-svg-icons";
-// import { byPrefixAndName } from '@fortawesome/fontawesome-svg-core/import.macro'
+
 export default function HomePage() {
   const [completedStories, setCompletedStories] = useState([]);
   const [ongoingStories, setOngoingStories] = useState([]);
@@ -20,65 +20,19 @@ export default function HomePage() {
   const [display, setdisplay] = useState(false);
   const [story_id, setstory_id] = useState(null);
 
-  // Toast notification function
+  // Toast
   const showToast = (message, duration = 2500) => {
     const toast = document.createElement("div");
     toast.className = "toast show";
     toast.textContent = message;
     document.body.appendChild(toast);
-
     setTimeout(() => {
       toast.classList.remove("show");
       setTimeout(() => toast.remove(), 500);
     }, duration);
   };
 
-  const cancelDelete = () => setStoryToDelete(null);
-
-  const handledelete = (story, type) => {
-    let bool = confirm("Are you sure you want to delete this story?");
-    if (!bool) return;
-
-    try {
-      const token = sessionStorage.getItem("accessToken");
-
-      if (!token) {
-        showToast("User not authenticated");
-        router.push("/Sign_in");
-        return;
-      }
-
-      const res = fetch(`${process.env.NEXT_PUBLIC_HOST}/story/${story._id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log(res);
-      if (res.status < 200 || res.status >= 300) {
-        showToast("Failed to delete story");
-        return;
-      }
-      showToast("Story deleted successfully");
-
-      // Refresh stories after deletion
-      if (type === "completed") {
-        setCompletedStories(
-          completedStories.filter((s) => s._id !== story._id)
-        );
-      } else {
-        setOngoingStories(ongoingStories.filter((s) => s._id !== story._id));
-      }
-    } catch (err) {
-      console.log(err);
-      showToast("Error: ", err.message);
-      return;
-    }
-  };
-
   const addEmail = (id) => {
-    console.log("Adding email for story id:", id);
     setstory_id(id);
     setdisplay(true);
   };
@@ -86,12 +40,8 @@ export default function HomePage() {
   const addUser = async (e) => {
     e.preventDefault();
     const token = sessionStorage.getItem("accessToken");
+    if (!token) return router.push("/Sign_in");
 
-    if (!token) {
-      showToast("User not authenticated");
-      router.push("/Sign_in");
-      return;
-    }
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/notification/create`,
@@ -101,33 +51,57 @@ export default function HomePage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            email: email,
-            story_id: story_id,
-          }),
+          body: JSON.stringify({ email, story_id }),
         }
       );
+
       if (!res.ok) {
         const data = await res.json();
-        showToast("⚠️ " + (data.message || "Failed to add user"));
+        showToast(data.message);
         return;
       }
-      showToast("✅ Notification sent successfully to the user!");
+
+      showToast("Notification sent!");
       setemail("");
       setdisplay(false);
     } catch (err) {
-      console.log(err);
-      showToast("Error: ", err.message);
+      showToast(err.message);
+    }
+  };
+
+  const handledelete = async (story, type) => {
+    if (!confirm("Delete story?")) return;
+
+    const token = sessionStorage.getItem("accessToken");
+    if (!token) return router.push("/Sign_in");
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_HOST}/story/${story._id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) {
+        showToast("Failed to delete story");
+        return;
+      }
+
+      showToast("Deleted!");
+      if (type === "completed")
+        setCompletedStories((prev) => prev.filter((s) => s._id !== story._id));
+      else setOngoingStories((prev) => prev.filter((s) => s._id !== story._id));
+    } catch (err) {
+      showToast(err.message);
     }
   };
 
   const changeAccess = async (story_id) => {
     const token = sessionStorage.getItem("accessToken");
-    if (!token) {
-      showToast("User not authenticated");
-      router.push("/Sign_in");
-      return;
-    }
+    if (!token) return router.push("/Sign_in");
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/story/changeaccess/${story_id}`,
@@ -139,124 +113,89 @@ export default function HomePage() {
           },
         }
       );
+
       if (!res.ok) {
-        const data = await res.json();
-        showToast("⚠️ " + (data.message || "Failed to change access"));
+        showToast("Failed to change access");
         return;
       }
-      showToast("✅ Story access changed successfully!");
-      // Refresh stories
+
+      showToast("Access changed!");
       complete();
     } catch (err) {
-      console.log(err);
-      showToast("Error: ", err.message);
+      showToast(err.message);
     }
   };
 
+  // ⭐ Story Card (responsive)
   const StoryCard = ({ story, type }) => (
-    <div
-      className="terminal-border min-h-[200px] h-auto  grid grid-cols-1 gap-3 items-center bg-[#3c3b3b]"
-      style={{ transition: "all 0.3s ease" }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 255, 255, 0.15)";
-        e.currentTarget.style.transform = "scale(1.02)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "";
-        e.currentTarget.style.transform = "scale(1)";
-      }}
-    >
-      <div className="terminal-content relative h-fit min-h-[180px] flex bg-[#262626]">
-        <div className="flex flex-col w-full">
-          <div className=" flex gap-2  justify-center ">
-            <p className="text-2xl font-mediium text-green-500">
-              {story.title}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <h2 className="text-gray-500">Character: </h2>
-            <p> {story.character} </p>
-          </div>
-          <div className="flex gap-2">
-            <h2 className="text-gray-500">Description: </h2>
-            <p className='max-h-[100px] overflow-auto'>{story.description}</p>
-          </div>
-        </div>
-        {/* Buttons */}
+    <div className="terminal-border relative rounded-xl bg-[#3c3b3b] overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_#ffffff30]">
+      <div className="terminal-content bg-[#262626] p-4 flex flex-col gap-2">
+        <p className="text-xl text-center text-green-500 break-words">
+          {story.title}
+        </p>
 
-        <div className=" absolute right-5 top-4 flex gap-2">
+        <div className="flex flex-col text-sm text-gray-300 gap-1">
+          <span className="text-gray-400">Description:</span>
+          <span className="break-words">{story.description}</span>
+        </div>
+
+        <div className="flex flex-col text-sm text-gray-300">
+          <span className="text-gray-400">Character:</span>
+          <span>{story.character}</span>
+        </div>
+
+        {/* Buttons */}
+        <div className="absolute top-3 right-3 flex gap-3">
           <button
-            title="Add User"
-            className="text-white-500 hover:text-white-100 text-lg transition-all duration-200 hover:scale-125"
-            onClick={() => {
-              showToast("Opening add user dialog...");
-              addEmail(`${story._id}`);
-            }}
+            onClick={() => addEmail(story._id)}
+            className="hover:scale-125 text-white"
           >
-            {/* Add User icon */}
-            <FontAwesomeIcon className="text-xl" icon={faUserPlus} />
+            <FontAwesomeIcon icon={faUserPlus} />
           </button>
+
           <button
-            title="Delete Story"
-            className="text-red-500 hover:text-red-600 text-lg transition-all duration-200 hover:scale-125"
-            onClick={() => {
-              showToast("Deleting story...");
-              handledelete(story, type);
-            }}
+            onClick={() => handledelete(story, type)}
+            className="hover:scale-125 text-red-500"
           >
-            <FontAwesomeIcon className="text-xl" icon={faTrash} />
+            <FontAwesomeIcon icon={faTrash} />
           </button>
 
           {type === "ongoing" && (
             <button
-              title="Continue Story"
-              className="text-green-500 hover:text-green-600 text-lg transition-all duration-200 hover:scale-125"
-              onClick={() => {
-                showToast("Loading ChatBox...");
-                router.push(`/ChatBox/${username}/${story._id} False`);
-              }}
+              onClick={() =>
+                router.push(`/ChatBox/${username}/${story._id} False`)
+              }
+              className="hover:scale-125 text-green-400"
             >
-              <FontAwesomeIcon className="text-xl" icon={faPlay} />
+              <FontAwesomeIcon icon={faPlay} />
             </button>
           )}
 
-          {type === "completed" && story.public && (
-            <button
-              title="Private to Public Story"
-              className="text-blue-500 hover:text-blue-600 text-lg transition-all duration-200 hover:scale-125"
-              onClick={() => {
-                showToast("Changing story access...");
-                changeAccess(story._id);
-              }}
-            >
-              <FontAwesomeIcon icon={faLockOpen} />
-            </button>
-          )}
-
-          {type === "completed" && !story.public && (
-            <button
-              title="Private to Public Story"
-              className="text-blue-500 hover:text-blue-600 text-lg transition-all duration-200 hover:scale-125"
-              onClick={() => {
-                showToast("Changing story access...");
-                changeAccess(story._id);
-              }}
-            >
-              <FontAwesomeIcon icon={faLock} />
-            </button>
-          )}
+          {type === "completed" &&
+            (story.public ? (
+              <button
+                onClick={() => changeAccess(story._id)}
+                className="hover:scale-125 text-blue-400"
+              >
+                <FontAwesomeIcon icon={faLockOpen} />
+              </button>
+            ) : (
+              <button
+                onClick={() => changeAccess(story._id)}
+                className="hover:scale-125 text-blue-400"
+              >
+                <FontAwesomeIcon icon={faLock} />
+              </button>
+            ))}
         </div>
       </div>
     </div>
   );
 
+  // Fetch stories
   useEffect(() => {
     if (!sessionStorage.getItem("accessToken")) {
-      showToast("User not authenticated");
-      setTimeout(() => {
-        router.push("/Sign_in");
-      }, 2000);
-      return;
+      return router.push("/Sign_in");
     }
     complete();
     ongoing();
@@ -264,142 +203,88 @@ export default function HomePage() {
 
   const complete = async () => {
     const token = sessionStorage.getItem("accessToken");
-
-    if (!token) {
-      showToast("User not authenticated");
-      router.push("/Sign_in");
-      return;
-    }
     try {
-      const completedRes = await fetch(
+      const res = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/story/complete`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      if (completedRes.ok) {
-        const completedData = await completedRes.json();
-        setCompletedStories(completedData.data || []);
+      if (res.ok) {
+        const data = await res.json();
+        setCompletedStories(data.data || []);
       }
     } catch (err) {
-      console.log(err);
-      showToast("Error fetching Complete stories");
+      showToast("Failed to load completed");
     }
   };
 
   const ongoing = async () => {
     const token = sessionStorage.getItem("accessToken");
-    if (!token) {
-      showToast("User not authenticated");
-      router.push("/Sign_in");
-      return;
-    }
     try {
-      const ongoingRes = await fetch(
+      const res = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/story/incomplete`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      if (ongoingRes.ok) {
-        const ongoingData = await ongoingRes.json();
-        console.log(ongoingData);
-        setOngoingStories(ongoingData.data || []);
+      if (res.ok) {
+        const data = await res.json();
+        setOngoingStories(data.data || []);
       }
     } catch (err) {
-      console.log(err);
-      showToast("Error fetching Ongoing stories");
+      showToast("Failed to load ongoing");
     }
   };
 
   return (
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        minHeight: "100vh",
-        padding: "20px",
-        paddingTop: "120px", // space for navbar
-        boxSizing: "border-box",
-        width: "100%",
-      }}
-    >
-      {/* Box that take the email as a add user smae design of sign in form*/}
+    <div className="flex flex-col items-center min-h-screen w-full px-3 sm:px-6 py-28 bg-black">
+      {/* EMAIL MODAL (responsive) */}
       {display && (
-        <div
-          className="z-10 absolute bottom-10 terminal-border bg-black"
-          style={{ maxWidth: "700px" }}
-        >
-          <div className="terminal-content">
-            {/* <div className="flex  w-full justify-between"> */}
-            <h2 className="terminal-title">Enter The Email Of The User</h2>
+        <div className="fixed bottom-10 max-sm:bottom-4 left-1/2 -translate-x-1/2 terminal-border bg-black z-50 w-[90%] max-w-md p-4">
+          <div className="terminal-content relative">
+            <h2 className="terminal-title text-center">Enter User Email</h2>
+
             <button
               onClick={() => setdisplay(false)}
-              aria-label="Close notifications"
-              style={{
-                position: "absolute",
-                right: 20,
-                top: 10,
-                background: "transparent",
-                border: "none",
-                color: "#ccc",
-                fontSize: 30,
-                cursor: "pointer",
-              }}
+              className="absolute top-3 right-4 text-3xl text-gray-400 hover:text-white"
             >
               ×
             </button>
-            {/* </div> */}
-            <form onSubmit={addUser}>
-              <div className="form-row">
-                <label htmlFor="title">Email :</label>
+
+            <form onSubmit={addUser} className="mt-4 flex flex-col gap-3">
+              <div className="form-row flex flex-col">
+                <label>Email :</label>
                 <input
-                  id="title"
                   type="email"
-                  name="email"
                   value={email}
+                  placeholder="Enter email"
                   onChange={(e) => setemail(e.target.value)}
-                  placeholder="Provide the Email of the user"
                   required
                 />
               </div>
 
-              <button type="submit" className="form-button">
-                [ Add User ]
-              </button>
+              <button className="form-button">[ ADD USER ]</button>
             </form>
           </div>
         </div>
       )}
 
-      <div className="terminal-border" style={{ maxWidth: "95%" }}>
+      {/* MAIN DASHBOARD */}
+      <div className="terminal-border w-full max-w-[1100px]">
         <div className="terminal-content">
-          <h2 className="terminal-title">USER DASHBOARD</h2>
+          <h2 className="terminal-title text-center">USER DASHBOARD</h2>
 
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "20px" }}
-          >
-            {/* Completed Stories */}
-            <div className="terminal-border">
+          <div className="flex flex-col gap-10 w-full">
+            {/* COMPLETED */}
+            <div className="terminal-border w-full">
               <div className="terminal-content">
-                <h3 className="terminal-title" style={{ fontSize: "1.5rem" }}>
-                  COMPLETED STORIES
-                </h3>
+                <h3 className="terminal-title text-xl">COMPLETED STORIES</h3>
+
                 {completedStories.length === 0 ? (
-                  <p>&gt; No completed stories yet.</p>
+                  <p className="mt-2">&gt; No completed stories.</p>
                 ) : (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(300px, 1fr))",
-                      gap: "20px",
-                      marginTop: "15px",
-                    }}
-                  >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
                     {completedStories.map((story) => (
                       <StoryCard
                         key={story._id}
@@ -412,24 +297,15 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Ongoing Stories */}
-            <div className="terminal-border">
+            {/* ONGOING */}
+            <div className="terminal-border w-full">
               <div className="terminal-content">
-                <h3 className="terminal-title" style={{ fontSize: "1.5rem" }}>
-                  ONGOING STORIES
-                </h3>
+                <h3 className="terminal-title text-xl">ONGOING STORIES</h3>
+
                 {ongoingStories.length === 0 ? (
-                  <p>&gt; No ongoing stories yet.</p>
+                  <p className="mt-2">&gt; No ongoing stories.</p>
                 ) : (
-                  <div
-                    style={{
-                      display: "grid",
-                      //Only one column for now
-                      gridTemplateColumns: "1fr",
-                      gap: "20px",
-                      marginTop: "15px",
-                    }}
-                  >
+                  <div className="grid grid-cols-1 gap-4 mt-4">
                     {ongoingStories.map((story) => (
                       <StoryCard key={story._id} story={story} type="ongoing" />
                     ))}
