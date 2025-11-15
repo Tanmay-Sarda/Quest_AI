@@ -1,7 +1,9 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useState } from "react"; 
 import { useRouter, useSearchParams } from "next/navigation";
+
 
 export default function OTPPage() {
   const [otp, setOtp] = useState(Array(6).fill(""));

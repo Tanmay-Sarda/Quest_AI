@@ -8,8 +8,7 @@ import { faBell } from "@fortawesome/free-solid-svg-icons";
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { username } = useParams();
-
+  const [username, setusername] = useState("")
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
@@ -29,6 +28,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    setusername(sessionStorage.getItem("username"));
     const token = sessionStorage.getItem("accessToken");
     setIsLoggedIn(!!token);
   }, [pathname]);
@@ -354,7 +354,7 @@ export default function Navbar() {
                   />
                 ) : (
                   <span className="text-xl font-bold text-white">
-                    {(sessionStorage.getItem("username") || username || "U")
+                    {(username || "U")
                       .charAt(0)
                       .toUpperCase()}
                   </span>
@@ -411,7 +411,7 @@ export default function Navbar() {
               <img src={profileImage} className="w-full h-full object-cover" />
             ) : (
               <span className="text-lg font-bold text-white">
-                {(sessionStorage.getItem("username") || username || "U")
+                {(username || "U")
                   .charAt(0)
                   .toUpperCase()}
               </span>
@@ -633,7 +633,7 @@ export default function Navbar() {
                     <img src={profileImage} className="w-full h-full" />
                   ) : (
                     <span className="text-2xl font-bold">
-                      {(sessionStorage.getItem("username") || username || "U")
+                      {(username || "U")
                         .charAt(0)
                         .toUpperCase()}
                     </span>
@@ -641,7 +641,7 @@ export default function Navbar() {
                 </div>
                 <div>
                   <p className="font-bold">
-                    {sessionStorage.getItem("username") || username || "User"}
+                    { username || "User"}
                   </p>
                   <p className="text-xs text-gray-400">
                     {sessionStorage.getItem("email") || ""}
