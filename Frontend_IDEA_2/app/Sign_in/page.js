@@ -87,10 +87,10 @@ export default function SignInPage() {
         <div className="terminal-content p-6 sm:p-10">
           <h2 className="terminal-title text-center">WELCOME BACK</h2>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
             {/* EMAIL */}
             <div className="form-row flex flex-col sm:flex-row items-start sm:items-center">
-              <label htmlFor="email" className="w-full sm:w-1/3">
+              <label htmlFor="email" className=" sm:w-1/3">
                 EMAIL :
               </label>
               <input

@@ -130,18 +130,18 @@ export default function HomePage() {
   const StoryCard = ({ story, type }) => (
     <div className="terminal-border relative rounded-xl bg-[#3c3b3b] overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_#ffffff30]">
       <div className="terminal-content bg-[#262626] p-4 flex flex-col gap-2">
-        <p className="text-xl text-center text-green-500 break-words">
-          {story.title}
-        </p>
-
-        <div className="flex flex-col text-sm text-gray-300 gap-1">
-          <span className="text-gray-400">Description:</span>
-          <span className="break-words">{story.description}</span>
+        <div className=" flex gap-2 icon  justify-center ">
+          <p className="text-2xl font-mediium text-green-500">{story.title}</p>
+        </div>
+       
+       <div className="flex flex-col sm:flex-row gap-2">
+          <h2 className="text-gray-500">Description: </h2>
+          <p className='max-h-[100px] overflow-auto'>{story.description}</p>
         </div>
 
-        <div className="flex flex-col text-sm text-gray-300">
-          <span className="text-gray-400">Character:</span>
-          <span>{story.character}</span>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <h2 className="text-gray-500">Character: </h2>
+          <p> {story.character} </p>
         </div>
 
         {/* Buttons */}
@@ -160,16 +160,18 @@ export default function HomePage() {
             <FontAwesomeIcon icon={faTrash} />
           </button>
 
-          {type === "ongoing" && (
-            <button
-              onClick={() =>
-                router.push(`/ChatBox/${username}/${story._id} False`)
-              }
-              className="hover:scale-125 text-green-400"
-            >
-              <FontAwesomeIcon icon={faPlay} />
-            </button>
-          )}
+
+          <button
+            onClick={() => {
+              if (type == "ongoing") router.push(`/ChatBox/${username}/${story._id} 2`)
+              else router.push(`/ChatBox/${username}/${story._id} 2`)
+            }
+            }
+            className="hover:scale-125 text-green-400"
+          >
+            <FontAwesomeIcon icon={faPlay} />
+          </button>
+
 
           {type === "completed" &&
             (story.public ? (
@@ -238,7 +240,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen w-full px-3 sm:px-6 py-28 bg-black">
+    <div className="flex flex-col items-center min-h-screen w-full px-3 sm:px-6 py-10 bg-black">
       {/* EMAIL MODAL (responsive) */}
       {display && (
         <div className="fixed bottom-10 max-sm:bottom-4 left-1/2 -translate-x-1/2 terminal-border bg-black z-50 w-[90%] max-w-md p-4">
@@ -284,7 +286,7 @@ export default function HomePage() {
                 {completedStories.length === 0 ? (
                   <p className="mt-2">&gt; No completed stories.</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
+                  <div className="grid grid-cols-1  gap-4 mt-4">
                     {completedStories.map((story) => (
                       <StoryCard
                         key={story._id}

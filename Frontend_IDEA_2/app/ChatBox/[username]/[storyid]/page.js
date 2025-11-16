@@ -13,9 +13,9 @@ export default function StoryPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { username, storyid } = useParams();
-
+  const [user, setuser] = useState("")
   const trimmedStoryId = storyid.split("%20")[0];
-  const isPublic = storyid.split("%20")[1] === "True";
+  const isPublic = storyid.split("%20")[1];
 
   const showToast = (message, duration = 2500) => {
     const toast = document.createElement("div");
@@ -37,7 +37,7 @@ export default function StoryPage() {
       }, 2000);
       return;
     }
-
+    setuser(sessionStorage.getItem("username"));
     inputRef.current?.focus();
     const fetchStoryContent = async () => {
       try {
@@ -110,11 +110,12 @@ export default function StoryPage() {
   };
 
   const handleExit = () => {
-    if (isPublic) {
+    if (isPublic==='1' ) {
       router.push(`/Public_Story`);
       return;
+    }else{
+    router.push(`/Home/${user}`);
     }
-    router.push(`/Home/${username}`);
   };
 
   useEffect(() => {
@@ -174,9 +175,9 @@ export default function StoryPage() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen w-full px-2 sm:px-4 bg-black">
+    <div className="absolute top-15 flex flex-col items-center max-h-screen w-full px-2 sm:px-4 bg-black">
       {/* HEADER */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-black flex max-sm:flex-col max-sm:h-auto max-sm:gap-2 justify-end items-center px-4 sm:px-10 py-2 z-10">
+        <div className="fixed top-0 left-0 right-0 h-16 bg-black flex max-sm:flex-col max-sm:h-auto max-sm:gap-2 justify-end items-center px-4 sm:px-10 py-2 z-10">
         <button
           onClick={handleExit}
           className="form-button-exit text-sm sm:text-base"
@@ -195,7 +196,9 @@ export default function StoryPage() {
       </div>
 
       {/* CHAT BOX */}
-      <div className="mt-24 sm:mt-20 w-full sm:w-[95%] flex flex-col flex-grow border-[4px] sm:border-[6px] border-white/70 p-2 sm:p-4 overflow-hidden h-[88vh]">
+      <div className="mt-2 w-full sm:w-[95%] flex flex-col flex-grow border-[4px] sm:border-[6px] border-white/70 p-2 sm:p-4 overflow-hidden h-[88vh]">
+      
+      
         <div className="flex flex-col flex-grow border-[2px] sm:border-[3px] border-white/50 p-2 overflow-hidden">
           {/* MESSAGES */}
           <div
@@ -220,7 +223,7 @@ export default function StoryPage() {
                     </button>
                   </div>
 
-                  <div className="message ai-message break-words rounded-xl relative group">
+                  <div className="ai-message message break-words rounded-xl relative group">
                     {s.response}
                     <button
                       onClick={() => handleCopy(s.response)}
@@ -235,7 +238,7 @@ export default function StoryPage() {
           </div>
 
           {/* INPUT */}
-          {!isPublic && (
+          {isPublic!=='1' && (
             <div className="flex w-full border-t border-dashed border-white/40 pt-2 mt-2 max-sm:flex-col">
               <textarea
                 ref={inputRef}
