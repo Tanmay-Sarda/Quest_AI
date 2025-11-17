@@ -1,15 +1,19 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 export default function EditProfile({ username }) {
-  const [oldPassword, setOldPassword] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [oldp, setoldp] = useState(false);
   const [newp, setnewp] = useState(false);
   const router = useRouter();
-  const [profileImage, setProfileImage] = useState(null);
+
+  const [profileImage, setProfileImage] = useState(null); // Old stored image
+  const [newP, setnewP] = useState(null); // Preview (dataURL)
+  const [newPFile, setNewPFile] = useState(null); // Actual File object
+
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -69,7 +73,7 @@ export default function EditProfile({ username }) {
     setApiKey("");
   };
 
-  const handleSubmit = async (e) => {
+  const handleApiKeySubmit = async (e) => {
     e.preventDefault();
 
     if (!oldPassword) {
@@ -127,7 +131,7 @@ export default function EditProfile({ username }) {
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-70 z-[2000]">
       <div className="bg-black border-4 border-white rounded-2xl p-10 w-[90%] max-w-md text-white relative shadow-lg animate-fade-in">
-        {/* Close Button */}
+
         <button
           onClick={() => router.push(`/Home/${username}`)}
           className="absolute top-4 right-5 text-white text-2xl hover:text-red-400"
@@ -139,69 +143,77 @@ export default function EditProfile({ username }) {
           Edit Profile
         </h2>
 
-        {/* Profile picture preview & upload */}
+        {/* Profile picture */}
         <div className="flex items-center gap-4 mb-4">
           <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center">
-            {profileImage ? (
-              <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+
+            {newP ? (
+              <img src={newP} alt="Preview" className="w-full h-full object-cover" />
+            ) : profileImage ? (
+              <img src={profileImage} alt="Old" className="w-full h-full object-cover" />
             ) : (
-              <span style={{ color: "#fff", fontWeight: 700, fontSize: 20 }}>{(localStorage.getItem("username") || username || "U").charAt(0).toUpperCase()}</span>
+              <span style={{ fontSize: 22, fontWeight: 700 }}>
+                {username.charAt(0).toUpperCase()}
+              </span>
             )}
+
           </div>
+
           <div className="flex flex-col gap-2">
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={(e)=>{
-              const file = e.target.files && e.target.files[0];
-              if (!file) return;
-              const reader = new FileReader();
-              reader.onload = () => {
-                const dataUrl = reader.result;
-                try { localStorage.setItem("profileImage", dataUrl); } catch (err) { console.warn(err); }
-                setProfileImage(dataUrl);
-                showToast("✅ Profile picture updated (preview)");
-              };
-              reader.readAsDataURL(file);
-            }} style={{ display: 'none' }} />
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                setNewPFile(file);
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const dataUrl = reader.result;
+                  setnewP(dataUrl);
+                  localStorage.setItem("profileImage_temp", dataUrl);
+                };
+                reader.readAsDataURL(file);
+
+                showToast("📸 New profile picture added (preview)");
+              }}
+            />
+
             <div className="flex gap-2">
-              <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} className="form-button px-3 py-1">Update profile picture</button>
-              {profileImage && <button type="button" onClick={() => { setProfileImage(null); try{ localStorage.removeItem("profileImage"); }catch{} }} className="px-3 py-1 rounded bg-gray-700">Remove</button>}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xl transition-all duration-300 hover:text-[#39FF14] hover:scale-110 px-3 py-1"
+              >
+                Update profile picture
+              </button>
+
+              {newP && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setnewP(null);
+                    setNewPFile(null);
+                    localStorage.removeItem("profileImage_temp");
+                    showToast("🗑️ Removed new picture");
+                  }}
+                  className="px-3 py-1 rounded bg-gray-700 transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-95"
+                >
+                  Remove
+                </button>
+              )}
             </div>
+
           </div>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-          <div className="w-full relative">
-            <input
-              type={oldp ? "text" : "password"}
-              placeholder="Old Password"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-blue-400 outline-none"
-              required
-            />
-            {oldPassword && (
-              <button
-                type="button"
-                onClick={() => setoldp(!oldp)}
-                style={{
-                  position: "absolute",
-                  right: "8px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: "0.9rem",
-                  color: "#888",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "color 0.3s"
-                }}
-                onMouseOver={(e) => e.target.style.color = "#ccc"}
-                onMouseOut={(e) => e.target.style.color = "#888"}
-              >
-                {oldp ? "HIDE" : "SHOW"}
-              </button>
-            )}
-          </div>
 
           <input
             type="text"
@@ -213,32 +225,20 @@ export default function EditProfile({ username }) {
 
           <div className="w-full relative">
             <input
-              type={newp ? "text" : "password"}
+              type={showPass ? "text" : "password"}
               placeholder="New Password (optional)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="p-2 bg-transparent border-b-2 w-full border-white focus:border-blue-400 outline-none"
             />
+
             {newPassword && (
               <button
                 type="button"
-                onClick={() => setnewp(!newp)}
-                style={{
-                  position: "absolute",
-                  right: "8px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: "0.9rem",
-                  color: "#888",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "color 0.3s"
-                }}
-                onMouseOver={(e) => e.target.style.color = "#ccc"}
-                onMouseOut={(e) => e.target.style.color = "#888"}
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
               >
-                {newp ? "HIDE" : "SHOW"}
+                {showPass ? "HIDE" : "SHOW"}
               </button>
             )}
           </div>

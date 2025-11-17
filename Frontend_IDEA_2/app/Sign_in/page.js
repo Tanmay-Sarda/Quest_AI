@@ -38,11 +38,12 @@ export default function SignInPage() {
         {
           token: credentialResponse.credential,
         }
-      );
+      ); 
+      console.log(res.data.data.user)
 
       localStorage.setItem("accessToken", res.data.data.user.accessToken);
       localStorage.setItem("username", res.data.data.user.username);
-
+      localStorage.setItem("profileImage",res.data.data.user.profilePicture)
       showToast("✅ Logged in successfully!");
       router.push(`/Home/${res.data.data.user.username}`);
     } catch (err) {
@@ -66,6 +67,7 @@ export default function SignInPage() {
       if (res.ok) {
         localStorage.setItem("accessToken", data.data.user.accessToken);
         localStorage.setItem("username", data.data.user.username);
+        localStorage.setItem("profileImage",data.data.user.profilePicture)
 
         showToast("✅ Sign in successful!");
         router.push(`/Home/${data.data.user.username}`);
