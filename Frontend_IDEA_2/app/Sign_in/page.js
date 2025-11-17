@@ -131,6 +131,22 @@ export default function SignInPage() {
               </div>
             </div>
 
+            {/* FORGOT PASSWORD */}
+            <div className="w-full sm:w-2/3 sm:ml-auto text-right">
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/Otp_page?email=${encodeURIComponent(form.email)}&mode=reset`
+                  )
+                }
+                className="text-xl text-white hover:underline font-semibold -mt-2"
+                style={{ lineHeight: 1 }}
+              >
+                Forgot password?
+              </button>
+            </div>
+
             {/* SIGN IN BUTTON (BIGGER ON HOVER) */}
             <button
               type="submit"
