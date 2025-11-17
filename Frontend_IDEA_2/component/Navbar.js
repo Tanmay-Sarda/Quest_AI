@@ -8,7 +8,7 @@ import { faBell } from "@fortawesome/free-solid-svg-icons";
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const [username, setusername] = useState("")
+  const [username, setusername] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
@@ -19,17 +19,18 @@ export default function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navRef = useRef(null);
+  const [characterName, setCharacterName] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const img = sessionStorage.getItem("profileImage");
+      const img = localStorage.getItem("profileImage");
       if (img) setProfileImage(img);
     }
   }, []);
 
   useEffect(() => {
-    setusername(sessionStorage.getItem("username"));
-    const token = sessionStorage.getItem("accessToken");
+    setusername(localStorage.getItem("username"));
+    const token = localStorage.getItem("accessToken");
     setIsLoggedIn(!!token);
   }, [pathname]);
 
@@ -52,24 +53,21 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("username");
+    showToast("🔓 Logging out...");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("username");
     setIsLoggedIn(false);
-    showToast("🔓 Logged out");
     router.push("/Sign_in");
   };
 
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_HOST}/notification/`,
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          },
-        }
-      );
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/notification/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
       const data = await response.json();
       if (data && data.success) {
         setNotifications(data.data || []);
@@ -82,11 +80,7 @@ export default function Navbar() {
     }
   };
 
-  const handleNotificationAction = async (
-    notificationId,
-    accept,
-    character = ""
-  ) => {
+  const handleNotificationAction = async (notificationId, accept, character = "") => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/notification/delete/${notificationId}`,
@@ -94,12 +88,9 @@ export default function Navbar() {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
-          body: JSON.stringify({
-            accept,
-            character,
-          }),
+          body: JSON.stringify({ accept, character }),
         }
       );
 
@@ -118,38 +109,22 @@ export default function Navbar() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 0:
-        return (
-          <span className="bg-yellow-500 text-xs px-2 py-1 rounded">
-            Pending
-          </span>
-        );
+        return <span className="bg-yellow-500 text-xs px-2 py-1 rounded">Pending</span>;
       case 1:
-        return (
-          <span className="bg-green-500 text-xs px-2 py-1 rounded">
-            Accepted
-          </span>
-        );
+        return <span className="bg-green-500 text-xs px-2 py-1 rounded">Accepted</span>;
       case 2:
-        return (
-          <span className="bg-red-500 text-xs px-2 py-1 rounded">Rejected</span>
-        );
+        return <span className="bg-red-500 text-xs px-2 py-1 rounded">Rejected</span>;
       default:
         return null;
     }
   };
 
-  const [characterName, setCharacterName] = useState("");
-
   const renderNotificationContent = (notification) => (
     <div key={notification._id} className="p-4 border-b border-gray-700">
       <div className="flex justify-between items-start mb-2">
         <div>
-          <p className="font-medium">
-            {notification.fromUser?.email || "Unknown User"}
-          </p>
-          <p className="text-sm text-gray-400">
-            Story: {notification.story_id?.title || "Unknown Story"}
-          </p>
+          <p className="font-medium">{notification.fromUser?.email || "Unknown User"}</p>
+          <p className="text-sm text-gray-400">Story: {notification.story_id?.title || "Unknown Story"}</p>
         </div>
         {getStatusBadge(notification.status)}
       </div>
@@ -163,15 +138,19 @@ export default function Navbar() {
             onChange={(e) => setCharacterName(e.target.value)}
           />
           <button
-            onClick={() =>
-              handleNotificationAction(notification._id, true, characterName)
-            }
+            onClick={() => {
+              showToast("✔ Accepted");
+              handleNotificationAction(notification._id, true, characterName);
+            }}
             className="px-3 py-1 bg-green-600 rounded hover:bg-green-700"
           >
             Accept
           </button>
           <button
-            onClick={() => handleNotificationAction(notification._id, false)}
+            onClick={() => {
+              showToast("❌ Rejected");
+              handleNotificationAction(notification._id, false);
+            }}
             className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
           >
             Reject
@@ -179,7 +158,10 @@ export default function Navbar() {
         </div>
       ) : (
         <button
-          onClick={() => handleNotificationAction(notification._id, null)}
+          onClick={() => {
+            showToast("🗑 Deleted");
+            handleNotificationAction(notification._id, null);
+          }}
           className="mt-3 px-3 py-1 bg-gray-600 rounded hover:bg-gray-700"
         >
           Delete
@@ -188,9 +170,7 @@ export default function Navbar() {
     </div>
   );
 
-  // -------------------------
-  // CLEAN RETRO HOVER BUTTON
-  // -------------------------
+  // ------------------------- CLEAN RETRO HOVER BUTTON -------------------------
   const NavButton = ({ onClick, children, title }) => (
     <button
       title={title}
@@ -238,6 +218,7 @@ export default function Navbar() {
           <button
             aria-label="Open menu"
             onClick={() => {
+              showToast("☰ Menu toggled");
               setMobileMenuOpen((s) => !s);
               setShowProfilePanel(false);
               setShowNotificationsPanel(false);
@@ -257,33 +238,55 @@ export default function Navbar() {
             src="/QuestLogo.jpeg"
             alt="Quest AI Logo"
             className="h-[70px] cursor-pointer hover:scale-105 transition-all duration-200"
-            onClick={() =>
-              router.push(isLoggedIn ? `/Home/${username}` : "/Sign_in")
-            }
+            onClick={() => {
+              showToast("🏠 Going Home");
+              router.push(isLoggedIn ? `/Home/${username}` : "/Sign_in");
+            }}
           />
         </div>
 
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-4 flex-1 justify-end">
           {/* ABOUT visible always */}
-          <NavButton onClick={() => router.push("/About")} title="About">
+          <NavButton
+            onClick={() => {
+              showToast("ℹ Redirecting to the About Page");
+              router.push("/About");
+            }}
+            title="About"
+          >
             [ ABOUT ]
           </NavButton>
 
           {!isLoggedIn && (
             <>
-              <NavButton onClick={() => router.push("/")} title="Signup">
+              <NavButton
+                onClick={() => {
+                  showToast("📝 Signup");
+                  router.push("/");
+                }}
+                title="Signup"
+              >
                 [ SIGNUP ]
               </NavButton>
 
-              <NavButton onClick={() => router.push("/Sign_in")} title="Signin">
+              <NavButton
+                onClick={() => {
+                  showToast("🔐 Signin");
+                  router.push("/Sign_in");
+                }}
+                title="Signin"
+              >
                 [ SIGNIN ]
               </NavButton>
             </>
           )}
 
           <NavButton
-            onClick={() => router.push("/Public_Story")}
+            onClick={() => {
+              showToast("📖 Redirecting to the Public Stories");
+              router.push("/Public_Story");
+            }}
             title="Public"
           >
             [ PUBLIC STORIES ]
@@ -293,14 +296,20 @@ export default function Navbar() {
           {isLoggedIn && (
             <>
               <NavButton
-                onClick={() => router.push(`/Home/${username}`)}
+                onClick={() => {
+                  showToast("🏠 Redirecting to the Home page");
+                  router.push(`/Home/${username}`);
+                }}
                 title="Home"
               >
                 [ HOME ]
               </NavButton>
 
               <NavButton
-                onClick={() => router.push(`/Story_Form/${username}`)}
+                onClick={() => {
+                  showToast("✍ Redirecting to the Create Story");
+                  router.push(`/Story_Form/${username}`);
+                }}
                 title="Create"
               >
                 [ CREATE STORY ]
@@ -309,6 +318,7 @@ export default function Navbar() {
               {/* notification bell */}
               <button
                 onClick={() => {
+                  showToast("🔔 Notifications");
                   setShowNotificationsPanel((s) => !s);
                   setShowProfilePanel(false);
                 }}
@@ -341,6 +351,7 @@ export default function Navbar() {
               {/* avatar */}
               <button
                 onClick={() => {
+                  showToast("👤 Profile");
                   setShowProfilePanel((s) => !s);
                   setShowNotificationsPanel(false);
                 }}
@@ -348,15 +359,10 @@ export default function Navbar() {
                 title="Profile"
               >
                 {profileImage ? (
-                  <img
-                    src={profileImage}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={profileImage} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-xl font-bold text-white">
-                    {(username || "U")
-                      .charAt(0)
-                      .toUpperCase()}
+                    {(username || "U").charAt(0).toUpperCase()}
                   </span>
                 )}
               </button>
@@ -369,6 +375,7 @@ export default function Navbar() {
           {isLoggedIn && (
             <button
               onClick={() => {
+                showToast("🔔 Notifications");
                 setShowNotificationsPanel((s) => !s);
                 setShowProfilePanel(false);
               }}
@@ -401,6 +408,7 @@ export default function Navbar() {
 
           <button
             onClick={() => {
+              showToast("👤 Profile");
               setShowProfilePanel((s) => !s);
               setShowNotificationsPanel(false);
             }}
@@ -411,9 +419,7 @@ export default function Navbar() {
               <img src={profileImage} className="w-full h-full object-cover" />
             ) : (
               <span className="text-lg font-bold text-white">
-                {(username || "U")
-                  .charAt(0)
-                  .toUpperCase()}
+                {(username || "U").charAt(0).toUpperCase()}
               </span>
             )}
           </button>
@@ -433,12 +439,16 @@ export default function Navbar() {
               alt="Quest AI Logo"
               className="h-[44px] cursor-pointer"
               onClick={() => {
+                showToast("🏠 Going Home");
                 setMobileMenuOpen(false);
                 router.push(isLoggedIn ? `/Home/${username}` : "/Sign_in");
               }}
             />
             <button
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => {
+                showToast("✖ Closing Menu");
+                setMobileMenuOpen(false);
+              }}
               aria-label="Close menu"
               className="text-white text-2xl"
             >
@@ -449,6 +459,7 @@ export default function Navbar() {
           <div className="flex flex-col gap-3">
             <NavButton
               onClick={() => {
+                showToast("ℹ Redirecting to the About page");
                 setMobileMenuOpen(false);
                 router.push("/About");
               }}
@@ -460,6 +471,7 @@ export default function Navbar() {
               <>
                 <NavButton
                   onClick={() => {
+                    showToast("📝 Signup");
                     setMobileMenuOpen(false);
                     router.push("/");
                   }}
@@ -469,6 +481,7 @@ export default function Navbar() {
 
                 <NavButton
                   onClick={() => {
+                    showToast("🔐 Signin");
                     setMobileMenuOpen(false);
                     router.push("/Sign_in");
                   }}
@@ -480,6 +493,7 @@ export default function Navbar() {
 
             <NavButton
               onClick={() => {
+                showToast("📖 Redirecting to the Public Stories");
                 setMobileMenuOpen(false);
                 router.push("/Public_Story");
               }}
@@ -491,6 +505,7 @@ export default function Navbar() {
               <>
                 <NavButton
                   onClick={() => {
+                    showToast("🏠 Redirecting to the Home page");
                     setMobileMenuOpen(false);
                     router.push(`/Home/${username}`);
                   }}
@@ -500,6 +515,7 @@ export default function Navbar() {
 
                 <NavButton
                   onClick={() => {
+                    showToast("✍ Redirecting to the Public Stories");
                     setMobileMenuOpen(false);
                     router.push(`/Story_Form/${username}`);
                   }}
@@ -509,6 +525,7 @@ export default function Navbar() {
 
                 <NavButton
                   onClick={() => {
+                    showToast("🔔 Notifications");
                     setMobileMenuOpen(false);
                     setShowNotificationsPanel(true);
                   }}
@@ -518,6 +535,7 @@ export default function Navbar() {
 
                 <NavButton
                   onClick={() => {
+                    showToast("👤 Edit Profile");
                     setMobileMenuOpen(false);
                     router.push(`/Edit/${username}`);
                   }}
@@ -527,6 +545,7 @@ export default function Navbar() {
 
                 <NavButton
                   onClick={() => {
+                    showToast("🔓 Logging out...");
                     setMobileMenuOpen(false);
                     handleLogout();
                   }}
@@ -551,7 +570,7 @@ export default function Navbar() {
         />
       )}
 
-      {/* Notifications panel (unchanged except hover styles) */}
+      {/* Notifications panel */}
       {showNotificationsPanel && (
         <>
           <div
@@ -590,9 +609,7 @@ export default function Navbar() {
             >
               <div>
                 <h2 className="text-lg">Notifications</h2>
-                <p className="text-gray-400 text-xs">
-                  {notificationsCount} unread
-                </p>
+                <p className="text-gray-400 text-xs">{notificationsCount} unread</p>
               </div>
               <button
                 onClick={() => setShowNotificationsPanel(false)}
@@ -606,9 +623,7 @@ export default function Navbar() {
               {loading ? (
                 <div className="text-center py-6">Loading...</div>
               ) : notifications.length === 0 ? (
-                <div className="text-center text-gray-500 py-6">
-                  No notifications
-                </div>
+                <div className="text-center text-gray-500 py-6">No notifications</div>
               ) : (
                 notifications.map(renderNotificationContent)
               )}
@@ -617,7 +632,7 @@ export default function Navbar() {
         </>
       )}
 
-      {/* Profile Panel (unchanged except hover styles) */}
+      {/* Profile Panel */}
       {showProfilePanel && (
         <>
           <div
@@ -633,19 +648,13 @@ export default function Navbar() {
                     <img src={profileImage} className="w-full h-full" />
                   ) : (
                     <span className="text-2xl font-bold">
-                      {(username || "U")
-                        .charAt(0)
-                        .toUpperCase()}
+                      {(username || "U").charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div>
-                  <p className="font-bold">
-                    { username || "User"}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {sessionStorage.getItem("email") || ""}
-                  </p>
+                  <p className="font-bold">{username || "User"}</p>
+                  <p className="text-xs text-gray-400">{localStorage.getItem("email") || ""}</p>
                 </div>
               </div>
               <button
@@ -659,6 +668,7 @@ export default function Navbar() {
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => {
+                  showToast("👤 Edit Profile");
                   setShowProfilePanel(false);
                   router.push(`/Edit/${username}`);
                 }}
@@ -669,6 +679,7 @@ export default function Navbar() {
 
               <button
                 onClick={() => {
+                  showToast("🔔 Notifications");
                   setShowProfilePanel(false);
                   setShowNotificationsPanel(true);
                 }}
@@ -679,6 +690,7 @@ export default function Navbar() {
 
               <button
                 onClick={() => {
+                  showToast("🔓 Logging out...");
                   setShowProfilePanel(false);
                   handleLogout();
                 }}

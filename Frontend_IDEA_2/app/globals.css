@@ -23,6 +23,7 @@ body {
 }
 
 #content {
+  display: relative;
   padding-top: 60px; /* To avoid overlap with fixed header */
   width: 100%;
   min-height: 100vh;
@@ -162,6 +163,8 @@ form {
   align-items: center;
   gap: 15px;
 }
+
+
 
 .form-row label {
   width: 120px;
@@ -336,6 +339,27 @@ footer {
 }
 .toast.show { opacity: 1; transform: translateX(0); }
 
+.toast-info {
+  background: #444;
+  color: #fff;
+  border: 1px solid #666;
+}
+
+/* SUCCESS */
+.toast-success {
+  background: #39ff14;
+  color: #000;
+  border: 1px solid #39ff14;
+}
+
+/* ERROR */
+.toast-error {
+  background: #ff3b3b;
+  color: #fff;
+  border: 1px solid #ff3b3b;
+}
+
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background-color: #555; border-radius: 4px; }
@@ -447,4 +471,34 @@ footer {
 
 .option {
   text-align: center;
+}
+
+
+@media (max-width:648px) {
+  .form-row{
+    gap:0px
+  }
+  
+  .form-row label{
+    text-align: left;
+    width: 100%;
+  }
+
+  .form-row input{
+    width: 100%;
+  }
+
+   .message{
+    max-width: 90%;
+   }  
+}
+
+@media (max-width:500px){
+  .terminal-content{
+    padding: 10px;
+  }
+
+  .icon{
+    margin-top: 20px;
+  }
 }

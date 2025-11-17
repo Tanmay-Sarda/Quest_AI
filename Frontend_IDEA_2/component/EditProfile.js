@@ -13,7 +13,7 @@ export default function EditProfile({ username }) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const img = sessionStorage.getItem("profileImage");
+      const img = localStorage.getItem("profileImage");
       if (img) setProfileImage(img);
     }
   }, []);
@@ -47,7 +47,7 @@ export default function EditProfile({ username }) {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       },
       body: JSON.stringify({
         oldPassword,
@@ -74,10 +74,10 @@ export default function EditProfile({ username }) {
     }
 
     showToast("✅ Profile updated successfully!");
-    // persist username and profileImage in sessionStorage for immediate UI updates
+    // persist username and profileImage in localStorage for immediate UI updates
     try {
-      if (newUsername) sessionStorage.setItem("username", newUsername);
-      if (profileImage) sessionStorage.setItem("profileImage", profileImage);
+      if (newUsername) localStorage.setItem("username", newUsername);
+      if (profileImage) localStorage.setItem("profileImage", profileImage);
     } catch {}
     router.push(`/Home/${newUsername || username}`); // Redirect to home with updated username
 
@@ -106,7 +106,7 @@ export default function EditProfile({ username }) {
             {profileImage ? (
               <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <span style={{ color: "#fff", fontWeight: 700, fontSize: 20 }}>{(sessionStorage.getItem("username") || username || "U").charAt(0).toUpperCase()}</span>
+              <span style={{ color: "#fff", fontWeight: 700, fontSize: 20 }}>{(localStorage.getItem("username") || username || "U").charAt(0).toUpperCase()}</span>
             )}
           </div>
           <div className="flex flex-col gap-2">
@@ -116,7 +116,7 @@ export default function EditProfile({ username }) {
               const reader = new FileReader();
               reader.onload = () => {
                 const dataUrl = reader.result;
-                try { sessionStorage.setItem("profileImage", dataUrl); } catch (err) { console.warn(err); }
+                try { localStorage.setItem("profileImage", dataUrl); } catch (err) { console.warn(err); }
                 setProfileImage(dataUrl);
                 showToast("✅ Profile picture updated (preview)");
               };
@@ -124,7 +124,7 @@ export default function EditProfile({ username }) {
             }} style={{ display: 'none' }} />
             <div className="flex gap-2">
               <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} className="form-button px-3 py-1">Update profile picture</button>
-              {profileImage && <button type="button" onClick={() => { setProfileImage(null); try{ sessionStorage.removeItem("profileImage"); }catch{} }} className="px-3 py-1 rounded bg-gray-700">Remove</button>}
+              {profileImage && <button type="button" onClick={() => { setProfileImage(null); try{ localStorage.removeItem("profileImage"); }catch{} }} className="px-3 py-1 rounded bg-gray-700">Remove</button>}
             </div>
           </div>
         </div>

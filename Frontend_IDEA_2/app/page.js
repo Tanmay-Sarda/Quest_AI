@@ -12,8 +12,8 @@ export default function SignUpPage() {
 
   // Typewriter animation removed, static text used instead
   useEffect(() => {
-    if (sessionStorage.getItem("accessToken")) {
-      router.push(`/Home/${sessionStorage.getItem("username")}`);
+    if (localStorage.getItem("accessToken")) {
+      router.push(`/Home/${localStorage.getItem("username")}`);
       return;
     }
 
@@ -58,8 +58,8 @@ export default function SignUpPage() {
         }
       );
 
-      sessionStorage.setItem("accessToken", res.data.data.user.accessToken);
-      sessionStorage.setItem("username", res.data.data.user.username);
+      localStorage.setItem("accessToken", res.data.data.user.accessToken);
+      localStorage.setItem("username", res.data.data.user.username);
 
       showToast("✅ Logged in successfully via Google!");
       router.push(`/Home/${res.data.data.user.username}`);
