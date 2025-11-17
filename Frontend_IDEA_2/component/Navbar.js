@@ -30,7 +30,6 @@ export default function Navbar() {
 
   useEffect(() => {
     setusername(localStorage.getItem("username"));
-    setProfileImage(localStorage.getItem("profileImage"));
     const token = localStorage.getItem("accessToken");
     setIsLoggedIn(!!token);
   }, [pathname]);
@@ -316,39 +315,6 @@ export default function Navbar() {
                 [ CREATE STORY ]
               </NavButton>
 
-              {/* notification bell */}
-              <button
-                onClick={() => {
-                  showToast("🔔 Notifications");
-                  setShowNotificationsPanel((s) => !s);
-                  setShowProfilePanel(false);
-                }}
-                title="Notifications"
-                className="p-2 rounded hover:scale-105 hover:text-[#39FF14] transition-all duration-200"
-                style={{
-                  color: "white",
-                  background: "transparent",
-                  border: "1px dashed rgba(255,255,255,0.15)",
-                }}
-              >
-                <FontAwesomeIcon icon={faBell} />
-                {notificationsCount > 0 && (
-                  <span
-                    style={{
-                      marginLeft: 6,
-                      fontSize: 12,
-                      background: "#39FF14",
-                      color: "#000",
-                      padding: "2px 6px",
-                      borderRadius: 999,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {notificationsCount}
-                  </span>
-                )}
-              </button>
-
               {/* avatar */}
               <button
                 onClick={() => {
@@ -371,59 +337,9 @@ export default function Navbar() {
           )}
         </nav>
 
-        {/* MOBILE: Right avatar & bell */}
+        {/* MOBILE: Right */}
         <div className="flex items-center gap-2 md:hidden">
-          {isLoggedIn && (
-            <button
-              onClick={() => {
-                showToast("🔔 Notifications");
-                setShowNotificationsPanel((s) => !s);
-                setShowProfilePanel(false);
-              }}
-              className="p-1 rounded hover:scale-105 hover:text-[#39FF14] transition-all duration-200"
-              title="Notifications"
-              style={{
-                color: "white",
-                background: "transparent",
-                border: "1px dashed rgba(255,255,255,0.15)",
-              }}
-            >
-              <FontAwesomeIcon icon={faBell} />
-              {notificationsCount > 0 && (
-                <span
-                  style={{
-                    marginLeft: 6,
-                    fontSize: 11,
-                    background: "#39FF14",
-                    color: "#000",
-                    padding: "1px 6px",
-                    borderRadius: 999,
-                    fontWeight: 700,
-                  }}
-                >
-                  {notificationsCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              showToast("👤 Profile");
-              setShowProfilePanel((s) => !s);
-              setShowNotificationsPanel(false);
-            }}
-            className="rounded-full w-9 h-9 flex items-center justify-center border border-white/10 bg-gray-900 overflow-hidden hover:scale-105 transition-all duration-200"
-            title="Profile"
-          >
-            {profileImage ? (
-              <img src={profileImage} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-lg font-bold text-white">
-                {(username || "U").charAt(0).toUpperCase()}
-              </span>
-            )}
-          </button>
+          {/* mobile bell and profile icons removed */}
         </div>
       </header>
 
@@ -433,18 +349,28 @@ export default function Navbar() {
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div style={{ padding: 18 }}>
-          <div className="flex items-center justify-between mb-4">
-            <img
-              src="/QuestLogo.jpeg"
-              alt="Quest AI Logo"
-              className="h-[44px] cursor-pointer"
+        <div style={{ padding: 14 }}>
+          <div className="flex items-center justify-between mb-2">
+            <div
+              className="flex items-center gap-3 cursor-pointer"
               onClick={() => {
-                showToast("🏠 Going Home");
                 setMobileMenuOpen(false);
-                router.push(isLoggedIn ? `/Home/${username}` : "/Sign_in");
+                if (isLoggedIn) router.push(`/Edit/${username}`);
+                else router.push("/Sign_in");
               }}
-            />
+            >
+              <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-900 flex items-center justify-center">
+                {profileImage ? (
+                  <img src={profileImage} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-lg font-bold text-white">{(username || "U").charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-white">{username || "Guest"}</p>
+                <p className="text-xs text-gray-400">Edit profile</p>
+              </div>
+            </div>
             <button
               onClick={() => {
                 showToast("✖ Closing Menu");
@@ -457,7 +383,7 @@ export default function Navbar() {
             </button>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-0">
             <NavButton
               onClick={() => {
                 showToast("ℹ Redirecting to the About page");
@@ -533,17 +459,7 @@ export default function Navbar() {
                 >
                   [ NOTIFICATIONS ]
                 </NavButton>
-
-                <NavButton
-                  onClick={() => {
-                    showToast("👤 Edit Profile");
-                    setMobileMenuOpen(false);
-                    router.push(`/Edit/${username}`);
-                  }}
-                >
-                  [ EDIT PROFILE ]
-                </NavButton>
-
+                
                 <NavButton
                   onClick={() => {
                     showToast("🔓 Logging out...");
@@ -641,7 +557,7 @@ export default function Navbar() {
             className="fixed inset-0 bg-black/40 z-[1000]"
           />
 
-          <aside className="fixed top-0 right-0 w-80 bg-black text-white h-full z-[1002] p-5">
+          <aside className="fixed top-20 right-5 w-80 bg-black text-white z-[1002] p-5 border border-white/10 rounded-lg">
             <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 bg-gray-900 rounded-full overflow-hidden flex items-center justify-center">
