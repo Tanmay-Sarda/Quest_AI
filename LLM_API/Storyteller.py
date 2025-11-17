@@ -15,9 +15,9 @@ llm = ChatGroq(
     groq_api_key=os.environ.get("GROQ_API_KEY")
 )
 
-# --- 2. Define Prompt Templates ---
-
-# Prompt for generating the initial scene with dialect awareness
+# ------------------------------
+# 2. Prompt Templates
+# ------------------------------
 setup_prompt = PromptTemplate(
     input_variables=["genre", "setting", "dialect"],
     template=(
@@ -25,11 +25,10 @@ setup_prompt = PromptTemplate(
         "Always write in that dialect’s tone, word choice, and rhythm. "
         "Create an interesting starting scene for a {genre} story set in {setting}. "
         "Describe the world and the character the player will be embodying in a single, engaging paragraph. "
-        "Address the player directly as 'You'. Do not ask what they want to do; just set the scene."
+        "Address the player directly as 'You'. Do not ask for an action; just set the scene."
     )
 )
 
-# Prompt for continuing the story
 story_prompt = PromptTemplate(
     input_variables=["story_so_far", "user_input", "dialect"],
     template=(
@@ -39,115 +38,165 @@ story_prompt = PromptTemplate(
         "Keep your responses grounded in the established story. Don't take actions for the player.\n\n"
         "**Current Situation:**\n{story_so_far}\n\n"
         "**The Player's Action:** {user_input}\n\n"
-        "**What happens next?** (Describe it in 2-4 sentences, ending in a way that prompts the player for their next move)."
+        "**What happens next?** Describe it in 2–4 sentences and end with a natural prompt for the player's next move."
     )
 )
 
-# Character-only response prompt 
-character_prompt = PromptTemplate(
-    input_variables=["character_name", "story_so_far", "user_input"],
+# ------------------------------
+# Multiplayer Prompt Templates
+# ------------------------------
+setup_prompt_multi = PromptTemplate(
+    input_variables=["genre", "setting", "dialect", "players"],
     template=(
-        "You are {character_name}, a character in the following story.\n\n"
-        "Here is the current story context:\n{story_so_far}\n\n"
-        "The user (another character) has said or done:\n{user_input}\n\n"
-        "Now respond only as {character_name} would**, staying true to their tone and knowledge.\n"
-        "Do not narrate, describe surroundings, or control other characters — just speak as {character_name}.\n"
+        "You are a creative AI Dungeon Master speaking in {dialect} and starting a new "
+        "turn-based multiplayer adventure. "
+        "You MUST narrate entirely in third-person. Never address any player as 'you'. "
+        "Always refer to players by their names: {players}.\n\n"
+        "Create an engaging opening scene for a {genre} story set in {setting}. "
+        "Introduce the world and briefly describe each player's role. "
+        "Do not ask for an action."
     )
 )
 
-# --- 3. Create Chains ---
+story_prompt_multi = PromptTemplate(
+    input_variables=["story_so_far", "user_input", "dialect"],
+    template=(
+        "You are a Dungeon Master continuing a turn-based MULTIPLAYER story. "
+        "Use third-person narration ONLY. Never speak to the players directly. "
+        "Write using the tone and rhythm of {dialect}.\n\n"
+        "Current story:\n{story_so_far}\n\n"
+        "The latest action taken:\n{user_input}\n\n"
+        "Describe the consequences in 3–5 sentences. "
+        "End with a moment that sets up the next player's turn."
+    )
+)
+
+
+# Chains
 setup_chain = setup_prompt | llm | StrOutputParser()
-story_chain = story_prompt | llm | StrOutputParser()
-character_chain = character_prompt | llm | StrOutputParser()
+story_chain  = story_prompt  | llm | StrOutputParser()
 
+setup_chain_multi = setup_prompt_multi | llm | StrOutputParser()
+story_chain_multi = story_prompt_multi | llm | StrOutputParser()
 
-# --- 4. Define Backend Functions ---
-
+# ------------------------------
+# 3. Story Functions
+# ------------------------------
 def start_new_story(genre: str, setting: str, dialect: str) -> str:
-    """
-    Generates the initial story scene based on a genre and setting from the frontend.
-    This would be called when a user starts a new game.
-    """
-    # If the frontend sends empty strings, provide random defaults
     if not genre.strip():
         genre = random.choice(["Fantasy", "Cyberpunk", "Cosmic Horror", "Steampunk", "Mystery"])
     if not setting.strip():
         setting = random.choice([
             "a forgotten library containing ancient secrets",
-            "a neon-drenched alleyway in a city that never sleeps",
+            "a neon-lit alleyway drowning in neon rain",
             "the bridge of a derelict starship drifting through the void"
         ])
     if not dialect.strip():
         dialect = random.choice([
-            "British English", 
-            "American English", 
-            "Southern US dialect", 
-            "Irish English", 
-            "Australian slang"
+            "British English", "American English", "Southern US dialect",
+            "Irish English", "Australian slang"
         ])
 
-    print(f"--- LOG: Starting new story | Genre: {genre}, Setting: {setting}, Dialect: {dialect} ---")
-    
-    # Generate and return the opening scene
+    print(f"\n--- LOG: Starting new story | {genre=} {setting=} {dialect=} ---\n")
     return setup_chain.invoke({"genre": genre, "setting": setting, "dialect": dialect})
 
 
 def continue_story(story_so_far: str, user_action: str, dialect: str) -> str:
-    """
-    Generates the next part of the story based on the current story and the user's action.
-    This would be called for every subsequent turn in the game.
-    """
-    # Basic validation for the user's action
     if not user_action.strip():
-        return "You pause for a moment, gathering your thoughts. The world waits for your next move."
+        return "You pause briefly, unsure of your next step. The world holds its breath."
 
-    print(f"--- LOG: Continuing story with action: '{user_action}' | Dialect: {dialect}---")
-    
-    # Generate and return the next story chunk
+    print(f"\n--- LOG: Continuing story | action='{user_action}' | dialect='{dialect}' ---\n")
+
     return story_chain.invoke({
         "story_so_far": story_so_far,
         "user_input": user_action,
         "dialect": dialect
     })
 
-def character_reply(character_name: str, story: str, user_input: str) -> str:
-    """
-    Generates an in-character response (AI replies as a specific character only).
-    """
-    if not character_name.strip():
-        return "Error: Character name required."
 
-    print(f"--- LOG: {character_name} responding in-character ---")
-    return character_chain.invoke({
-        "character_name": character_name,
-        "story_so_far": story,
-        "user_input": user_input
-    })
+# ------------------------------
+# 4. Terminal Game Loop (Single or Multi-Player)
+# ------------------------------
+def single_player_mode():
+    print("\n=== Single Player Mode ===")
+    genre = input("Genre: ")
+    setting = input("Setting: ")
+    dialect = input("Dialect/Accent: ")
 
-
-# --- 5. Main Execution Block ---
-if __name__ == "__main__":
-    print("Welcome to the AI Dungeon!\n")
-
-    # Step 1: Gather initial inputs
-    genre = input("Enter a genre: ").strip()
-    setting = input("Enter a setting: ").strip()
-    dialect = input("Enter a dialect/accent: ").strip()
-
-    # Step 2: Generate the opening scene
     story = start_new_story(genre, setting, dialect)
     print("\n--- STORY START ---")
     print(story)
     print("-------------------\n")
 
-    # Step 3: Interactive story loop
     while True:
-        user_action = input("What will you do? (type 'quit' to exit): ").strip()
-
-        if user_action.lower() in ["quit", "exit"]:
-            print("\n👋 End of the story!")
+        action = input("What will you do? ('quit' to exit): ")
+        if action.lower() in ("quit", "exit"):
+            print("\n👋 Story ended.")
             break
 
-        # Generate next part of the story
-        story = continue_story(story, user_action, dialect)
+        story = continue_story(story, action, dialect)
         print("\n" + story + "\n")
+
+
+def multiplayer_mode():
+    print("\n=== Turn-Based Multiplayer Mode ===")
+
+    num = int(input("How many players? "))
+    players = [input(f"Player {i+1} name: ") for i in range(num)]
+    players_str = ", ".join(players)
+
+    genre = input("Genre: ")
+    setting = input("Setting: ")
+    dialect = input("Dialect/Accent: ")
+
+    # Use multiplayer-specific setup chain
+    story = setup_chain_multi.invoke({
+        "genre": genre,
+        "setting": setting,
+        "dialect": dialect,
+        "players": players_str
+    })
+
+    print("\n--- STORY START ---")
+    print(story)
+    print("-------------------\n")
+
+    turn = 0
+    while True:
+        current_player = players[turn % num]
+        print(f"\n🎮 {current_player}'s turn")
+
+        action = input(f"{current_player}, what do you do? ('quit' to exit): ")
+        if action.lower() in ("quit", "exit"):
+            print("\n👋 Story ended.")
+            break
+
+        tagged_action = f"{current_player} decides to {action}"
+
+        story = story_chain_multi.invoke({
+            "story_so_far": story,
+            "user_input": tagged_action,
+            "dialect": dialect
+        })
+
+        print("\n" + story + "\n")
+        turn += 1
+
+
+
+# ------------------------------
+# 5. Run Terminal App
+# ------------------------------
+if __name__ == "__main__":
+    print("=== AI Storyteller ===")
+    print("1. Single Player")
+    print("2. Turn-Based Multiplayer")
+
+    mode = input("\nChoose mode (1/2): ").strip()
+
+    if mode == "1":
+        single_player_mode()
+    elif mode == "2":
+        multiplayer_mode()
+    else:
+        print("Invalid option.")
