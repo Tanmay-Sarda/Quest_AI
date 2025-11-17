@@ -5,22 +5,18 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faTrash,
   faPlay,
-  faLock,
-  faLockOpen,
-  faUserPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
-import { get } from "mongoose";
 
 const page = () => {
   const router = useRouter();
-  const { username } = useParams();
+  const [username, setusername] = useState("")
   const [publicstories, setPublicstories] = useState([]);
 
   useEffect(() => {
     getpublicstories();
+    setusername(localStorage.getItem('username'));
   }, []);
 
   const getpublicstories = async () => {
@@ -73,7 +69,7 @@ const page = () => {
                 max-sm:flex-col max-sm:p-3 max-sm:min-h-[200px]"
       >
         <div className="flex flex-col w-full max-sm:gap-1">
-          <div className="flex justify-center">
+          <div className="flex icon justify-center">
             <p className="text-2xl max-sm:text-xl font-mediium text-green-500">
               {story.title}
             </p>
@@ -131,8 +127,8 @@ const page = () => {
         </h1>
 
         <div
-          className="grid grid-cols-2 gap-6 w-full max-w-7xl 
-                    max-sm:grid-cols-1 max-sm:gap-4"
+          className="grid grid-cols-1 gap-6 w-full max-w-7xl 
+                    lg:grid-cols-2 "
         >
           {publicstories.length === 0 ? (
             <p className="text-center col-span-full">

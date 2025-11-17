@@ -22,7 +22,7 @@ const Page = () => {
 
   // Auth check
   useEffect(() => {
-    if (!sessionStorage.getItem("accessToken")) {
+    if (!localStorage.getItem("accessToken")) {
       showToast("User not authenticated");
       setTimeout(() => {
         router.push("/Sign_in");

@@ -14,7 +14,7 @@ export default function OTPPage() {
   const mode = searchParams.get("mode") || "signup"; // signup or login
   const [pending, setpending] = useState("")
   useEffect(() => {
-    setpending( sessionStorage.getItem("pendingSignup") )
+    setpending( localStorage.getItem("pendingSignup") )
   }, )
   
   const pendingSignup = JSON.parse(
@@ -94,7 +94,7 @@ export default function OTPPage() {
       if (res.ok) {
         // changed behavior depending on mode
         if (mode === "signup") {
-          sessionStorage.removeItem("pendingSignup");
+          localStorage.removeItem("pendingSignup");
 
           // SIGNUP FLOW → redirect to login
           showToast(" Signup successful! Please log in.");
@@ -102,10 +102,10 @@ export default function OTPPage() {
         } else {
           // LOGIN FLOW → store tokens and redirect to user's Home 
           try {
-            sessionStorage.setItem("accessToken", data.data.user.accessToken);
-            sessionStorage.setItem("username", data.data.user.username);
+            localStorage.setItem("accessToken", data.data.user.accessToken);
+            localStorage.setItem("username", data.data.user.username);
           } catch (err) {
-            console.warn("sessionStorage unavailable:", err);
+            console.warn("localStorage unavailable:", err);
           }
 
           showToast(" Login successful!");

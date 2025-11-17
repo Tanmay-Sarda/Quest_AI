@@ -9,12 +9,12 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  // ---- FIX: only check sessionStorage after window exists ----
+  // ---- FIX: only check localStorage after window exists ----
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = sessionStorage.getItem("accessToken");
+      const token = localStorage.getItem("accessToken");
       if (token) {
-        router.push(`/Home/${sessionStorage.getItem("username")}`);
+        router.push(`/Home/${localStorage.getItem("username")}`);
       }
     }
   }, []);
@@ -40,8 +40,8 @@ export default function SignInPage() {
         }
       );
 
-      sessionStorage.setItem("accessToken", res.data.data.user.accessToken);
-      sessionStorage.setItem("username", res.data.data.user.username);
+      localStorage.setItem("accessToken", res.data.data.user.accessToken);
+      localStorage.setItem("username", res.data.data.user.username);
 
       showToast("✅ Logged in successfully!");
       router.push(`/Home/${res.data.data.user.username}`);
@@ -64,8 +64,8 @@ export default function SignInPage() {
       const data = await res.json();
 
       if (res.ok) {
-        sessionStorage.setItem("accessToken", data.data.user.accessToken);
-        sessionStorage.setItem("username", data.data.user.username);
+        localStorage.setItem("accessToken", data.data.user.accessToken);
+        localStorage.setItem("username", data.data.user.username);
 
         showToast("✅ Sign in successful!");
         router.push(`/Home/${data.data.user.username}`);

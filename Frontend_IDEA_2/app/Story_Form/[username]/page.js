@@ -25,7 +25,7 @@ export default function StoryForm() {
     toast.info("Story is being created...");
 
     try {
-      const token = sessionStorage.getItem("accessToken");
+      const token = localStorage.getItem("accessToken");
 
       const payload = {
         title: form.title,

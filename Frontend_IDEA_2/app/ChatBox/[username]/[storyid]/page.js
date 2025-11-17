@@ -30,14 +30,14 @@ export default function StoryPage() {
   };
 
   useEffect(() => {
-    if (!sessionStorage.getItem("accessToken") && !isPublic) {
+    if (!localStorage.getItem("accessToken") && !isPublic) {
       showToast("User not authenticated");
       setTimeout(() => {
         router.push("/Sign_in");
       }, 2000);
       return;
     }
-    setuser(sessionStorage.getItem("username"));
+    setuser(localStorage.getItem("username"));
     inputRef.current?.focus();
     const fetchStoryContent = async () => {
       try {
@@ -45,7 +45,7 @@ export default function StoryPage() {
           `${process.env.NEXT_PUBLIC_HOST}/story/content/${trimmedStoryId}`,
           {
             headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           }
         );
@@ -74,7 +74,7 @@ export default function StoryPage() {
     setLoading(true);
 
     try {
-      const token = sessionStorage.getItem("accessToken");
+      const token = localStorage.getItem("accessToken");
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/story/addcontent/${trimmedStoryId}`,
@@ -147,7 +147,7 @@ export default function StoryPage() {
     if (!confirm2) return;
 
     try {
-      const token = sessionStorage.getItem("accessToken");
+      const token = localStorage.getItem("accessToken");
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/story/toggle-complete/${trimmedStoryId}`,

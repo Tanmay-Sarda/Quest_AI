@@ -39,7 +39,7 @@ export default function HomePage() {
 
   const addUser = async (e) => {
     e.preventDefault();
-    const token = sessionStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
     if (!token) return router.push("/Sign_in");
 
     try {
@@ -72,7 +72,7 @@ export default function HomePage() {
   const handledelete = async (story, type) => {
     if (!confirm("Delete story?")) return;
 
-    const token = sessionStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
     if (!token) return router.push("/Sign_in");
 
     try {
@@ -99,7 +99,7 @@ export default function HomePage() {
   };
 
   const changeAccess = async (story_id) => {
-    const token = sessionStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
     if (!token) return router.push("/Sign_in");
 
     try {
@@ -196,7 +196,7 @@ export default function HomePage() {
 
   // Fetch stories
   useEffect(() => {
-    if (!sessionStorage.getItem("accessToken")) {
+    if (!localStorage.getItem("accessToken")) {
       return router.push("/Sign_in");
     }
     complete();
@@ -204,7 +204,7 @@ export default function HomePage() {
   }, []);
 
   const complete = async () => {
-    const token = sessionStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/story/complete`,
@@ -222,7 +222,7 @@ export default function HomePage() {
   };
 
   const ongoing = async () => {
-    const token = sessionStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_HOST}/story/incomplete`,

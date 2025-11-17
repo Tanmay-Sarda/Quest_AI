@@ -23,14 +23,14 @@ export default function Navbar() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const img = sessionStorage.getItem("profileImage");
+      const img = localStorage.getItem("profileImage");
       if (img) setProfileImage(img);
     }
   }, []);
 
   useEffect(() => {
-    setusername(sessionStorage.getItem("username"));
-    const token = sessionStorage.getItem("accessToken");
+    setusername(localStorage.getItem("username"));
+    const token = localStorage.getItem("accessToken");
     setIsLoggedIn(!!token);
   }, [pathname]);
 
@@ -54,8 +54,8 @@ export default function Navbar() {
 
   const handleLogout = () => {
     showToast("🔓 Logging out...");
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("username");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("username");
     setIsLoggedIn(false);
     router.push("/Sign_in");
   };
@@ -65,7 +65,7 @@ export default function Navbar() {
       setLoading(true);
       const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/notification/`, {
         headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       const data = await response.json();
@@ -88,7 +88,7 @@ export default function Navbar() {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
           body: JSON.stringify({ accept, character }),
         }
@@ -654,7 +654,7 @@ export default function Navbar() {
                 </div>
                 <div>
                   <p className="font-bold">{username || "User"}</p>
-                  <p className="text-xs text-gray-400">{sessionStorage.getItem("email") || ""}</p>
+                  <p className="text-xs text-gray-400">{localStorage.getItem("email") || ""}</p>
                 </div>
               </div>
               <button
