@@ -3,11 +3,12 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function EditProfile({ username }) {
+  const [oldPassword, setOldPassword] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [apiKey, setApiKey] = useState("");
-  const [oldp, setoldp] = useState(false);
-  const [newp, setnewp] = useState(false);
+  const [showPass, setShowPass] = useState(false); // For new password
+  const [showOldPass, setShowOldPass] = useState(false); // For old password
   const router = useRouter();
 
   const [profileImage, setProfileImage] = useState(null); // Old stored image
@@ -39,91 +40,102 @@ export default function EditProfile({ username }) {
     e.preventDefault();
 
     if (!apiKey) {
-      alert("Please provide an API key.");
+      showToast("Please provide an API key.");
       return;
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/api-key`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`
-      },
-      body: JSON.stringify({
-        apiKey,
-      }),
-    });
-
-    let data;
     try {
-      data = await res.json();
-    } catch {
-      const text = await res.text(); // capture the HTML or error response
-      console.error("Non-JSON response:", text);
-      showToast("❌ Server did not return JSON. Check your backend.");
-      return;
-    }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/api-key`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        },
+        body: JSON.stringify({
+          apiKey,
+        }),
+      });
 
-    if (!res.ok) {
-      showToast(`❌ ${data?.message || "Failed to update API key"}`);
-      return;
-    }
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        console.error("Non-JSON response:", text);
+        showToast("❌ Server did not return JSON. Check your backend.");
+        return;
+      }
 
-    showToast("✅ API key updated successfully!");
-    setApiKey("");
+      if (!res.ok) {
+        showToast(`❌ ${data?.message || "Failed to update API key"}`);
+        return;
+      }
+
+      showToast("✅ API key updated successfully!");
+      setApiKey("");
+    } catch (error) {
+      console.error("Network error updating API key:", error);
+      showToast("❌ Network error. Could not connect to the server.");
+    }
   };
 
-  const handleApiKeySubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!oldPassword) {
-      alert("Please confirm your previous password.");
+      showToast("Please confirm your previous password.");
       return;
     }
 
-    if(!newUsername && !newPassword){
-      alert("Please provide a new username or password to update.");
+    if (!newUsername && !newPassword && !newPFile) {
+      showToast("Please provide a new username, password, or profile picture to update.");
       return;
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/update-profile`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`
-      },
-      body: JSON.stringify({
-        oldPassword,
-        newUsername,
-        newPassword,
-        profileImage,
-      }),
-    });
+    const formData = new FormData();
+    formData.append("oldPassword", oldPassword);
+    if (newUsername) formData.append("newUsername", newUsername);
+    if (newPassword) formData.append("newPassword", newPassword);
+    if (newPFile) formData.append("profileImage", newPFile); // Append the actual file
 
-    let data;
-    console.log(res)
     try {
-      data = await res.json();
-    } catch {
-      const text = await res.text(); // capture the HTML or error response
-      console.error("Non-JSON response:", text);
-      showToast("❌ Server did not return JSON. Check your backend.");
-      return;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/update-profile`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+          // Do NOT set Content-Type for FormData, browser sets it automatically
+        },
+        body: formData,
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        console.error("Non-JSON response:", text);
+        showToast("❌ Server did not return JSON. Check your backend.");
+        return;
+      }
+
+      if (!res.ok) {
+        showToast(`❌ ${data?.message || "Failed to update profile"}`);
+        return;
+      }
+
+      showToast("✅ Profile updated successfully!");
+      // persist username and profileImage in localStorage for immediate UI updates
+      try {
+        if (newUsername) localStorage.setItem("username", newUsername);
+        if (data.profilePicture) localStorage.setItem("profileImage", data.profilePicture); // Assuming backend returns updated profilePicture URL
+      } catch (err) {
+        console.warn("Error updating localStorage:", err);
+      }
+      router.push(`/Home/${newUsername || username}`); // Redirect to home with updated username
+    } catch (error) {
+      console.error("Network error updating profile:", error);
+      showToast("❌ Network error. Could not connect to the server.");
     }
-
-    if (!res.ok) {
-      showToast(`❌ ${data?.message || "Failed to update profile"}`);
-      return;
-    }
-
-    showToast("✅ Profile updated successfully!");
-    // persist username and profileImage in localStorage for immediate UI updates
-    try {
-      if (newUsername) localStorage.setItem("username", newUsername);
-      if (profileImage) localStorage.setItem("profileImage", profileImage);
-    } catch {}
-    router.push(`/Home/${newUsername || username}`); // Redirect to home with updated username
-
   };
 
 
@@ -214,6 +226,25 @@ export default function EditProfile({ username }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="w-full relative">
+            <input
+              type={showOldPass ? "text" : "password"}
+              placeholder="Old Password"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-blue-400 outline-none"
+              required
+            />
+            {oldPassword && (
+              <button
+                type="button"
+                onClick={() => setShowOldPass(!showOldPass)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+              >
+                {showOldPass ? "HIDE" : "SHOW"}
+              </button>
+            )}
+          </div>
 
           <input
             type="text"
