@@ -30,6 +30,7 @@ export default function Navbar() {
 
   useEffect(() => {
     setusername(localStorage.getItem("username"));
+    setProfileImage(localStorage.getItem("profileImage"));
     const token = localStorage.getItem("accessToken");
     setIsLoggedIn(!!token);
   }, [pathname]);

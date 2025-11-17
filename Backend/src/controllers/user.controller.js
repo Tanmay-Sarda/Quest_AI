@@ -184,10 +184,11 @@ const generateRefreshToken= asyncHandler(async (req, res) => {
 
 const  updateUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id; // From verifyJWT middleware
-  const { oldPassword,newUsername,newPassword} = req.body;
+  const {newUsername,newPassword} = req.body;
 
   // If a new profile picture is uploaded, handle the upload to Cloudinary  
   if (req.file) {
+    console.log("YES")
     try {
         // Upload new profile picture to Cloudinary
         const uploadResult = await uploadCloudinary(req.file.path);
@@ -203,10 +204,7 @@ const  updateUserProfile = asyncHandler(async (req, res) => {
         return res.status(500).json(new ApiError(500, "Failed to upload profile picture"));
     }
   }
-  //  Validate required fields
-  if (!oldPassword) {
-    return res.status(400).json(new ApiError(400, "Current password is required to update profile."));
-  }
+
 
   //  Find the user
   const user = await User.findById(userId);
@@ -214,19 +212,13 @@ const  updateUserProfile = asyncHandler(async (req, res) => {
     return res.status(404).json(new ApiError(404, "User not found."));
   }
 
-  //  Check if current password is correct
-  const isvalid = await user.isPasswordCorrect(oldPassword);
-  if(!isvalid)
-  {
-    return res.status(401).json(new ApiError(401, "Current password is incorrect."));
-  }
   //  Update fields conditionally
   if (newUsername) user.username = newUsername;
   if(newPassword) user.password = newPassword;
   //  Save the user
   await user.save();
 
-  res.status(200).json(new ApiResponse(200, { username: user.username, email: user.email }, "Profile updated successfully."));
+  res.status(200).json(new ApiResponse(200, { username: user.username, email: user.email,profilePicture:user.profilePicture }, "Profile updated successfully."));
 });
 
 export { registerUser, loginUser, logoutUser, generateRefreshToken, googleLogin ,  updateUserProfile};
