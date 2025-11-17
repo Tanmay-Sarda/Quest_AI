@@ -25,11 +25,6 @@ db = client["test"]
 story_collection = db["stories"]
 
 # --- LLM Setup ---
-llm = ChatGroq(
-    model="moonshotai/kimi-k2-instruct",
-    temperature=0.9,
-    groq_api_key=os.environ.get("GROQ_API_KEY")
-)
 
 # --- Prompt Templates ---
 
@@ -90,10 +85,6 @@ summary_prompt = PromptTemplate(
 )
 
 # --- Chains ---
-dialect_chain = dialect_prompt | llm | StrOutputParser()
-setup_chain = setup_prompt | llm | StrOutputParser()
-story_chain = story_prompt | llm | StrOutputParser()
-summary_chain = summary_prompt | llm | StrOutputParser()
 
 # --- Helper Function ---
 def format_story_chunk(content_list: List[dict]) -> str:
@@ -114,11 +105,13 @@ class NewStoryRequest(BaseModel):
     description: str
     owner: Owner
     genre: Optional[str] = None
+    api_key: str
 
 class ContinueStoryRequest(BaseModel):
     story_id: str
     user_id: str
     user_action: str
+    api_key: str
 
 
 
@@ -127,6 +120,14 @@ class ContinueStoryRequest(BaseModel):
 async def start_new_story(request: NewStoryRequest):
     """Non-streaming version (backward compatible)"""
     try:
+        llm = ChatGroq(
+            model="moonshotai/kimi-k2-instruct",
+            temperature=0.9,
+            groq_api_key=request.api_key
+        )
+        dialect_chain = dialect_prompt | llm | StrOutputParser()
+        setup_chain = setup_prompt | llm | StrOutputParser()
+
         dialect = dialect_chain.invoke({
             "description": request.description
         })
@@ -154,6 +155,14 @@ async def start_new_story(request: NewStoryRequest):
 @app.post("/story/continue")
 async def continue_story_api(request: ContinueStoryRequest):
     try:
+        llm = ChatGroq(
+            model="moonshotai/kimi-k2-instruct",
+            temperature=0.9,
+            groq_api_key=request.api_key
+        )
+        story_chain = story_prompt | llm | StrOutputParser()
+        summary_chain = summary_prompt | llm | StrOutputParser()
+
         try:
             story_oid = ObjectId(request.story_id)
         except InvalidId:

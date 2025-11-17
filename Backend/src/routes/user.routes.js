@@ -1,4 +1,4 @@
-import { registerUser, loginUser, logoutUser, generateRefreshToken,googleLogin ,  updateUserProfile } from "../controllers/user.controller.js";
+import { registerUser, loginUser, logoutUser, generateRefreshToken,googleLogin ,  updateUserProfile, updateApiKey } from "../controllers/user.controller.js";
 import  { Router } from 'express';
 const router = Router();
 import { verifyJWT } from "../middleware/auth.middleware.js";
@@ -10,5 +10,6 @@ router.route('/refresh-token').get(generateRefreshToken); //Using route.route to
 router.route('/logout').post(verifyJWT, logoutUser); //Protected route, user must be logged in to logout
 router.post("/google-login", googleLogin);
 router.patch("/update-profile",verifyJWT,upload.single('profileImage'), updateUserProfile); // Protected route to update user profile
+router.post("/api-key", verifyJWT, updateApiKey);
 
 export default router;

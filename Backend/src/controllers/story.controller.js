@@ -10,15 +10,16 @@ const createStory = asyncHandler(async (req, res) => {
   console.log("createStory called");
   const { title, description, character, genre } = req.body;
   const ownerId = req.user?._id;
-
+  const user = await mongoose.model('User').findById(ownerId);
+  if (!user || !user.apiKey) {
+    return res.status(403).json(new ApiError(403, 'API key is required to create a story.'));
+  }
   if (!ownerId) {
     return res.status(401).json(new ApiError(401, 'Unauthorized: User not authenticated'));
   }
-
   if (!title || !description || !character) {
     return res.status(400).json(new ApiError(400, 'Title, description, and character name are required'));
   }
-
   try {
     // Call FastAPI to generate initial story content
     const fastApiRequestData = {
@@ -28,7 +29,8 @@ const createStory = asyncHandler(async (req, res) => {
         owner: ownerId.toString(),
         character: character
       },
-      genre: genre || undefined  
+      genre: genre || undefined,
+      api_key: user.apiKey
     };
 
     const aiResponse = await axios.post(`${process.env.FASTAPI_URL}/story/new`, fastApiRequestData);
@@ -235,6 +237,10 @@ const addpromptResponse = asyncHandler(async (req, res) => {
   const trimmedStoryId = story_id?.trim();
   const { prompt } = req.body;
   const userId = req.user?._id;
+  const user = await mongoose.model('User').findById(userId);
+  if (!user || !user.apiKey) {
+    return res.status(403).json(new ApiError(403, 'API key is required to continue a story.'));
+  }
 
   if (!prompt) {
     return res.status(400).json(new ApiError(400, 'Prompt is required'));
@@ -245,7 +251,8 @@ const addpromptResponse = asyncHandler(async (req, res) => {
     const fastApiRequestData = {
       story_id: trimmedStoryId,
       user_id: userId.toString(),
-      user_action: prompt
+      user_action: prompt,
+      api_key: user.apiKey
     };
 
     const response = await axios.post(

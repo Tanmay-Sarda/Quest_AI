@@ -1,4 +1,4 @@
-langchain_google_genai
+langchain_groq
 langchain_core
 bson
 fastapi

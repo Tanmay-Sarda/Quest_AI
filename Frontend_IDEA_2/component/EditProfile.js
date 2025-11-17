@@ -5,6 +5,7 @@ export default function EditProfile({ username }) {
   const [oldPassword, setOldPassword] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [apiKey, setApiKey] = useState("");
   const [oldp, setoldp] = useState(false);
   const [newp, setnewp] = useState(false);
   const router = useRouter();
@@ -28,6 +29,44 @@ export default function EditProfile({ username }) {
       toast.classList.remove("show");
       setTimeout(() => toast.remove(), 500);
     }, duration);
+  };
+
+  const handleApiKeySubmit = async (e) => {
+    e.preventDefault();
+
+    if (!apiKey) {
+      alert("Please provide an API key.");
+      return;
+    }
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/api-key`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+      },
+      body: JSON.stringify({
+        apiKey,
+      }),
+    });
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      const text = await res.text(); // capture the HTML or error response
+      console.error("Non-JSON response:", text);
+      showToast("❌ Server did not return JSON. Check your backend.");
+      return;
+    }
+
+    if (!res.ok) {
+      showToast(`❌ ${data?.message || "Failed to update API key"}`);
+      return;
+    }
+
+    showToast("✅ API key updated successfully!");
+    setApiKey("");
   };
 
   const handleSubmit = async (e) => {
@@ -209,6 +248,28 @@ export default function EditProfile({ username }) {
             className="mt-6 form-button w-full text-lg tracking-widest"
           >
             [ SAVE CHANGES ]
+          </button>
+        </form>
+
+        <form onSubmit={handleApiKeySubmit} className="flex flex-col gap-4 mt-8">
+          <h3 className="text-2xl mb-4 font-bold text-center tracking-wide">
+            Update API Key
+          </h3>
+          <div className="w-full relative">
+            <input
+              type="password"
+              placeholder="Your API Key"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-blue-400 outline-none"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="mt-6 form-button w-full text-lg tracking-widest"
+          >
+            [ SAVE API KEY ]
           </button>
         </form>
       </div>
