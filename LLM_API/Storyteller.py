@@ -137,6 +137,31 @@ def single_player_mode():
         story = continue_story(story, action, dialect)
         print("\n" + story + "\n")
 
+def introduce_new_player(story_so_far: str, new_player: str, dialect: str) -> str:
+    """
+    Tells the LLM to introduce a new player mid-story.
+    Uses multiplayer rules: third-person narration only.
+    """
+    intro_prompt = PromptTemplate(
+        input_variables=["story_so_far", "new_player", "dialect"],
+        template=(
+            "You are a Dungeon Master continuing a MULTIPLAYER story. "
+            "A new player has joined mid-adventure.\n\n"
+            "Current story:\n{story_so_far}\n\n"
+            "Introduce the new player named {new_player} in a natural and immersive way. "
+            "Stay in third-person and keep the narration consistent with {dialect}. "
+            "Describe how they enter the scene and their role. "
+            "Do not ask for an action."
+        )
+    )
+
+    chain = intro_prompt | llm | StrOutputParser()
+
+    return chain.invoke({
+        "story_so_far": story_so_far,
+        "new_player": new_player,
+        "dialect": dialect
+    })
 
 def multiplayer_mode():
     print("\n=== Turn-Based Multiplayer Mode ===")
@@ -163,14 +188,41 @@ def multiplayer_mode():
 
     turn = 0
     while True:
-        current_player = players[turn % num]
+        current_player = players[turn % len(players)]
         print(f"\n🎮 {current_player}'s turn")
 
-        action = input(f"{current_player}, what do you do? ('quit' to exit): ")
+        action = input(f"{current_player}, what do you do? ('quit' to exit, 'add' to add player): ")
+
+        # ----------------------------
+        # ADD PLAYER MID-GAME FEATURE
+        # ----------------------------
+        if action.lower() == "add":
+            new_player = input("Enter new player's name: ").strip()
+            if not new_player:
+                print("Invalid name.")
+                continue
+
+            players.append(new_player)
+            print(f"✅ Added player: {new_player}")
+
+            # Introduce them in the story
+            story = introduce_new_player(story, new_player, dialect)
+
+            print("\n" + story + "\n")
+
+            # IMPORTANT: do NOT increment turn, current player plays again
+            continue
+
+        # ----------------------------
+        # QUIT GAME
+        # ----------------------------
         if action.lower() in ("quit", "exit"):
             print("\n👋 Story ended.")
             break
 
+        # ----------------------------
+        # NORMAL ACTION
+        # ----------------------------
         tagged_action = f"{current_player} decides to {action}"
 
         story = story_chain_multi.invoke({
@@ -181,6 +233,7 @@ def multiplayer_mode():
 
         print("\n" + story + "\n")
         turn += 1
+
 
 
 
