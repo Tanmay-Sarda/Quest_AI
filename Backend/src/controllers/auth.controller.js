@@ -1,13 +1,14 @@
 import asyncHandler from "../utils/AsyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import { User }     from "../models/User.models.js";
 
 import bcrypt from "bcrypt";
 import { Otp } from "../models/Otp.model.js";
 import { sendOTPEmail } from "../utils/mailer.js";
 
 // import user actions
-import { registerUser, loginUser } from "./user.controller.js";
+import { registerUser, loginUser,resetpassword } from "./user.controller.js";
 
 /****************************************
  * HELPER 1: Generate + Send OTP
@@ -67,6 +68,11 @@ const verifyOtp = async (email, enteredOtp) => {
 export const sendSignupOTP = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
+   const existingUser = await User.findOne({ email });
+      if (existingUser) {
+         return res.status(409).json(new ApiError(409, 'User already exists with this email'));
+      }
+
   await generateAndSendOtp(email);
 
   return res
@@ -77,9 +83,8 @@ export const sendSignupOTP = asyncHandler(async (req, res) => {
 /****************************************
  * VERIFY SIGNUP OTP → CALL registerUser()
  ****************************************/
-export const verifySignupOTP = asyncHandler(async (req, res) => {
+export const verifySignupOTP = asyncHandler(async (req, res,next) => {
   const { username, email, password, profilePicture, otp } = req.body;
-
   const result = await verifyOtp(email, otp);
 
   if (!result.ok) {
@@ -88,7 +93,7 @@ export const verifySignupOTP = asyncHandler(async (req, res) => {
 
   // after OTP success → call registerUser()
   req.body = { username, email, password, profilePicture };
-  return registerUser(req, res);
+  return registerUser(req, res,next);
 });
 
 /****************************************
@@ -119,4 +124,61 @@ export const verifyLoginOTP = asyncHandler(async (req, res) => {
   // after OTP success → call loginUser()
   req.body = { email, password };
   return loginUser(req, res);
+});
+
+/****************************************
+ * send OTP FOR FORGOT PASSWORD
+ ****************************************/
+export const sendForgotPasswordOTP = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({email});
+  if (!user) {
+     return res.status(200).json(new ApiResponse(true, {}, "OTP has been sent"));
+  }
+
+  await generateAndSendOtp(email);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(true, {}, "OTP has been sent"));
+});
+
+/****************************************
+ * VERIFY FORGOT PASSWORD OTP
+ ****************************************/
+export const verifyForgotPasswordOTP = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  const otpEntry = await Otp.findOne({ email });
+
+  if (!otpEntry) {
+    return res.status(400).json(new ApiError(400, "OTP not found or expired"));
+  }
+
+  if (otpEntry.attempts >= 5) {
+    await Otp.deleteOne({ email });
+    return res.status(400).json(new ApiError(400, "Too many incorrect attempts. Please request a new OTP."));
+  }
+
+  if (otpEntry.expiresAt < Date.now()) {
+    await Otp.deleteOne({ email });
+    return res.status(400).json(new ApiError(400, "OTP expired"));
+  }
+
+  const valid = await bcrypt.compare(otp, otpEntry.otpHash);
+  if (!valid) {
+    otpEntry.attempts++;
+    await otpEntry.save();
+    return res.status(400).json(new ApiError(400, "Invalid OTP"));
+  }
+
+  // Mark OTP as verified without deleting it
+  otpEntry.isVerified = true;
+  otpEntry.verifiedAt = Date.now();
+  await otpEntry.save();
+
+  return res.status(200).json(
+    new ApiResponse(true, { email }, "OTP verified successfully")
+  );
 });

@@ -72,11 +72,18 @@ export default function OTPPage() {
     setLoading(true);
 
     // SELECT CORRECT VERIFY ENDPOINT 
-    const verifyUrl =
-      mode === "login"
-        ? `${process.env.NEXT_PUBLIC_HOST}/auth/verify-login-otp`
-        : `${process.env.NEXT_PUBLIC_HOST}/auth/verify-signup-otp`;
+    let verifyUrl = "";
 
+if (mode === "login") {
+  verifyUrl = `${process.env.NEXT_PUBLIC_HOST}/auth/verify-login-otp`;
+} 
+else if (mode === "reset") {
+  verifyUrl = `${process.env.NEXT_PUBLIC_HOST}/auth/forget-password/verify-otp`;
+} 
+else {
+  // default = signup
+  verifyUrl = `${process.env.NEXT_PUBLIC_HOST}/auth/verify-signup-otp`;
+}
     try {
       const res = await fetch(verifyUrl, {
         method: "POST",
@@ -93,6 +100,12 @@ export default function OTPPage() {
 
       if (res.ok) {
         // changed behavior depending on mode
+        if(mode==="reset"){
+          showToast(" OTP verified! You can now reset your password.");
+          setTimeout(() => router.push(`/Reset_password?email=${encodeURIComponent(email)}`), 1500);
+          return;
+        }
+
         if (mode === "signup") {
           localStorage.removeItem("pendingSignup");
 
@@ -123,36 +136,44 @@ export default function OTPPage() {
   };
 
   const handleResendOtp = async () => {
-    setLoading(true);
+  setLoading(true);
 
-    //  changed resend endpoints to auth/send-login-otp or auth/send-signup-otp
-    const resendUrl =
-      mode === "login"
-        ? `${process.env.NEXT_PUBLIC_HOST}/auth/send-login-otp`
-        : `${process.env.NEXT_PUBLIC_HOST}/auth/send-signup-otp`;
+  let resendUrl = "";
 
-    try {
-      const res = await fetch(resendUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+  if (mode === "login") {
+    resendUrl = `${process.env.NEXT_PUBLIC_HOST}/auth/send-login-otp`;
+  } 
+  else if (mode === "reset") {
+    resendUrl = `${process.env.NEXT_PUBLIC_HOST}/auth/forget-password/send-otp`;
+  } 
+  else {
+    // signup
+    resendUrl = `${process.env.NEXT_PUBLIC_HOST}/auth/send-signup-otp`;
+  }
 
-      const data = await res.json();
+  try {
+    const res = await fetch(resendUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
 
-      if (res.ok) {
-        showToast(" OTP resent to your email"); // message wording
-        setOtp(Array(6).fill("")); //  clear inputs after resend
-      } else {
-        showToast("⚠ " + (data.message || "Failed to resend OTP"));
-      }
-    } catch (error) {
-      console.error("Resend OTP error:", error);
-      showToast("⚠ Error: " + (error.message || "Something went wrong"));
-    } finally {
-      setLoading(false);
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast(" OTP resent to your email");
+      setOtp(Array(6).fill("")); 
+    } else {
+      showToast("⚠ " + (data.message || "Failed to resend OTP"));
     }
-  };
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    showToast("⚠ Error: " + (error.message || "Something went wrong"));
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div

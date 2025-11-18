@@ -3,6 +3,7 @@ import asyncHandler from "../utils/AsyncHandler.js";
 import ApiResponse  from "../utils/ApiResponse.js";
 import { User }     from "../models/User.models.js";
 import { OAuth2Client } from "google-auth-library";
+import { Otp } from "../models/Otp.model.js";
 import crypto from "crypto";
 import { uploadCloudinary,deleteCloudinary } from "../utils/cloudanary.js";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -240,4 +241,34 @@ const updateApiKey = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, {}, "API key updated successfully"));
 });
 
-export { registerUser, loginUser, logoutUser, generateRefreshToken, googleLogin ,  updateUserProfile, updateApiKey};
+const resetpassword= asyncHandler(async (req, res) => {
+    const { email, newPassword } = req.body;
+    // Find the user by email
+    if(!email || !newPassword){
+        return res.status(400).json(new ApiError(400, 'Email and new password are required'));
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.status(404).json(new ApiError(404, 'User not found with this email'));
+    }
+
+    const otpRecord = await Otp.findOne({ email });
+    if (!otpRecord || !otpRecord.isVerified) {
+        return res.status(400).json(new ApiError(400, 'OTP verification required to reset password'));
+    }
+
+    if(Date.now() - otpRecord.verifiedAt.getTime() > 10 * 60 * 1000){ 
+        return res.status(400).json(new ApiError(400, 'OTP verification has expired. Please verify OTP again.'));
+    }
+    
+    // Update the user's password
+    user.password = newPassword;
+    await user.save();
+
+    await Otp.deleteOne({ email });
+
+    res.status(200).json(new ApiResponse(true, {}, 'Password reset successfully'));
+});
+
+export { registerUser, loginUser, logoutUser, generateRefreshToken, googleLogin ,  updateUserProfile,resetpassword, updateApiKey};

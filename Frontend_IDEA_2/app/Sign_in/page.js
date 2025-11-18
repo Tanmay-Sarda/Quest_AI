@@ -9,7 +9,7 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  // ---- FIX: only check localStorage after window exists ----
+  // Check session only in browser
   useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("accessToken");
@@ -31,6 +31,7 @@ export default function SignInPage() {
     }, duration);
   };
 
+  // GOOGLE LOGIN
   const handleLogin = async (credentialResponse) => {
     try {
       const res = await axios.post(
@@ -48,19 +49,23 @@ export default function SignInPage() {
       router.push(`/Home/${res.data.data.user.username}`);
     } catch (err) {
       console.error(err);
-      showToast("⚠️ Google login failed");
+      showToast("⚠ Google login failed");
     }
   };
 
+  // NORMAL LOGIN
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/user/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_HOST}/user/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
 
       const data = await res.json();
 
@@ -72,10 +77,10 @@ export default function SignInPage() {
         showToast("✅ Sign in successful!");
         router.push(`/Home/${data.data.user.username}`);
       } else {
-        showToast("⚠️ " + (data.message || "Sign in failed"));
+        showToast("⚠ " + (data.message || "Sign in failed"));
       }
     } catch (error) {
-      showToast("⚠️ " + error.message);
+      showToast("⚠ " + error.message);
     }
   };
 
@@ -92,7 +97,7 @@ export default function SignInPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
             {/* EMAIL */}
             <div className="form-row flex flex-col sm:flex-row items-start sm:items-center">
-              <label htmlFor="email" className=" sm:w-1/3">
+              <label htmlFor="email" className="sm:w-1/3">
                 EMAIL :
               </label>
               <input
@@ -121,6 +126,7 @@ export default function SignInPage() {
                   required
                   className="w-full"
                 />
+
                 {form.password && (
                   <button
                     type="button"
@@ -138,18 +144,15 @@ export default function SignInPage() {
               <button
                 type="button"
                 onClick={() =>
-                  router.push(
-                    `/Otp_page?email=${encodeURIComponent(form.email)}&mode=reset`
-                  )
+                  router.push(`/Forget_Password`)
                 }
                 className="text-xl text-white hover:underline font-semibold -mt-2"
-                style={{ lineHeight: 1 }}
               >
                 Forgot password?
               </button>
             </div>
 
-            {/* SIGN IN BUTTON (BIGGER ON HOVER) */}
+            {/* SIGN IN BUTTON */}
             <button
               type="submit"
               className="form-button self-center hover:scale-110 transition-all duration-200 mt-4"
@@ -159,7 +162,7 @@ export default function SignInPage() {
 
             <p className="option text-center mt-4">Or sign in using</p>
 
-            {/* GOOGLE LOGIN (NO effect applied) */}
+            {/* GOOGLE LOGIN */}
             <div className="flex justify-center mt-2">
               <GoogleLogin
                 onSuccess={handleLogin}
