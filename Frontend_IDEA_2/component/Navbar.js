@@ -26,11 +26,12 @@ export default function Navbar() {
       const img = localStorage.getItem("profileImage");
       if (img) setProfileImage(img);
     }
-  }, []);
+  },);
 
   useEffect(() => {
     setusername(localStorage.getItem("username"));
     const token = localStorage.getItem("accessToken");
+    setProfileImage(localStorage.getItem("profileImage"))
     setIsLoggedIn(!!token);
   }, [pathname]);
 

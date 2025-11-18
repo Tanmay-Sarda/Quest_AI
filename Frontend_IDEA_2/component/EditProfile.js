@@ -81,17 +81,13 @@ export default function EditProfile({ username }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!oldPassword) {
-      showToast("Please confirm your previous password.");
-      return;
-    }
-
+    
+  console.log("ERROR")
     if (!newUsername && !newPassword && !newPFile) {
       showToast("Please provide a new username, password, or profile picture to update.");
       return;
     }
-
+     showToast("Profile Updating....")
     const formData = new FormData();
     formData.append("oldPassword", oldPassword);
     if (newUsername) formData.append("newUsername", newUsername);
@@ -108,16 +104,7 @@ export default function EditProfile({ username }) {
         body: formData,
       });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        const text = await res.text();
-        console.error("Non-JSON response:", text);
-        showToast("❌ Server did not return JSON. Check your backend.");
-        return;
-      }
-
+      let data = await res.json();
       if (!res.ok) {
         showToast(`❌ ${data?.message || "Failed to update profile"}`);
         return;
@@ -125,12 +112,9 @@ export default function EditProfile({ username }) {
 
       showToast("✅ Profile updated successfully!");
       // persist username and profileImage in localStorage for immediate UI updates
-      try {
-        if (newUsername) localStorage.setItem("username", newUsername);
-        if (data.profilePicture) localStorage.setItem("profileImage", data.profilePicture); // Assuming backend returns updated profilePicture URL
-      } catch (err) {
-        console.warn("Error updating localStorage:", err);
-      }
+      console.log(data.data.username,data.data.profilePicture)
+      localStorage.setItem("username",data.data.username)
+      localStorage.setItem("profileImage",data.data.profilePicture);
       router.push(`/Home/${newUsername || username}`); // Redirect to home with updated username
     } catch (error) {
       console.error("Network error updating profile:", error);
@@ -141,7 +125,7 @@ export default function EditProfile({ username }) {
 
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-70 z-[2000]">
+    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-70">
       <div className="bg-black border-4 border-white rounded-2xl p-10 w-[90%] max-w-md text-white relative shadow-lg animate-fade-in">
 
         <button
@@ -226,25 +210,6 @@ export default function EditProfile({ username }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="w-full relative">
-            <input
-              type={showOldPass ? "text" : "password"}
-              placeholder="Old Password"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-blue-400 outline-none"
-              required
-            />
-            {oldPassword && (
-              <button
-                type="button"
-                onClick={() => setShowOldPass(!showOldPass)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
-              >
-                {showOldPass ? "HIDE" : "SHOW"}
-              </button>
-            )}
-          </div>
 
           <input
             type="text"
