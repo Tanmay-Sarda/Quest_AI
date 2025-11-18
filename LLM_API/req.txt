@@ -6,3 +6,6 @@ dotenv
 motor
 langchain_groq
 uvicorn
+tqdm
+selenium
+pytest
