@@ -60,7 +60,7 @@ export default function SignUpPage() {
 
       localStorage.setItem("accessToken", res.data.data.user.accessToken);
       localStorage.setItem("username", res.data.data.user.username);
-      localStorage.setItem("profileImage",res.data.user.profilePicture)
+      localStorage.setItem("profileImage",res.data.data.user.profilePicture)
 
       showToast("✅ Logged in successfully via Google!");
       router.push(`/Home/${res.data.data.user.username}`);

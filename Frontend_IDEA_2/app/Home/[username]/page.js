@@ -83,9 +83,10 @@ export default function HomePage() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+     
+      let data=await res.json();
       if (!res.ok) {
-        showToast("Failed to delete story");
+        showToast(`Error: ${data.message}`);
         return;
       }
 
@@ -114,8 +115,11 @@ export default function HomePage() {
         }
       );
 
+
+        let data=await res.json()
+        console.log(data)
       if (!res.ok) {
-        showToast("Failed to change access");
+        showToast(`Error: ${data.message}`);
         return;
       }
 

@@ -51,6 +51,10 @@ export default function StoryPage() {
         );
 
         const data = await res.json();
+        if(!res.ok){
+          showToast(`${data.message}`)
+          return 
+        }
         const existingContent = data.data?.content || [];
 
         setStories(
@@ -92,6 +96,7 @@ export default function StoryPage() {
 
       if (!response.ok) {
         showToast(`Error: ${data.message}`);
+        return 
       }
 
       setStories(

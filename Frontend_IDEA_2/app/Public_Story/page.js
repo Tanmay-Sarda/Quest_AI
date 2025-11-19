@@ -19,25 +19,6 @@ const page = () => {
     setusername(localStorage.getItem('username'));
   }, []);
 
-  const getpublicstories = async () => {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_HOST}/story/publicstories`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to fetch public stories");
-
-      const data = await res.json();
-      setPublicstories(data.data);
-    } catch (err) {
-      console.error("Error fetching public stories:", err);
-    }
-  };
-
   const showToast = (message, duration = 2500) => {
     const toast = document.createElement("div");
     toast.className = "toast show";
@@ -48,6 +29,25 @@ const page = () => {
       toast.classList.remove("show");
       setTimeout(() => toast.remove(), 500);
     }, duration);
+  };
+
+   const getpublicstories = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_HOST}/story/publicstories`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (!res.ok) showToast("Failed to fetch public stories");
+
+      const data = await res.json();
+      setPublicstories(data.data);
+    } catch (err) {
+      showToast(`Error fetching public stories: ${err}`);
+    }
   };
 
   const StoryCard = ({ story, type }) => (

@@ -20,6 +20,18 @@ export default function StoryForm() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+   const showToast = (message, duration = 2500) => {
+    const toast = document.createElement("div");
+    toast.className = "toast show";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 500);
+    }, duration);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     toast.info("Story is being created...");
@@ -44,6 +56,10 @@ export default function StoryForm() {
       });
 
       const data = await res.json();
+      if(!res.ok){
+        showToast(`Error: ${data.message}`);
+        return 
+      }
       const newStoryId = data.data?._id;
 
       toast.success("Story created successfully!");

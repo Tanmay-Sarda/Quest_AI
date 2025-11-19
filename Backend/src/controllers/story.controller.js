@@ -6,7 +6,7 @@ import { Story } from '../models/Story.models.js';
 import mongoose from 'mongoose';
 
 
-const createStory = asyncHandler(async (req, res) => {
+const createStory = async (req, res) => {
   console.log("createStory called");
   const { title, description, character, genre } = req.body;
   const ownerId = req.user?._id;
@@ -14,16 +14,13 @@ const createStory = asyncHandler(async (req, res) => {
   if (!user || !user.apiKey) {
     return res.status(403).json(new ApiError(403, 'API key is required to create a story.'));
   }
-  if (!ownerId) {
-    return res.status(401).json(new ApiError(401, 'Unauthorized: User not authenticated'));
-  }
   if (!title || !description || !character) {
     return res.status(400).json(new ApiError(400, 'Title, description, and character name are required'));
   }
   try {
     // Call FastAPI to generate initial story content
     const fastApiRequestData = {
-      name: title,  
+      name: title,
       description: description,
       owner: {
         owner: ownerId.toString(),
@@ -75,163 +72,186 @@ const createStory = asyncHandler(async (req, res) => {
     const message = error.response?.data?.detail || 'Failed to create story via AI service.';
     return res.status(statusCode).json(new ApiError(statusCode, message));
   }
-});
+};
 
-const getAllStories = asyncHandler(async (req, res) => {
-  const owner = req.user?._id;
-  if (!owner) {
-    return res.status(401).json(new ApiError(false, 'Unauthorized: User not authenticated'));
+const getAllStories = async (req, res) => {
+  try {
+    const owner = req.user?._id;
+    if (!owner) {
+      return res.status(401).json(new ApiError(false, 'Unauthorized: User not authenticated'));
+    }
+
+    const stories = await Story.find({ "ownerid.owner": owner })
+      .select('-ownerid')
+      .sort({ createdAt: -1 });
+
+    // Attach character to each story
+    const result = stories.map((story) => {
+      const ownerEntry = story.ownerid?.find((entry) =>
+        entry.owner.equals(owner)
+      );
+
+      return {
+        _id: story._id,
+        title: story.title,
+        description: story.description,
+        genre: story.genre,
+        character: ownerEntry ? ownerEntry.character : null,
+        complete: story.complete,
+        createdAt: story.createdAt,
+        contentCount: story.content?.length || 0
+      };
+    });
+
+    res.status(200).json(new ApiResponse(true, result, 'Stories fetched successfully'));
+  } catch (error) {
+    return res.status(500).json(new ApiError(500, 'Failed to fetch stories'));
   }
+};
 
-  const stories = await Story.find({ "ownerid.owner": owner })
-    .select('-ownerid')
-    .sort({ createdAt: -1 });
+const getcomplete = async (req, res) => {
+  try {
+    const owner = req.user?._id;
+    if (!owner) {
+      return res.status(403).json(new ApiError(403, 'Login is required to do this functionality'));
+    }
 
-  // Attach character to each story
-  const result = stories.map((story) => {
-    const ownerEntry = story.ownerid?.find((entry) =>
-      entry.owner.equals(owner)
-    );
-    
-    return {
+    const stories = await Story.find({
+      "ownerid.owner": owner,
+      complete: true
+    }).select("-prompt -response").sort({ updatedAt: -1 });
+
+    const result = stories.map((story) => {
+      const ownerEntry = story.ownerid.find((entry) =>
+        entry.owner.equals(owner)
+      );
+
+      return {
+        ...story.toObject(),
+        character: ownerEntry ? ownerEntry.character : null,
+      };
+    });
+
+    return res.status(200).json(new ApiResponse(200, result, 'Complete stories fetched successfully'));
+  } catch (error) {
+    return res.status(500).json(new ApiError(500, "Failed to fetch stories"))
+  }
+};
+
+const getincomplete = async (req, res) => {
+  try {
+    const owner = req.user?._id;
+    if (!owner) {
+      return res.status(403).json(new ApiError(403, 'Login is required to do this functionality'));
+    }
+
+    const stories = await Story.find({
+      "ownerid.owner": owner,
+      complete: false
+    }).select('-prompt -response').sort({ updatedAt: -1 });
+
+    const result = stories.map((story) => {
+      const ownerEntry = story.ownerid.find((entry) =>
+        entry.owner.equals(owner)
+      );
+
+      return {
+        ...story.toObject(),
+        character: ownerEntry ? ownerEntry.character : null,
+      };
+    });
+
+    return res.status(200).json(new ApiResponse(200, result, 'Incomplete stories fetched successfully'));
+  } catch (error) {
+    return res.status(500).json(new ApiError(500, "Failed to fetch stories"))
+  }
+};
+
+const getpublicstories = async (req, res) => {
+  try {
+    const stories = await Story.find({
+      public: true
+    }).select('-prompt -response').populate('ownerid.owner', 'email').sort({ createdAt: -1 });
+
+    const result = stories.map((story) => {
+      const ownerEntry = story.ownerid[0]; // Get the first owner entry
+      return {
+        ...story.toObject(),
+        character: ownerEntry ? ownerEntry.character : null,
+        email: ownerEntry ? ownerEntry.owner.email : null,
+      };
+    });
+
+    //remove ownerid from result
+    result.forEach(story => {
+      delete story.ownerid;
+    });
+
+
+    return res.status(200).json(new ApiResponse(200, result, 'Public stories fetched successfully'));
+  } catch (error) {
+    return res.status(500).json(new ApiError(500, "Failed to fetch stories"))
+  }
+};
+
+const deleteStory = async (req, res) => {
+  try {
+    const storyId = req.params.storyId?.trim();
+    const ownerId = req.user?._id;
+
+    if (!storyId) {
+      return res.status(400).json(new ApiError(400, "Story ID is required"));
+    }
+
+    const story = await Story.findOne({
+      _id: storyId,
+      "ownerid.owner": ownerId
+    });
+
+    if (!story) {
+      return res.status(404).json(new ApiError(404, "Story not found or you are not the owner"));
+    }
+
+    await story.deleteOne();
+    return res.status(200).json(new ApiResponse(200, null, "Story deleted successfully"));
+  } catch (error) {
+    return res.status(500).json(new ApiError(500, "Failed to delete story"))
+  }
+};
+
+const getStoryContent = async (req, res) => {
+  try {
+    const { story_id } = req.params;
+    const trimmedStoryId = story_id?.trim();
+
+    if (!trimmedStoryId) {
+      return res.status(400).json(new ApiError(400, 'Story id is required'));
+    }
+
+    const story = await Story.findOne({
+      _id: trimmedStoryId,
+    }).select('-ownerid');
+
+    if (!story) {
+      return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
+    }
+
+
+    res.status(200).json(new ApiResponse(true, {
       _id: story._id,
       title: story.title,
       description: story.description,
       genre: story.genre,
-      character: ownerEntry ? ownerEntry.character : null,
+      content: story.content,
       complete: story.complete,
-      createdAt: story.createdAt,
-      contentCount: story.content?.length || 0
-    };
-  });
-
-  res.status(200).json(new ApiResponse(true, result, 'Stories fetched successfully'));
-});
-
-const getcomplete = asyncHandler(async (req, res) => {
-  const owner = req.user?._id;
-  if (!owner) {
-    return res.status(403).json(new ApiError(403, 'Login is required to do this functionality'));
+      public: story.public
+    }, 'Story content fetched successfully'));
+  } catch (err) {
+    return res.status(500).json(new ApiError(500, "Failed to fetch story content"))
   }
+};
 
-  const stories = await Story.find({
-    "ownerid.owner": owner,
-    complete: true
-  }).select("-prompt -response").sort({ updatedAt: -1 });
-
-  const result = stories.map((story) => {
-    const ownerEntry = story.ownerid.find((entry) =>
-      entry.owner.equals(owner)
-    );
-
-    return {
-      ...story.toObject(),
-      character: ownerEntry ? ownerEntry.character : null,
-    };
-  });
-
-  return res.status(200).json(new ApiResponse(200, result, 'Complete stories fetched successfully'));
-});
-
-const getincomplete = asyncHandler(async (req, res) => {
-  const owner = req.user?._id;
-  if (!owner) {
-    return res.status(403).json(new ApiError(403, 'Login is required to do this functionality'));
-  }
-
-  const stories = await Story.find({
-    "ownerid.owner": owner,
-    complete: false
-  }).select('-prompt -response').sort({ updatedAt: -1 });
-
-  const result = stories.map((story) => {
-    const ownerEntry = story.ownerid.find((entry) =>
-      entry.owner.equals(owner)
-    );
-
-    return {
-      ...story.toObject(),
-      character: ownerEntry ? ownerEntry.character : null,
-    };
-  });
-
-  return res.status(200).json(new ApiResponse(200, result, 'Incomplete stories fetched successfully'));
-});
-
-const getpublicstories = asyncHandler(async (req, res) => {
-   
-  const stories = await Story.find({
-    public: true
-  }).select('-prompt -response').populate('ownerid.owner', 'email').sort({ createdAt: -1 });
-  
-  const result = stories.map((story) => {
-    const ownerEntry = story.ownerid[0]; // Get the first owner entry
-    return {
-      ...story.toObject(),
-      character: ownerEntry ? ownerEntry.character : null,
-      email: ownerEntry ? ownerEntry.owner.email : null,
-    };
-  });
-
-  //remove ownerid from result
-  result.forEach(story => {
-    delete story.ownerid;
-  });
-
-
-  return res.status(200).json(new ApiResponse(200, result, 'Public stories fetched successfully'));
-});
-
-const deleteStory = asyncHandler(async (req, res) => {
-  const storyId = req.params.storyId?.trim();
-  const ownerId = req.user?._id;
-
-  if (!storyId) {
-    return res.status(400).json(new ApiError(400, "Story ID is required"));
-  }
-
-  const story = await Story.findOne({
-    _id: storyId,
-    "ownerid.owner": ownerId
-  });
-
-  if (!story) {
-    return res.status(404).json(new ApiError(404, "Story not found or you are not the owner"));
-  }
-
-  await story.deleteOne();
-  return res.status(200).json(new ApiResponse(200, null, "Story deleted successfully"));
-});
-
-const getStoryContent = asyncHandler(async (req, res) => {
-  const { story_id } = req.params;
-  const trimmedStoryId = story_id?.trim();
-
-  if (!trimmedStoryId) {
-    return res.status(400).json(new ApiError(400, 'Story id is required'));
-  }
-
-  const story = await Story.findOne({
-    _id: trimmedStoryId,
-  }).select('-ownerid');
-
-  if (!story) {
-    return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
-  }
-
-
-  res.status(200).json(new ApiResponse(true, {
-    _id: story._id,
-    title: story.title,
-    description: story.description,
-    genre: story.genre,
-    content: story.content,
-    complete: story.complete,
-    public: story.public
-  }, 'Story content fetched successfully'));
-});
-
-const addpromptResponse = asyncHandler(async (req, res) => {
+const addpromptResponse = async (req, res) => {
   console.log("addpromptResponse called");
   const { story_id } = req.params;
   const trimmedStoryId = story_id?.trim();
@@ -262,14 +282,14 @@ const addpromptResponse = asyncHandler(async (req, res) => {
 
     // Fetch updated story from MongoDB
     const updatedStory = await Story.findById(trimmedStoryId).select('-ownerid');
-    
+
     if (!updatedStory) {
       return res.status(404).json(new ApiError(404, 'Story not found after update'));
     }
     console.log("Story continued successfully");
     console.log(updatedStory.content);
     res.status(200).json(new ApiResponse(true, {
-    content: updatedStory.content,
+      content: updatedStory.content,
     }, 'Story continued successfully'));
 
   } catch (error) {
@@ -278,9 +298,10 @@ const addpromptResponse = asyncHandler(async (req, res) => {
     const message = error.response?.data?.detail || 'Failed to continue story via AI service.';
     return res.status(statusCode).json(new ApiError(statusCode, message));
   }
-});
+};
 
-const toggleCompleteStatus = asyncHandler(async (req, res) => {
+const toggleCompleteStatus = async (req, res) => {
+  try{
   const { story_id } = req.params;
   const owner = req.user?._id;
 
@@ -304,9 +325,12 @@ const toggleCompleteStatus = asyncHandler(async (req, res) => {
     _id: story._id,
     complete: story.complete
   }, `Story marked as ${story.complete ? 'complete' : 'incomplete'}`));
-});
+}catch(error){
+  return res.status(500).json(new ApiError(500, "Failed to toggle story status"))
+}
+};
 
-const changeAccess = asyncHandler(async (req, res) => {
+const changeAccess = async (req, res) => {
   const { story_id } = req.params;
   const owner = req.user?._id;
 
@@ -319,12 +343,12 @@ const changeAccess = asyncHandler(async (req, res) => {
     "ownerid.owner": owner
   });
 
-  if(!story) {
+  if (!story) {
     return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
   }
 
   //Check the owner always the first entry
-  if(!story.ownerid[0].owner.equals(owner)) {
+  if (!story.ownerid[0].owner.equals(owner)) {
     return res.status(403).json(new ApiError(403, 'Only the main owner can change access'));
   }
 
@@ -335,7 +359,7 @@ const changeAccess = asyncHandler(async (req, res) => {
     _id: story._id,
     public: story.public
   }, `Story access changed to ${story.public ? 'public' : 'private'}`));
-});
+};
 
 export {
   createStory,

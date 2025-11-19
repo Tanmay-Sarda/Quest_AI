@@ -73,6 +73,8 @@ export default function Navbar() {
       if (data && data.success) {
         setNotifications(data.data || []);
         setNotificationsCount((data.data && data.data.length) || 0);
+      }else{
+        showToast(data.message)
       }
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
