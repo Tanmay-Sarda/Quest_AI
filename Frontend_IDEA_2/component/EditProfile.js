@@ -125,12 +125,13 @@ export default function EditProfile({ username }) {
 
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-70">
-      <div className="bg-black border-4 border-white rounded-2xl p-10 w-[90%] max-w-md text-white relative shadow-lg animate-fade-in">
+    <div className="fixed inset-0 flex justify-center items-center" style={{ backgroundColor: 'var(--overlay-bg)' }}>
+      <div className="border-4 rounded-2xl p-10 w-[90%] max-w-md relative shadow-lg animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)', color: 'var(--text-color)' }}>
 
         <button
           onClick={() => router.push(`/Home/${username}`)}
-          className="absolute top-4 right-5 text-white text-2xl hover:text-red-400"
+          className="absolute top-4 right-5 text-2xl"
+          style={{ color: 'var(--danger-color)' }}
         >
           ✖
         </button>
@@ -141,7 +142,7 @@ export default function EditProfile({ username }) {
 
         {/* Profile picture */}
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center" style={{ backgroundColor: 'var(--terminal-bg)' }}>
 
             {newP ? (
               <img src={newP} alt="Preview" className="w-full h-full object-cover" />
@@ -184,7 +185,7 @@ export default function EditProfile({ username }) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xl transition-all duration-300 hover:text-[#39FF14] hover:scale-110 px-3 py-1"
+                className="text-xl transition-all duration-300 hover:scale-110 px-3 py-1 form-button"
               >
                 Update profile picture
               </button>
@@ -198,7 +199,8 @@ export default function EditProfile({ username }) {
                     localStorage.removeItem("profileImage_temp");
                     showToast("🗑️ Removed new picture");
                   }}
-                  className="px-3 py-1 rounded bg-gray-700 transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-95"
+                  className="px-3 py-1 rounded transition-all duration-300 hover:scale-105 active:scale-95"
+                  style={{ backgroundColor: 'var(--terminal-bg)', color: 'var(--text-color)' }}
                 >
                   Remove
                 </button>
@@ -216,7 +218,8 @@ export default function EditProfile({ username }) {
             placeholder="New Username (optional)"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
-            className="p-2 bg-transparent border-b-2 border-white focus:border-green-400 outline-none"
+            className="p-2 bg-transparent border-b-2 outline-none"
+            style={{ borderColor: 'var(--border-color)' }}
           />
 
           <div className="w-full relative">
@@ -225,14 +228,15 @@ export default function EditProfile({ username }) {
               placeholder="New Password (optional)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-green-400 outline-none"
+              className="p-2 bg-transparent border-b-2 w-full outline-none"
+              style={{ borderColor: 'var(--border-color)' }}
             />
 
             {newPassword && (
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                className="absolute right-2 top-1/2 -translate-y-1/2"
               >
                 {showPass ? "HIDE" : "SHOW"}
               </button>
@@ -257,7 +261,8 @@ export default function EditProfile({ username }) {
               placeholder="Your API Key"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-green-400 outline-none"
+              className="p-2 bg-transparent border-b-2 w-full outline-none"
+              style={{ borderColor: 'var(--border-color)' }}
               required
             />
           </div>

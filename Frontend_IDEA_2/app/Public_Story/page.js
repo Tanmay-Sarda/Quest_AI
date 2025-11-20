@@ -52,41 +52,33 @@ const page = () => {
 
   const StoryCard = ({ story, type }) => (
     <div
-      className="terminal-border min-h-[300px] h-auto grid grid-cols-1 gap-3 items-center bg-[#3c3b3b]
-            max-sm:min-h-[240px] max-sm:p-1"
-      style={{ transition: "all 0.3s ease" }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 0 20px rgba(255, 255, 255, 0.15)";
-        e.currentTarget.style.transform = "scale(1.02)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "";
-        e.currentTarget.style.transform = "scale(1)";
-      }}
+      className="terminal-border min-h-[300px] h-auto grid grid-cols-1 gap-3 items-center story-card"
+      style={{ backgroundColor: 'var(--terminal-bg)' }}
     >
       <div
-        className="terminal-content relative h-fit min-h-[280px] flex bg-[#262626]
+        className="terminal-content relative h-fit min-h-[280px] flex 
                 max-sm:flex-col max-sm:p-3 max-sm:min-h-[200px]"
+        style={{ backgroundColor: 'var(--bg-color)' }}
       >
         <div className="flex flex-col w-full max-sm:gap-1">
           <div className="flex icon justify-center">
-            <p className="text-2xl max-sm:text-xl font-mediium text-green-500">
+            <p className="text-2xl max-sm:text-xl font-mediium" style={{ color: 'var(--user-color)' }}>
               {story.title}
             </p>
           </div>
 
           <div className="flex gap-2 max-sm:flex-col max-sm:gap-0">
-            <h2 className="text-gray-500 max-sm:text-sm">Owner:</h2>
+            <h2 className="max-sm:text-sm" style={{ color: 'var(--text-color)', opacity: 0.7 }}>Owner:</h2>
             <p className="max-sm:text-sm">{story.email}</p>
           </div>
 
           <div className="flex gap-2 max-sm:flex-col max-sm:gap-0">
-            <h2 className="text-gray-500 max-sm:text-sm">Character:</h2>
+            <h2 className="max-sm:text-sm" style={{ color: 'var(--text-color)', opacity: 0.7 }}>Character:</h2>
             <p className="max-sm:text-sm">{story.character}</p>
           </div>
 
           <div className="flex gap-2 max-sm:flex-col max-sm:gap-0">
-            <h2 className="text-gray-500 max-sm:text-sm">Description:</h2>
+            <h2 className="max-sm:text-sm" style={{ color: 'var(--text-color)', opacity: 0.7 }}>Description:</h2>
             <p className="max-h-[100px] overflow-auto max-sm:text-sm">
               {story.description}
             </p>
@@ -97,8 +89,9 @@ const page = () => {
           {type === "ongoing" && (
             <button
               title="Continue Story"
-              className="text-green-500 hover:text-green-600 text-lg transition-all duration-200 hover:scale-125
+              className="text-lg transition-all duration-200 hover:scale-125
                             max-sm:text-base"
+              style={{ color: 'var(--user-color)' }}
               onClick={() => {
                 showToast("Loading ChatBox...");
                 router.push(`/ChatBox/${username}/${story._id} True`);
@@ -119,7 +112,6 @@ const page = () => {
     <div>
       <div
         className="min-h-screen w-full flex flex-col items-center 
-                bg-gradient-to-b from-[#0a0a14] via-[#0b0f1c] to-[#0a0a14] text-white 
                 p-5 max-sm:p-3"
       >
         <h1 className="text-4xl font-bold mb-8 mt-10 max-sm:text-2xl max-sm:mb-4">

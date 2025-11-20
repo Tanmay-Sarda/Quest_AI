@@ -131,7 +131,7 @@ export default function SignInPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sm"
                   >
                     {showPassword ? "HIDE" : "SHOW"}
                   </button>
@@ -146,7 +146,7 @@ export default function SignInPage() {
                 onClick={() =>
                   router.push(`/Forget_Password`)
                 }
-                className="text-xl text-white hover:underline font-semibold -mt-2"
+                className="text-xl hover:underline font-semibold -mt-2"
               >
                 Forgot password?
               </button>

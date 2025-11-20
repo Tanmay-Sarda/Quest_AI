@@ -50,9 +50,10 @@ export default function DynamicFooter() {
         bottom: "5px",
         width: "100%",
         textAlign: "center",
-        color: "rgba(255, 255, 255, 0.4)",
+        color: "var(--text-color)",
+        opacity: 0.7,
         fontSize: "1rem",
-        backgroundColor: "#000",
+        backgroundColor: "var(--footer-bg)",
         animation: "fadeIn 2s ease-out",
       }}
     >

@@ -3,6 +3,7 @@ import "./globals.css";
 import NavbarWrapper from "@/component/NavbarWrapper";
 import DynamicFooter from "./DynamicFooter";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ThemeProvider } from "../context/ThemeContext";
 
 const vt323 = VT323({
   variable: "--font-vt323",
@@ -31,11 +32,13 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${vt323.variable} relative `}>
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID} >
-        <NavbarWrapper  />
-        <div id="content">{children}</div>
-        <DynamicFooter />
-        </GoogleOAuthProvider>
+        <ThemeProvider>
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID} >
+            <NavbarWrapper  />
+            <div id="content">{children}</div>
+            <DynamicFooter />
+          </GoogleOAuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

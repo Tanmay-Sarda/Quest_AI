@@ -1,12 +1,57 @@
 @import "tailwindcss";
 
+/* Default (Dark) Theme Variables */
 :root { 
-  --text-color: #ccc;
+  --text-color: #ffffff;
   --border-color: rgba(255, 255, 255, 0.4);
-  --user-color: #ccc; 
+  --user-color: #ffffff; /* Green for user messages in dark mode */
   --ai-color: #aaa;
-  --bg-color: #0A0A0A;
+  --bg-color: #000000;
   --terminal-bg: rgba(10, 10, 10, 0.8);
+  --header-bg: rgba(0,0,0,0.5);
+  --footer-bg: rgba(0,0,0,0.5);
+  --button-hover-color: #ffffff;
+  --button-hover-text: #000000;
+  --input-border-focus: var(--text-color);
+  --toast-bg: #1a1a1a;
+  --toast-color: #ccc;
+  --toast-border: #555;
+  --notification-panel-bg: #0b0b0b;
+  --notification-panel-border: rgba(255,255,255,0.06);
+  --profile-panel-bg: #000;
+  --profile-panel-border: rgba(255,255,255,0.1);
+  --mobile-menu-bg: #050505;
+  --mobile-menu-border: rgba(255,255,255,0.1);
+  --shadow-color: rgba(255, 255, 255, 0.15);
+  --overlay-bg: rgba(0, 0, 0, 0.7);
+  --danger-color: #ff4d4d;
+}
+
+/* Light Theme Variables */
+html[data-theme="light"] {
+  --text-color: #000000;
+  --border-color: rgba(0, 0, 0, 0.2);
+  --user-color: #000000; /* Blue for user messages in light mode */
+  --ai-color: #555;
+  --bg-color: #ffffff;
+  --terminal-bg: rgba(255, 255, 255, 0.9);
+  --header-bg: rgba(255,255,255,0.8);
+  --footer-bg: rgba(255,255,255,0.8);
+  --button-hover-color: #000000;
+  --button-hover-text: #ffffff;
+  --input-border-focus: var(--user-color);
+  --toast-bg: #fff;
+  --toast-color: #333;
+  --toast-border: #ccc;
+  --notification-panel-bg: #fff;
+  --notification-panel-border: rgba(0,0,0,0.1);
+  --profile-panel-bg: #fff;
+  --profile-panel-border: rgba(0,0,0,0.1);
+  --mobile-menu-bg: #f8f9fa;
+  --mobile-menu-border: rgba(0,0,0,0.1);
+  --shadow-color: rgba(0, 0, 0, 0.15);
+  --overlay-bg: rgba(255, 255, 255, 0.7);
+  --danger-color: #ff4d4d;
 }
 
 /* Base retro body */
@@ -20,6 +65,7 @@ body {
   padding: 0;
   overflow-x: hidden;
   position: relative;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #content {
@@ -50,6 +96,16 @@ body::before {
   z-index: -1;
   pointer-events: none;
   animation: scanline 10s linear infinite;
+}
+
+html[data-theme="light"] body::before {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,0.03),
+    rgba(0,0,0,0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
 }
 
 /* Animations */
@@ -95,8 +151,9 @@ header {
   box-sizing: border-box;
   z-index: 10;
   animation: fadeInDown 1s ease-out;
-  background: rgba(0,0,0,0.5);
+  background: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .logo-img {
@@ -108,6 +165,10 @@ header {
 }
 .logo-img:hover { filter: brightness(1.2); }
 
+.logo-light {
+  filter: invert(1);
+}
+
 header nav a {
   color: var(--text-color);
   text-decoration: none;
@@ -116,7 +177,7 @@ header nav a {
   transition: all 0.3s;
   cursor: pointer;
 }
-header nav a:hover { color: #fff; }
+header nav a:hover { color: var(--button-hover-color); }
 
 /* Terminal components */
 .terminal-border {
@@ -128,6 +189,7 @@ header nav a:hover { color: #fff; }
   box-sizing: border-box;
   animation: fadeIn 1s ease-out;
   margin-bottom: 20px;
+  transition: border-color 0.3s ease;
 }
 
 .terminal-content {
@@ -137,11 +199,12 @@ header nav a:hover { color: #fff; }
   padding: 30px;
   width: 100%;
   box-sizing: border-box;
+  transition: border-color 0.3s ease;
 }
 
 .terminal-title {
   text-align: center;
-  color: #fff;
+  color: var(--text-color);
   font-size: 1.8rem;
   margin-bottom: 20px;
   letter-spacing: 2px;
@@ -149,6 +212,17 @@ header nav a:hover { color: #fff; }
   border-bottom-width: 1px;
   border-bottom-color: var(--border-color);
   border-bottom-style: dashed; 
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Story Card */
+.story-card {
+  transition: all 0.3s ease;
+}
+
+.story-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px var(--shadow-color);
 }
 
 /* Forms */
@@ -170,22 +244,24 @@ form {
   width: 120px;
   text-align: right;
   font-size: 1.5rem;
+  color: var(--text-color);
+  transition: color 0.3s ease;
 }
 
 .form-row input {
   flex-grow: 1;
   background: transparent;
   border: none;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 2px solid var(--border-color);
   color: var(--text-color);
   font-family: 'VT323', monospace;
   font-size: 1.5rem;
   padding: 5px 10px;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, color 0.3s;
 }
-.form-row input:focus { border-bottom-color: var(--text-color); }
-.form-row input::placeholder { color: #555; }
+.form-row input:focus { border-bottom-color: var(--input-border-focus); }
+.form-row input::placeholder { color: var(--text-color); opacity: 0.5; }
 
 /* Buttons */
 .form-button {
@@ -201,6 +277,7 @@ form {
   margin-left: 10px;
   position: relative;
   overflow: hidden;
+  color: var(--text-color);
 }
 
 .form-button::before {
@@ -211,8 +288,8 @@ form {
   transform: translateX(-50%) scaleX(0);
   width: 100%;
   height: 100%;
-  color: #39FF14;
-  transition: transform 0.8s ease;
+  background-color: var(--button-hover-color);
+  transition: transform 0.3s ease;
   z-index: -1;
 }
 
@@ -221,7 +298,7 @@ form {
 }
 
 .form-button:hover {
-  color: #39FF14;
+  color: var(--button-hover-text);
   transition: color 0.5s ease-in;
 }
 
@@ -254,7 +331,7 @@ form {
   transform: translateX(-50%) scaleX(0);
   width: 100%;
   height: 100%;
-  background-color: rgb(228, 21, 21);
+  background-color: var(--danger-color);
   
   transition: transform 0.3s ease;
   z-index: -1;
@@ -313,12 +390,14 @@ footer {
   bottom: 0;
   width: 100%;
   text-align: center;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-color);
+  opacity: 0.7;
   font-size: 1rem;
   padding: 10px 0;
-  background: rgba(0,0,0,0.5);
+  background: var(--footer-bg);
   border-top: 1px solid var(--border-color);
   animation: fadeIn 2s ease-out;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* Toast notifications */
@@ -326,16 +405,16 @@ footer {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: #1a1a1a;
-  color: #ccc;
+  background-color: var(--toast-bg);
+  color: var(--toast-color);
   padding: 15px 25px;
-  border: 1px solid #555;
+  border: 1px solid var(--toast-border);
   font-family: 'VT323', monospace;
   font-size: 1.2rem;
   z-index: 1000;
   opacity: 0;
   transform: translateX(100%);
-  transition: opacity 0.5s, transform 0.5s;
+  transition: opacity 0.5s, transform 0.5s, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 .toast.show { opacity: 1; transform: translateX(0); }
 
@@ -366,7 +445,7 @@ footer {
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* Chat components */
-.chat-divider { border-top: 1px dashed var(--border-color); }
+.chat-divider { border-top: 1px dashed var(--border-color); transition: border-color 0.3s ease; }
 
 #chat-messages {
   flex-grow: 1;
@@ -384,19 +463,21 @@ footer {
   max-width: 70%;
   border: 1px solid;
   word-wrap: break-word;
+  transition: border-color 0.3s ease;
 }
 
 .user-message {
   align-self: flex-end;
   border-color: var(--user-color);
   background: rgba(255, 255, 255, 0.05);
-  color: #39FF14;
+  color: var(--user-color);
 }
 
 .ai-message {
   align-self: flex-start;
   border-color: var(--ai-color);
   background: rgba(255, 255, 255, 0.02);
+  color: var(--text-color);
 }
 
 #chat-form {
@@ -410,26 +491,26 @@ footer {
   flex-grow: 1;
   background: transparent;
   border: none;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 2px solid var(--border-color);
   font-family: 'VT323', monospace;
-  color: #39FF14;
+  color: var(--text-color);
   font-size: 1.5rem;
   padding: 5px 10px;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, color 0.3s;
 }
-#chat-input:focus { border-bottom-color: var(--text-color); }
+#chat-input:focus { border-bottom-color: var(--input-border-focus); }
 
 .nav-btn {
   background: transparent;
-  border: 2px solid white;
-  color: white;
+  border: 2px solid var(--text-color);
+  color: var(--text-color);
   font-family: "Courier New", monospace;
   padding: 8px 20px;
   min-width: 140px;
   text-align: center;
   border-radius: 6px;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, border-color 0.3s ease;
   position: relative;
   overflow: hidden;
 }
@@ -442,7 +523,7 @@ footer {
   transform: translateX(-50%) scaleX(0);
   width: 100%;
   height: 100%;
-  background: white;
+  background: var(--button-hover-color);
   transition: transform 0.3s ease;
   z-index: -1;
   border-radius: 4px;
@@ -453,16 +534,16 @@ footer {
 }
 
 .nav-btn:hover {
-  color: black;
+  color: var(--button-hover-text);
 }
 
 .logout-btn {
-  border-color: #ff4d4d;
-  color: #ff4d4d;
+  border-color: var(--danger-color);
+  color: var(--danger-color);
 }
 
 .logout-btn::before {
-  background: #ff4d4d;
+  background: var(--danger-color);
 }
 
 .logout-btn:hover {

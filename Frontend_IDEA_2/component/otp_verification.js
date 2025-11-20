@@ -195,7 +195,7 @@ else {
             style={{
               textAlign: "center",
               marginBottom: "20px",
-              color: "#aaa",
+              color: "var(--text-color)",
               fontSize: "0.9rem",
             }}
           >
@@ -227,16 +227,16 @@ else {
                     textAlign: "center",
                     fontSize: "1.5rem",
                     fontWeight: "bold",
-                    backgroundColor: "transparent",
-                    border: "1px solid #666",
-                    color: "#fff",
+                    backgroundColor: "var(--terminal-bg)",
+                    border: "1px solid var(--border-color)",
+                    color: "var(--text-color)",
                     borderRadius: "4px",
                     outline: "none",
                     transition: "border-color 0.3s",
                   }}
                   disabled={loading}
-                  onFocus={(e) => (e.target.style.borderColor = "#0f0")}
-                  onBlur={(e) => (e.target.style.borderColor = "#666")}
+                  onFocus={(e) => (e.target.style.borderColor = "var(--button-hover-color)")}
+                  onBlur={(e) => (e.target.style.borderColor = "var(--border-color)")}
                 />
               ))}
             </div>
@@ -268,9 +268,9 @@ else {
                 onClick={handleResendOtp}
                 disabled={loading}
                 style={{
-                  background: "transparent",
-                  border: "1px dashed #666",
-                  color: "#0f0",
+                  background: "var(--terminal-bg)",
+                  border: "1px dashed var(--border-color)",
+                  color: "var(--button-hover-color)",
                   padding: "10px 20px",
                   borderRadius: "4px",
                   cursor: loading ? "not-allowed" : "pointer",

@@ -4,6 +4,7 @@ import { useRouter, usePathname, useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Navbar() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navRef = useRef(null);
   const [characterName, setCharacterName] = useState("");
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -206,13 +208,13 @@ export default function Navbar() {
           top: 0,
           width: "100%",
           zIndex: 1000,
-          backgroundColor: "#000",
+          backgroundColor: "var(--header-bg)",
           height: "80px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           padding: "0 20px",
-          borderBottom: "1px dashed rgba(255,255,255,0.3)",
+          borderBottom: "1px dashed var(--border-color)",
         }}
       >
         {/* Left Section */}
@@ -228,9 +230,9 @@ export default function Navbar() {
             }}
             className="md:hidden text-xl p-2 rounded hover:scale-105 hover:text-[#39FF14] transition-all duration-200"
             style={{
-              color: "white",
+              color: "var(--text-color)",
               background: "transparent",
-              border: "1px dashed rgba(255,255,255,0.08)",
+              border: "1px dashed var(--border-color)",
             }}
           >
             ≡
@@ -240,7 +242,7 @@ export default function Navbar() {
           <img
             src="/QuestLogo.jpeg"
             alt="Quest AI Logo"
-            className="h-[70px] cursor-pointer hover:scale-105 transition-all duration-200"
+            className={`h-[70px] cursor-pointer hover:scale-105 transition-all duration-200 ${theme === 'light' ? 'logo-light' : ''}`}
             onClick={() => {
               showToast("🏠 Going Home");
               router.push(isLoggedIn ? `/Home/${username}` : "/Sign_in");
@@ -293,6 +295,17 @@ export default function Navbar() {
             title="Public"
           >
             [ PUBLIC STORIES ]
+          </NavButton>
+
+          {/* Theme Toggle Button */}
+          <NavButton
+            onClick={() => {
+              showToast(`Theme toggled to ${theme === "light" ? "dark" : "light"}`);
+              toggleTheme();
+            }}
+            title="Toggle Theme"
+          >
+            {theme === 'light' ? '☀️' : '🌙'}
           </NavButton>
 
           {/* IF LOGGED IN */}
@@ -348,7 +361,7 @@ export default function Navbar() {
 
       {/* ---------------- MOBILE SLIDE MENU ---------------- */}
       <div
-        className={`fixed top-0 left-0 h-full w-[78%] max-w-xs bg-[#050505] z-[1100] transform transition-transform duration-250 ease-in-out border-r border-dashed border-white/10 ${
+        className={`fixed top-0 left-0 h-full w-[78%] max-w-xs bg-[var(--mobile-menu-bg)] z-[1100] transform transition-transform duration-250 ease-in-out border-r border-dashed border-[var(--mobile-menu-border)] ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -431,6 +444,17 @@ export default function Navbar() {
               [ PUBLIC STORIES ]
             </NavButton>
 
+            {/* Theme Toggle Button for Mobile */}
+            <NavButton
+              onClick={() => {
+                showToast(`Theme toggled to ${theme === "light" ? "dark" : "light"}`);
+                toggleTheme();
+                setMobileMenuOpen(false); // Close mobile menu after toggling theme
+              }}
+            >
+              {theme === 'light' ? '☀️' : '🌙'}
+            </NavButton>
+
             {isLoggedIn && (
               <>
                 <NavButton
@@ -511,8 +535,8 @@ export default function Navbar() {
               height: "100vh",
               width: 400,
               maxWidth: "100%",
-              background: "#0b0b0b",
-              color: "#fff",
+              background: "var(--notification-panel-bg)",
+              color: "var(--text-color)",
               zIndex: 1002,
               boxShadow: "-6px 0 18px rgba(0,0,0,0.6)",
               display: "flex",
@@ -522,7 +546,7 @@ export default function Navbar() {
             <div
               style={{
                 padding: "16px 20px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                borderBottom: "1px solid var(--notification-panel-border)",
                 display: "flex",
                 justifyContent: "space-between",
               }}
@@ -560,8 +584,8 @@ export default function Navbar() {
             className="fixed inset-0 bg-black/40 z-[1000]"
           />
 
-          <aside className="fixed top-20 right-5 w-80 bg-black text-white z-[1002] p-5 border border-white/10 rounded-lg">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
+          <aside className="fixed top-20 right-5 w-80 bg-[var(--profile-panel-bg)] text-[var(--text-color)] z-[1002] p-5 border border-[var(--profile-panel-border)] rounded-lg">
+            <div className="flex justify-between items-center border-b border-[var(--profile-panel-border)] pb-3 mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 bg-gray-900 rounded-full overflow-hidden flex items-center justify-center">
                   {profileImage ? (
