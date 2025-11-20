@@ -225,7 +225,7 @@ export default function EditProfile({ username }) {
               placeholder="New Password (optional)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-blue-400 outline-none"
+              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-green-400 outline-none"
             />
 
             {newPassword && (
@@ -257,7 +257,7 @@ export default function EditProfile({ username }) {
               placeholder="Your API Key"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-blue-400 outline-none"
+              className="p-2 bg-transparent border-b-2 w-full border-white focus:border-green-400 outline-none"
               required
             />
           </div>
