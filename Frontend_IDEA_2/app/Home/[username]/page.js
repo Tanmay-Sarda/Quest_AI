@@ -132,14 +132,14 @@ export default function HomePage() {
 
   // ⭐ Story Card (responsive)
   const StoryCard = ({ story, type }) => (
-    <div className="terminal-border relative rounded-xl bg-[#3c3b3b] overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_#ffffff30]">
-      <div className="terminal-content bg-[#262626] p-4 flex flex-col gap-2">
+    <div className="terminal-border relative rounded-xl bg-[var(--terminal-bg)] overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_#ffffff30]">
+      <div className="terminal-content bg-[var(--notification-panel-bg)] p-4 flex flex-col gap-2">
         <div className=" flex gap-2 icon  justify-center ">
-          <p className="text-2xl font-mediium text-green-500">{story.title}</p>
+          <p className="text-2xl font-mediium text-[var(--text-color)]">{story.title}</p>
         </div>
        
        <div className="flex flex-col sm:flex-row gap-2">
-          <h2 className="text-gray-500">Description: </h2>
+          <h2 className="text-[var(--ai-color)]">Description: </h2>
           <p className='max-h-[100px] overflow-auto'>{story.description}</p>
         </div>
 
@@ -244,10 +244,10 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen w-full px-3 sm:px-6 py-10 bg-black">
+    <div className="flex flex-col items-center min-h-screen w-full px-3 sm:px-6 py-10 bg-[var(--bg-color)]">
       {/* EMAIL MODAL (responsive) */}
       {display && (
-        <div className="fixed bottom-10 max-sm:bottom-4 left-1/2 -translate-x-1/2 terminal-border bg-black z-50 w-[90%] max-w-md p-4">
+        <div className="fixed bottom-10 max-sm:bottom-4 left-1/2 -translate-x-1/2 terminal-border bg-[var(--bg-color)] z-50 w-[90%] max-w-md p-4">
           <div className="terminal-content relative">
             <h2 className="terminal-title text-center">Enter User Email</h2>
 

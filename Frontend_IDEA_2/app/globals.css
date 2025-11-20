@@ -25,6 +25,8 @@
   --shadow-color: rgba(255, 255, 255, 0.15);
   --overlay-bg: rgba(0, 0, 0, 0.7);
   --danger-color: #ff4d4d;
+  --scanline-color-1: rgba(255,255,255,0.02);
+  --scanline-color-2: rgba(255,255,255,0.01);
 }
 
 /* Light Theme Variables */
@@ -52,7 +54,8 @@ html[data-theme="light"] {
   --shadow-color: rgba(0, 0, 0, 0.15);
   --overlay-bg: rgba(255, 255, 255, 0.7);
   --danger-color: #ff4d4d;
-}
+  --scanline-color-1: rgba(0,0,0,0.05);
+  --scanline-color-2: rgba(0,0,0,0.03);
 
 /* Base retro body */
 body {

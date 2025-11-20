@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter, useParams } from "next/navigation";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function StoryForm() {
   const [form, setForm] = useState({
@@ -15,6 +16,8 @@ export default function StoryForm() {
 
   const router = useRouter();
   const { username } = useParams();
+
+  const { theme } = useTheme();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -72,12 +75,12 @@ export default function StoryForm() {
 
   return (
     <div
-      className="relative min-h-screen flex items-start justify-center text-white overflow-hidden
-      max-sm:px-4 max-sm:pt-28"
+      className="relative min-h-screen flex items-start justify-center overflow-hidden
+      max-sm:px-4 max-sm:pt-28 text-[var(--text-color)]"
       style={{
-        backgroundColor: "#060606",
+        backgroundColor: "var(--bg-color)",
         backgroundImage:
-          "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), repeating-linear-gradient(transparent, transparent 2px, rgba(255,255,255,0.01) 3px)",
+          "linear-gradient(var(--scanline-color-1) 1px, transparent 1px), repeating-linear-gradient(transparent, transparent 2px, var(--scanline-color-2) 3px)",
         backgroundSize: "100% 3px, 100% 6px",
         paddingTop: 100,
       }}
@@ -100,8 +103,8 @@ export default function StoryForm() {
         </motion.h2>
 
         <div className="space-y-6">
-          <div className="border border-dashed border-white/10 rounded-lg p-6 max-sm:p-4">
-            <h3 className="text-center uppercase tracking-widest text-2xl mb-4 text-white/80 font-bold max-sm:text-xl">
+          <div className="border border-dashed border-[var(--border-color)] rounded-lg p-6 max-sm:p-4">
+            <h3 className="text-center uppercase tracking-widest text-2xl mb-4 text-[var(--text-color)] font-bold max-sm:text-xl">
               Create Your Story
             </h3>
 
@@ -128,7 +131,7 @@ export default function StoryForm() {
                     value={form[field.name]}
                     onChange={handleChange}
                     placeholder={field.placeholder}
-                    className="w-full rounded-xl bg-white/20 px-4 py-3 text-white placeholder-gray-400
+                    className="w-full rounded-xl bg-[var(--notification-panel-bg)] px-4 py-3 text-[var(--text-color)] placeholder-gray-400
                     focus:outline-none focus:ring-2 focus:ring-indigo-500 
                     transition-all duration-300 hover:bg-white/30 hover:shadow-lg hover:shadow-indigo-500/30
                     max-sm:px-3 max-sm:py-2 max-sm:text-sm"
@@ -149,7 +152,7 @@ export default function StoryForm() {
         </div>
       </motion.div>
 
-      <ToastContainer position="top-right" autoClose={2500} theme="dark" />
+      <ToastContainer position="top-right" autoClose={2500} theme={theme} />
     </div>
   );
 }
