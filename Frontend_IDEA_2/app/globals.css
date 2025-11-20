@@ -114,10 +114,9 @@ html[data-theme="light"] body::before {
 
 .bg-scanline-pattern {
   background-color: var(--bg-color);
-  background-image:
-    linear-gradient(var(--scanline-color-1) 1px, transparent 1px),
-    repeating-linear-gradient(transparent, transparent 2px, var(--scanline-color-2) 3px);
-  background-size: 100% 3px, 100% 6px;
+  background:
+    linear-gradient(var(--scanline-color-1) 1px, transparent 1px) 0 0 / 100% 3px,
+    repeating-linear-gradient(transparent, transparent 2px, var(--scanline-color-2) 3px) 0 0 / 100% 6px;
 }
 
 /* Animations */
