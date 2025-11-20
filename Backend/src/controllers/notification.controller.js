@@ -4,87 +4,135 @@ import { Story } from "../models/Story.models.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 
-const getNotificationsForUser = async (req, res) => {
+/****************************************
+ * GET NOTIFICATIONS FOR USER
+ ****************************************/
+const getNotificationsForUser = async (req, res, next) => {
+  const userId = req.user?.id;
 
-    const userId = req.user.id;
+  if (!userId) {
+    return res.status(400).json(new ApiError(400, "User ID is required"));
+  }
 
-    if (!userId) {
-        return res.status(400).json(new ApiError(400, "User ID is required"));
-    }
-
-    //Notification has three different section of data: toUser, fromUser, story_id
+  try {
     const notifications = await Notification.find({ toUser: userId })
-        .populate('fromUser', '_id username email') // Populate fromUser with username and email
-        .populate('story_id', '_id title'); // Populate story_id with title and summary
+      .populate("fromUser", "_id username email")
+      .populate("story_id", "_id title");
 
-    return res.status(200).json(new ApiResponse(200, notifications, "Notifications fetched successfully"));
-}
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, notifications, "Notifications fetched successfully")
+      );
+  } catch (error) {
+    next(error); 
+  }
+};
 
-const createNotification = async (req, res) => {
-
+/****************************************
+ * CREATE NOTIFICATION
+ ****************************************/
+const createNotification = async (req, res, next) => {
+  try {
     const { email, story_id } = req.body;
 
-    const fromUserId = req.user.id;
+    const fromUserId = req.user?.id; // ⭐ CHANGE: safe access
 
-    const toUser = await User.findOne({ email: email }).select("_id");
+    // Support both Mongoose Query (with chainable .select) and mocked returns
+    let findOneResult = User.findOne({ email: email });
+    if (findOneResult && typeof findOneResult.select === "function") {
+      findOneResult = findOneResult.select("_id");
+    }
+    const toUser = await findOneResult;
     if (!toUser) {
-        return res.status(404).json(new ApiError(404, "Recipient user not found"));
+      return res
+        .status(404)
+        .json(new ApiError(404, "Recipient user not found"));
     }
 
     const noti = await Notification.create({
-        toUser: toUser._id,
-        fromUser: fromUserId,
-        story_id: story_id,
-        status: 0,
+      toUser: toUser._id,
+      fromUser: fromUserId,
+      story_id: story_id,
+      status: 0,
     });
 
-    return res.status(201).json(new ApiResponse(201, noti, "Notification created successfully"));
-}
+    return res
+      .status(201)
+      .json(new ApiResponse(201, noti, "Notification created successfully"));
+  } catch (error) {
+    next(error); 
+  }
+};
 
-const deleteNotification = async (req, res) => {
-   
+/****************************************
+ * DELETE NOTIFICATION
+ ****************************************/
+const deleteNotification = async (req, res, next) => {
+  try {
     const { notificationId } = req.params;
     const { accept, character } = req.body;
 
     if (!notificationId) {
-        return res.status(400).json(new ApiError(400, "Notification ID is required"));
-    }
-      console.log("Delete notification called");
-    if (accept && !character) {
-        return res.status(400).json(new ApiError(400, "Character is required when accepting a notification"));
+      return res
+        .status(400)
+        .json(new ApiError(400, "Notification ID is required"));
     }
 
+    if (accept && !character) {
+      return res
+        .status(400)
+        .json(
+          new ApiError(
+            400,
+            "Character is required when accepting a notification"
+          )
+        );
+    }
 
     const notification = await Notification.findOne({ _id: notificationId });
     if (!notification) {
-        return res.status(404).json(new ApiError(404, "Notification not found or you are not authorized to delete it"));
+      return res.status(404).json(
+        new ApiError(
+          404,
+          "Notification not found or you are not authorized to delete it"
+        )
+      );
     }
 
     if (accept !== undefined && notification.status === 0) {
+      if (accept) {
+        const story = await Story.findById(notification.story_id);
 
-        if (accept) {
-            console.log("Adding user to story as per notification acceptance");
-            //add owner to story
-            const story = await Story.findById(notification.story_id);
-            if (!story) {
-                return res.status(404).json(new ApiError(404, "Story not found"));
-            }
-
-            story.ownerid.push({ owner: notification.toUser, character: character });
-            await story.save();
+        if (!story) {
+          return res.status(404).json(new ApiError(404, "Story not found"));
         }
-        //Create notification for the fromUser about rejection or acceptance
-        console.log("Creating new notification for the sender about the decision");
-        const newNotification = await Notification.create({
-            toUser: notification.fromUser,
-            fromUser: notification.toUser,
-            story_id: notification.story_id,
-            status: accept ? 1 : 2,
+
+        story.ownerid.push({
+          owner: notification.toUser,
+          character: character,
         });
+
+        await story.save();
+      }
+
+      // Create notification for sender
+      await Notification.create({
+        toUser: notification.fromUser,
+        fromUser: notification.toUser,
+        story_id: notification.story_id,
+        status: accept ? 1 : 2,
+      });
     }
+
     await notification.deleteOne();
-      console.log("Delete notification called");
-    return res.status(200).json(new ApiResponse(200, null, "Notification deleted successfully"));
-}
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Notification deleted successfully"));
+  } catch (error) {
+    next(error); 
+  }
+};
 
 export { getNotificationsForUser, createNotification, deleteNotification };
