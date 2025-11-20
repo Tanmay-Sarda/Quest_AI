@@ -76,12 +76,8 @@ export default function StoryForm() {
   return (
     <div
       className="relative min-h-screen flex items-start justify-center overflow-hidden
-      max-sm:px-4 max-sm:pt-28 text-[var(--text-color)]"
+      max-sm:px-4 max-sm:pt-28 text-[var(--text-color)] bg-scanline-pattern"
       style={{
-        backgroundColor: "var(--bg-color)",
-        backgroundImage:
-          "linear-gradient(var(--scanline-color-1) 1px, transparent 1px), repeating-linear-gradient(transparent, transparent 2px, var(--scanline-color-2) 3px)",
-        backgroundSize: "100% 3px, 100% 6px",
         paddingTop: 100,
       }}
     >
