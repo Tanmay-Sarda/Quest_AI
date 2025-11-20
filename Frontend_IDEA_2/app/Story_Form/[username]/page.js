@@ -23,7 +23,7 @@ export default function StoryForm() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-   const showToast = (message, duration = 2500) => {
+   const showToast = (message, duration = 1500) => {
     const toast = document.createElement("div");
     toast.className = "toast show";
     toast.textContent = message;
@@ -152,7 +152,7 @@ export default function StoryForm() {
         </div>
       </motion.div>
 
-      <ToastContainer position="top-right" autoClose={2500} theme={theme} />
+      <ToastContainer position="top-right" autoClose={1500} theme={theme} />
     </div>
   );
 }

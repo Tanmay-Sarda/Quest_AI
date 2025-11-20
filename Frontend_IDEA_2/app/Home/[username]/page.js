@@ -21,7 +21,7 @@ export default function HomePage() {
   const [story_id, setstory_id] = useState(null);
 
   // Toast
-  const showToast = (message, duration = 2500) => {
+  const showToast = (message, duration = 1500) => {
     const toast = document.createElement("div");
     toast.className = "toast show";
     toast.textContent = message;
