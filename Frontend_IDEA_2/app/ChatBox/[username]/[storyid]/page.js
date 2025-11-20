@@ -17,7 +17,7 @@ export default function StoryPage() {
   const trimmedStoryId = storyid.split("%20")[0];
   const isPublic = storyid.split("%20")[1];
 
-  const showToast = (message, duration = 2500) => {
+  const showToast = (message, duration = 1500) => {
     const toast = document.createElement("div");
     toast.className = "toast show";
     toast.textContent = message;
@@ -180,9 +180,9 @@ export default function StoryPage() {
   };
 
   return (
-    <div className="absolute top-15 flex flex-col items-center max-h-screen w-full px-2 sm:px-4 bg-black">
+    <div className="absolute top-15 flex flex-col items-center max-h-screen w-full px-2 sm:px-4 bg-[var(--bg-color)]">
       {/* HEADER */}
-        <div className="fixed top-0 left-0 right-0 h-16 bg-black flex max-sm:flex-col max-sm:h-auto max-sm:gap-2 justify-end items-center px-4 sm:px-10 py-2 z-10">
+        <div className="fixed top-0 left-0 right-0 h-16 bg-[var(--header-bg)] flex max-sm:flex-col max-sm:h-auto max-sm:gap-2 justify-end items-center px-4 sm:px-10 py-2 z-10">
         <button
           onClick={handleExit}
           className="form-button-exit text-sm sm:text-base"
@@ -201,10 +201,10 @@ export default function StoryPage() {
       </div>
 
       {/* CHAT BOX */}
-      <div className="mt-2 w-full sm:w-[95%] flex flex-col flex-grow border-[4px] sm:border-[6px] border-white/70 p-2 sm:p-4 overflow-hidden h-[88vh]">
+      <div className="mt-2 w-full sm:w-[95%] flex flex-col flex-grow border-[4px] sm:border-[6px] border-[var(--border-color)] p-2 sm:p-4 overflow-hidden h-[88vh]">
       
       
-        <div className="flex flex-col flex-grow border-[2px] sm:border-[3px] border-white/50 p-2 overflow-hidden">
+        <div className="flex flex-col flex-grow border-[2px] sm:border-[3px] border-[var(--border-color)] p-2 overflow-hidden">
           {/* MESSAGES */}
           <div
             ref={scrollRef}
@@ -224,7 +224,7 @@ export default function StoryPage() {
                       onClick={() => handleCopy(s.prompt)}
                       className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Copy className="w-4 h-4 text-white/70 hover:text-white" />
+                      <Copy className="w-4 h-4 text-[var(--text-color)]/70 hover:text-[var(--text-color)]" />
                     </button>
                   </div>
 
@@ -234,7 +234,7 @@ export default function StoryPage() {
                       onClick={() => handleCopy(s.response)}
                       className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Copy className="w-4 h-4 text-white/70 hover:text-white" />
+                      <Copy className="w-4 h-4 text-[var(--text-color)]/70 hover:text-[var(--text-color)]" />
                     </button>
                   </div>
                 </div>
@@ -244,14 +244,14 @@ export default function StoryPage() {
 
           {/* INPUT */}
           {isPublic!=='1' && (
-            <div className="flex w-full border-t border-dashed border-white/40 pt-2 mt-2 max-sm:flex-col">
+            <div className="flex w-full border-t border-dashed border-[var(--border-color)] pt-2 mt-2 max-sm:flex-col">
               <textarea
                 ref={inputRef}
                 onKeyDown={handleKeyPress}
                 placeholder="> Enter your action..."
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                className="w-full sm:w-[90%] max-h-40 p-2 resize-none overflow-y-auto rounded bg-transparent text-green-500 border border-gray-500 focus:outline-none"
+                className="w-full sm:w-[90%] max-h-40 p-2 resize-none overflow-y-auto rounded bg-transparent text-[var(--text-color)] border border-[var(--border-color)] focus:outline-none"
                 rows={1}
                 disabled={loading}
               />
