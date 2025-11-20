@@ -244,8 +244,11 @@ export default function Navbar() {
             alt="Quest AI Logo"
             className={`h-[70px] cursor-pointer hover:scale-105 transition-all duration-200 ${theme === 'light' ? 'logo-light' : ''}`}
             onClick={() => {
-              showToast("🏠 Going Home");
-              router.push(isLoggedIn ? `/Home/${username}` : "/Sign_in");
+              const targetUrl = isLoggedIn ? `/Home/${username}` : "/Sign_in";
+              if (pathname !== targetUrl) {
+                showToast("🏠 Going Home");
+                router.push(targetUrl);
+              }
             }}
           />
         </div>
@@ -255,8 +258,11 @@ export default function Navbar() {
           {/* ABOUT visible always */}
           <NavButton
             onClick={() => {
-              showToast("ℹ Redirecting to the About Page");
-              router.push("/About");
+              const targetUrl = "/About";
+              if (pathname !== targetUrl) {
+                showToast("ℹ Redirecting to the About Page");
+                router.push(targetUrl);
+              }
             }}
             title="About"
           >
@@ -267,8 +273,11 @@ export default function Navbar() {
             <>
               <NavButton
                 onClick={() => {
-                  showToast("📝 Signup");
-                  router.push("/");
+                  const targetUrl = "/";
+                  if (pathname !== targetUrl) {
+                    showToast("📝 Signup");
+                    router.push(targetUrl);
+                  }
                 }}
                 title="Signup"
               >
@@ -277,8 +286,11 @@ export default function Navbar() {
 
               <NavButton
                 onClick={() => {
-                  showToast("🔐 Signin");
-                  router.push("/Sign_in");
+                  const targetUrl = "/Sign_in";
+                  if (pathname !== targetUrl) {
+                    showToast("🔐 Signin");
+                    router.push(targetUrl);
+                  }
                 }}
                 title="Signin"
               >
@@ -289,8 +301,11 @@ export default function Navbar() {
 
           <NavButton
             onClick={() => {
-              showToast("📖 Redirecting to the Public Stories");
-              router.push("/Public_Story");
+              const targetUrl = "/Public_Story";
+              if (pathname !== targetUrl) {
+                showToast("📖 Redirecting to the Public Stories");
+                router.push(targetUrl);
+              }
             }}
             title="Public"
           >
@@ -313,8 +328,11 @@ export default function Navbar() {
             <>
               <NavButton
                 onClick={() => {
-                  showToast("🏠 Redirecting to the Home page");
-                  router.push(`/Home/${username}`);
+                  const targetUrl = `/Home/${username}`;
+                  if (pathname !== targetUrl) {
+                    showToast("🏠 Redirecting to the Home page");
+                    router.push(targetUrl);
+                  }
                 }}
                 title="Home"
               >
@@ -323,8 +341,11 @@ export default function Navbar() {
 
               <NavButton
                 onClick={() => {
-                  showToast("✍ Redirecting to the Create Story");
-                  router.push(`/Story_Form/${username}`);
+                  const targetUrl = `/Story_Form/${username}`;
+                  if (pathname !== targetUrl) {
+                    showToast("✍ Redirecting to the Create Story");
+                    router.push(targetUrl);
+                  }
                 }}
                 title="Create"
               >
@@ -371,8 +392,17 @@ export default function Navbar() {
               className="flex items-center gap-3 cursor-pointer"
               onClick={() => {
                 setMobileMenuOpen(false);
-                if (isLoggedIn) router.push(`/Edit/${username}`);
-                else router.push("/Sign_in");
+                if (isLoggedIn) {
+                  const targetUrl = `/Edit/${username}`;
+                  if (pathname !== targetUrl) {
+                    router.push(targetUrl);
+                  }
+                } else {
+                  const targetUrl = "/Sign_in";
+                  if (pathname !== targetUrl) {
+                    router.push(targetUrl);
+                  }
+                }
               }}
             >
               <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-900 flex items-center justify-center">
@@ -402,9 +432,12 @@ export default function Navbar() {
           <div className="flex flex-col gap-0">
             <NavButton
               onClick={() => {
-                showToast("ℹ Redirecting to the About page");
+                const targetUrl = "/About";
                 setMobileMenuOpen(false);
-                router.push("/About");
+                if (pathname !== targetUrl) {
+                  showToast("ℹ Redirecting to the About page");
+                  router.push(targetUrl);
+                }
               }}
             >
               [ ABOUT ]
@@ -414,9 +447,12 @@ export default function Navbar() {
               <>
                 <NavButton
                   onClick={() => {
-                    showToast("📝 Signup");
+                    const targetUrl = "/";
                     setMobileMenuOpen(false);
-                    router.push("/");
+                    if (pathname !== targetUrl) {
+                      showToast("📝 Signup");
+                      router.push(targetUrl);
+                    }
                   }}
                 >
                   [ SIGNUP ]
@@ -424,9 +460,12 @@ export default function Navbar() {
 
                 <NavButton
                   onClick={() => {
-                    showToast("🔐 Signin");
+                    const targetUrl = "/Sign_in";
                     setMobileMenuOpen(false);
-                    router.push("/Sign_in");
+                    if (pathname !== targetUrl) {
+                      showToast("🔐 Signin");
+                      router.push(targetUrl);
+                    }
                   }}
                 >
                   [ SIGNIN ]
@@ -436,9 +475,12 @@ export default function Navbar() {
 
             <NavButton
               onClick={() => {
-                showToast("📖 Redirecting to the Public Stories");
+                const targetUrl = "/Public_Story";
                 setMobileMenuOpen(false);
-                router.push("/Public_Story");
+                if (pathname !== targetUrl) {
+                  showToast("📖 Redirecting to the Public Stories");
+                  router.push(targetUrl);
+                }
               }}
             >
               [ PUBLIC STORIES ]
@@ -459,9 +501,12 @@ export default function Navbar() {
               <>
                 <NavButton
                   onClick={() => {
-                    showToast("🏠 Redirecting to the Home page");
+                    const targetUrl = `/Home/${username}`;
                     setMobileMenuOpen(false);
-                    router.push(`/Home/${username}`);
+                    if (pathname !== targetUrl) {
+                      showToast("🏠 Redirecting to the Home page");
+                      router.push(targetUrl);
+                    }
                   }}
                 >
                   [ HOME ]
@@ -469,9 +514,12 @@ export default function Navbar() {
 
                 <NavButton
                   onClick={() => {
-                    showToast("✍ Redirecting to the Public Stories");
+                    const targetUrl = `/Story_Form/${username}`;
                     setMobileMenuOpen(false);
-                    router.push(`/Story_Form/${username}`);
+                    if (pathname !== targetUrl) {
+                      showToast("✍ Redirecting to the Create Story");
+                      router.push(targetUrl);
+                    }
                   }}
                 >
                   [ CREATE STORY ]
@@ -612,9 +660,12 @@ export default function Navbar() {
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => {
-                  showToast("👤 Edit Profile");
+                  const targetUrl = `/Edit/${username}`;
                   setShowProfilePanel(false);
-                  router.push(`/Edit/${username}`);
+                  if (pathname !== targetUrl) {
+                    showToast("👤 Edit Profile");
+                    router.push(targetUrl);
+                  }
                 }}
                 className="text-left hover:text-[#39FF14] transition-all duration-200"
               >

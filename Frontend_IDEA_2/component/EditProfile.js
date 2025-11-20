@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "../context/ThemeContext";
 
 export default function EditProfile({ username }) {
   const [oldPassword, setOldPassword] = useState("");
@@ -10,6 +11,7 @@ export default function EditProfile({ username }) {
   const [showPass, setShowPass] = useState(false); // For new password
   const [showOldPass, setShowOldPass] = useState(false); // For old password
   const router = useRouter();
+  const { theme } = useTheme();
 
   const [profileImage, setProfileImage] = useState(null); // Old stored image
   const [newP, setnewP] = useState(null); // Preview (dataURL)
@@ -185,7 +187,7 @@ export default function EditProfile({ username }) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="form-button rounded-md p-1"
+                className="form-button rounded-md p-1 transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14]"
               >
                 Update profile picture
               </button>
@@ -199,7 +201,7 @@ export default function EditProfile({ username }) {
                     localStorage.removeItem("profileImage_temp");
                     showToast("🗑️ Removed new picture");
                   }}
-                  className="form-button rounded-md p-1"
+                  className="form-button rounded-md p-1 transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14]"
                   style={{ backgroundColor: 'var(--terminal-bg)', color: 'var(--text-color)' }}
                 >
                   Remove
@@ -245,7 +247,7 @@ export default function EditProfile({ username }) {
 
           <button
             type="submit"
-            className="mt-6 form-button w-full text-lg tracking-widest rounded-md p-1"
+            className="mt-6 form-button w-full text-lg tracking-widest rounded-md p-1 transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14]"
           >
             [ SAVE CHANGES ]
           </button>
@@ -268,7 +270,7 @@ export default function EditProfile({ username }) {
           </div>
           <button
             type="submit"
-            className="mt-6 form-button w-full text-lg tracking-widest rounded-md p-1"
+            className="mt-6 form-button w-full text-lg tracking-widest rounded-md p-1 transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14]"
           >
             [ SAVE API KEY ]
           </button>
