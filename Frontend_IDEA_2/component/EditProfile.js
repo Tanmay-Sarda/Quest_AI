@@ -185,7 +185,7 @@ export default function EditProfile({ username }) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xl transition-all duration-300 hover:scale-110 px-3 py-1 form-button transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14] hover:shadow-[0_0_15px_5px_rgba(57,255,20,0.5)]"
+                className="form-button rounded-md p-1"
               >
                 Update profile picture
               </button>
@@ -199,7 +199,7 @@ export default function EditProfile({ username }) {
                     localStorage.removeItem("profileImage_temp");
                     showToast("🗑️ Removed new picture");
                   }}
-                  className="px-3 py-1 rounded transition-all duration-300 hover:scale-105 active:scale-95 transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14] hover:shadow-[0_0_15px_5px_rgba(57,255,20,0.5)]"
+                  className="form-button rounded-md p-1"
                   style={{ backgroundColor: 'var(--terminal-bg)', color: 'var(--text-color)' }}
                 >
                   Remove
@@ -245,7 +245,7 @@ export default function EditProfile({ username }) {
 
           <button
             type="submit"
-            className="mt-6 form-button w-full text-lg tracking-widest transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14] hover:shadow-[0_0_15px_5px_rgba(57,255,20,0.5)]"
+            className="mt-6 form-button w-full text-lg tracking-widest rounded-md p-1"
           >
             [ SAVE CHANGES ]
           </button>
@@ -268,7 +268,7 @@ export default function EditProfile({ username }) {
           </div>
           <button
             type="submit"
-            className="mt-6 form-button w-full text-lg tracking-widest transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14] hover:shadow-[0_0_15px_5px_rgba(57,255,20,0.5)]"
+            className="mt-6 form-button w-full text-lg tracking-widest rounded-md p-1"
           >
             [ SAVE API KEY ]
           </button>
