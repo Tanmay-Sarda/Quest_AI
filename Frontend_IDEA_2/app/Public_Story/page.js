@@ -1,18 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlay,
 } from "@fortawesome/free-solid-svg-icons";
-import { useState, useEffect } from "react";
+
 
 const page = () => {
   const router = useRouter();
   const [username, setusername] = useState("")
   const [publicstories, setPublicstories] = useState([]);
+  const [loading, setLoading] = useState(true); // Added loading state
 
   useEffect(() => {
     getpublicstories();
@@ -47,10 +48,12 @@ const page = () => {
       setPublicstories(data.data);
     } catch (err) {
       showToast(`Error fetching public stories: ${err}`);
+    } finally {
+      setLoading(false); // Set loading to false after fetch
     }
   };
 
-  const StoryCard = ({ story, type }) => (
+  const StoryCard = ({ story, type }) => ( // Moved inside and simplified
     <div
       className="terminal-border min-h-[300px] h-auto grid grid-cols-1 gap-3 items-center story-card"
       style={{ backgroundColor: 'var(--terminal-bg)' }}
@@ -122,13 +125,17 @@ const page = () => {
           className="grid grid-cols-1 gap-6 w-full max-w-7xl 
                     lg:grid-cols-2 "
         >
-          {publicstories.length === 0 ? (
+          {loading ? ( // Conditional rendering for loading state
+            <p className="text-center col-span-full">
+              Loading public stories...
+            </p>
+          ) : publicstories.length === 0 ? (
             <p className="text-center col-span-full">
               No public stories available.
             </p>
           ) : (
             publicstories.map((story) => (
-              <StoryCard key={story._id} story={story} type="ongoing" />
+              <StoryCard key={story._id} story={story} type="ongoing" username={username} showToast={showToast} router={router} />
             ))
           )}
         </div>
