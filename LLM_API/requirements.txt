@@ -1,0 +1,10 @@
+langchain-groq
+langchain-core
+pymongo
+fastapi
+python-dotenv
+motor
+uvicorn
+tqdm
+selenium
+pytest
