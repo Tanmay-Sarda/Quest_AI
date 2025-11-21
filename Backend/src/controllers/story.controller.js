@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 
 const createStory = async (req, res) => {
   console.log("createStory called");
-  const { title, description, character, genre } = req.body;
+  const { title, description, character, genre, apiKey } = req.body;
   const ownerId = req.user?._id;
   const user = await mongoose.model('User').findById(ownerId);
   if (!user || !user.apiKey) {

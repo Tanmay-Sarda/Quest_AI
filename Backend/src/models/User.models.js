@@ -17,9 +17,6 @@ userSchema.pre("save", async function (next) {
     if (this.isModified("password")) {
         this.password = await bcrpt.hash(this.password, 10);
     }
-    if (this.isModified("apiKey")) {
-        this.apiKey = await bcrpt.hash(this.apiKey, 10);
-    }
     next();
 });
 
