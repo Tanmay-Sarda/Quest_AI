@@ -33,22 +33,43 @@ const page = () => {
     }, duration);
   };
 
-  const downloadStory = (story) => {
-    const storyContent = `
-Title: ${story.title}
-Owner: ${story.email}
-Character: ${story.character}
-Description: ${story.description}
-`;
-    const blob = new Blob([storyContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${story.title}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const downloadStory = async (story) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_HOST}/story/content/${story._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        showToast("Failed to fetch story content");
+        return;
+      }
+
+      const data = await res.json();
+      const storyContent = data.data?.content || [];
+
+      let formattedContent = `Title: ${story.title}\nOwner: ${story.email}\nCharacter: ${story.character}\n\n`;
+      storyContent.forEach((item) => {
+        formattedContent += `> ${item.prompt}\n`;
+        formattedContent += `${item.response}\n\n`;
+      });
+
+      const blob = new Blob([formattedContent], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${story.title}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showToast(`Error downloading story: ${err}`);
+    }
   };
 
    const getpublicstories = async () => {
