@@ -1,6 +1,6 @@
 langchain_groq
 langchain_core
-bson
+pymongo
 fastapi
 dotenv
 motor
