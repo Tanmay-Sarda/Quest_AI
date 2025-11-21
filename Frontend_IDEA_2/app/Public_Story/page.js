@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlay,
+  faDownload,
 } from "@fortawesome/free-solid-svg-icons";
 
 
@@ -30,6 +31,24 @@ const page = () => {
       toast.classList.remove("show");
       setTimeout(() => toast.remove(), 500);
     }, duration);
+  };
+
+  const downloadStory = (story) => {
+    const storyContent = `
+Title: ${story.title}
+Owner: ${story.email}
+Character: ${story.character}
+Description: ${story.description}
+`;
+    const blob = new Blob([storyContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${story.title}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
    const getpublicstories = async () => {
@@ -106,6 +125,18 @@ const page = () => {
               />
             </button>
           )}
+          <button
+            title="Download Story"
+            className="text-lg transition-all duration-200 hover:scale-125
+                          max-sm:text-base"
+            style={{ color: 'var(--user-color)' }}
+            onClick={() => downloadStory(story)}
+          >
+            <FontAwesomeIcon
+              className="text-xl max-sm:text-lg"
+              icon={faDownload}
+            />
+          </button>
         </div>
       </div>
     </div>
