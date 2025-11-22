@@ -19,6 +19,10 @@ export default function StoryPage() {
   const isPublic = storyidParts[1] === 'true' || storyidParts[1] === 'True' || storyidParts[1] === '1';
   const isComplete = storyidParts[2] === 'true';
 
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [onConfirmAction, setOnConfirmAction] = useState(null);
+
   const showToast = (message, duration = 1500) => {
     const toast = document.createElement("div");
     toast.className = "toast show";
@@ -142,47 +146,68 @@ export default function StoryPage() {
     }
   };
 
-  const handleComplete = async () => {
-    let confirm1 = confirm(
-      "Are you sure you want to mark this story as complete?"
-    );
-    if (!confirm1) return;
+  const handleToggleComplete = () => {
+    const action = isComplete ? "ongoing" : "complete";
+    setConfirmMessage(`Are you sure you want to mark this story as ${action}?`);
 
-    let confirm2 = confirm(
-      "Once marked complete, you cannot change the story."
-    );
-    if (!confirm2) return;
+    const confirmAction = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
 
-    try {
-      const token = localStorage.getItem("accessToken");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_HOST}/story/toggle-complete/${trimmedStoryId}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_HOST}/story/toggle-complete/${trimmedStoryId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+        const data = await response.json();
+
+        if (!response.ok) {
+          showToast(`Error: ${data.message}`);
+          return;
         }
-      );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        showToast(`Error: ${data.message}`);
-        return;
+        showToast(data.message);
+        setTimeout(() => router.push(`/Home/${username}`), 1500);
+      } catch (err) {
+        toast.error(err.message);
+      } finally {
+        setIsConfirming(false);
       }
-
-      showToast(data.message);
-      setTimeout(() => router.push(`/Home/${username}`), 1500);
-    } catch (err) {
-      toast.error(err.message);
-    }
+    };
+    
+    setOnConfirmAction(() => confirmAction);
+    setIsConfirming(true);
   };
+
+  const ConfirmationModal = ({ message, onConfirm, onCancel }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="terminal-border bg-[var(--bg-color)] w-[90%] max-w-md p-4">
+        <div className="terminal-content relative">
+          <h2 className="terminal-title text-center">{message}</h2>
+          <div className="mt-4 flex justify-center gap-4">
+            <button onClick={onConfirm} className="form-button">[ YES ]</button>
+            <button onClick={onCancel} className="form-button-exit">[ NO ]</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="absolute top-15 flex flex-col items-center max-h-screen w-full px-2 sm:px-4 bg-[var(--bg-color)]">
+      {isConfirming && (
+        <ConfirmationModal
+          message={confirmMessage}
+          onConfirm={onConfirmAction}
+          onCancel={() => setIsConfirming(false)}
+        />
+      )}
       {/* HEADER */}
         <div className="fixed top-0 left-0 right-0 h-16 bg-[var(--header-bg)] flex max-sm:flex-col max-sm:h-auto max-sm:gap-2 justify-end items-center px-4 sm:px-10 py-2 z-10">
         <button
@@ -194,10 +219,10 @@ export default function StoryPage() {
 
         {!isPublic && (
           <button
-            onClick={handleComplete}
+            onClick={handleToggleComplete}
             className="form-button-com text-sm sm:text-base ml-2"
           >
-            <span>[ COMPLETE ]</span>
+            <span>{isComplete ? "[ CONTINUE ]" : "[ COMPLETE ]"}</span>
           </button>
         )}
       </div>
