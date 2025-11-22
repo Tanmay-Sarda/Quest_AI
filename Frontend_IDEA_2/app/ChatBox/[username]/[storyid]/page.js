@@ -16,7 +16,7 @@ export default function StoryPage() {
   const [user, setuser] = useState("")
   const storyidParts = storyid.split("%20");
   const trimmedStoryId = storyidParts[0];
-  const isPublic = storyidParts[1] === 'true' || storyidParts[1] === 'True' || storyidParts[1] === '1';
+  const isPublic = storyidParts[1] === 'public';
   const isComplete = storyidParts[2] === 'true';
 
   const [isConfirming, setIsConfirming] = useState(false);
