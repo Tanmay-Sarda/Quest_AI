@@ -191,8 +191,8 @@ export default function StoryPage() {
         <div className="terminal-content relative">
           <h2 className="terminal-title text-center">{message}</h2>
           <div className="mt-4 flex justify-center gap-4">
-            <button onClick={onConfirm} className="form-button">[ YES ]</button>
-            <button onClick={onCancel} className="form-button-exit">[ NO ]</button>
+            <button onClick={onConfirm} className="form-button rounded-sm p-1 transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14]">[ YES ]</button>
+            <button onClick={onCancel} className="form-button rounded-sm p-1 transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14]">[ NO ]</button>
           </div>
         </div>
       </div>

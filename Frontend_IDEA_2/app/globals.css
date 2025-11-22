@@ -323,72 +323,7 @@ form {
   display: none;
 }
 
-.form-button-exit {
-  margin-top:4px;
-  border-color: #39FF14;
-  padding: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: color 0.3s;
-}
 
-.form-button-exit::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%) scaleX(0);
-  width: 100%;
-  height: 100%;
-  background-color: var(--danger-color);
-  
-  transition: transform 0.3s ease;
-  z-index: -1;
-  border-radius: 6px;
-}
-
-.form-button-exit:hover::before {
-  transform: translateX(-50%) scaleX(1);
-}
-
-
-.form-button-exit:hover {
-   color: #ffffff;
-}
-
-.form-button-com {
-  margin-top: 4px;
-  padding: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: color 0.3s;
-}
-
-.form-button-com::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%) scaleX(0);
-  width: 100%;
-  height: 100%;
-  background-color: rgb(47, 13, 236);
-  transition: transform 0.3s ease;
-  z-index: -1;
-  border-radius: 6px;
-}
-
-.form-button-com:hover::before {
-  transform: translateX(-50%) scaleX(1);
-}
-
-.form-button-com:hover {
-   color: #ffffff;
-}
 
 .form-actions {
   display: flex;

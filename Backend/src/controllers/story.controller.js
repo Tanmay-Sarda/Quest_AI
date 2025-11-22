@@ -286,6 +286,10 @@ const addpromptResponse = async (req, res) => {
     if (!updatedStory) {
       return res.status(404).json(new ApiError(404, 'Story not found after update'));
     }
+    if (updatedStory.public) {
+      updatedStory.public = false;
+      await updatedStory.save();
+    }
     console.log("Story continued successfully");
     console.log(updatedStory.content);
     res.status(200).json(new ApiResponse(true, {
