@@ -167,8 +167,8 @@ export default function HomePage() {
 
           <button
             onClick={() => {
-              if (type == "ongoing") router.push(`/ChatBox/${username}/${story._id} 2`)
-              else router.push(`/ChatBox/${username}/${story._id} 2`)
+              if (type == "ongoing") router.push(`/ChatBox/${username}/${story._id} ${story.public} ${story.complete}`)
+              else router.push(`/ChatBox/${username}/${story._id} ${story.public} ${story.complete}`)
             }
             }
             className="hover:scale-125 text-green-400"

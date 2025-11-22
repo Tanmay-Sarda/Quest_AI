@@ -36,8 +36,6 @@ export default function AboutPage() {
             {/* Card 1: Origin */}
             <div
               className="terminal-border p-5 sm:p-6 rounded-xl 
-                hover:shadow-[0_0_20px_#8ce5c2ff]
-                hover:scale-[1.03]
                 transition-all duration-300"
               style={{
                 borderColor: "var(--border-color)",
@@ -63,11 +61,8 @@ export default function AboutPage() {
               </p>
             </div>
 
-            {/* Card 2: The AI */}
             <div
               className="terminal-border p-5 sm:p-6 rounded-xl
-                hover:shadow-[0_0_20px_#8ce5c2ff]
-                hover:scale-[1.03]
                 transition-all duration-300"
               style={{
                 borderColor: "var(--border-color)",
@@ -93,11 +88,8 @@ export default function AboutPage() {
               </p>
             </div>
 
-            {/* Card 3: Multiplayer */}
             <div
               className="terminal-border p-5 sm:p-6 rounded-xl
-                hover:shadow-[0_0_20px_#8ce5c2ff]
-                hover:scale-[1.03]
                 transition-all duration-300"
               style={{
                 borderColor: "var(--border-color)",
@@ -126,8 +118,6 @@ export default function AboutPage() {
             {/* Card 4: BYOK */}
             <div
               className="terminal-border p-5 sm:p-6 rounded-xl
-                hover:shadow-[0_0_20px_#8ce5c2ff]
-                hover:scale-[1.03]
                 transition-all duration-300"
               style={{
                 borderColor: "var(--border-color)",

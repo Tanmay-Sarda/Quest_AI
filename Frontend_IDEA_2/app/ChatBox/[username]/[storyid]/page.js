@@ -14,8 +14,10 @@ export default function StoryPage() {
   const [loading, setLoading] = useState(false);
   const { username, storyid } = useParams();
   const [user, setuser] = useState("")
-  const trimmedStoryId = storyid.split("%20")[0];
-  const isPublic = storyid.split("%20")[1];
+  const storyidParts = storyid.split("%20");
+  const trimmedStoryId = storyidParts[0];
+  const isPublic = storyidParts[1] === 'true' || storyidParts[1] === 'True' || storyidParts[1] === '1';
+  const isComplete = storyidParts[2] === 'true';
 
   const showToast = (message, duration = 1500) => {
     const toast = document.createElement("div");
@@ -243,7 +245,7 @@ export default function StoryPage() {
           </div>
 
           {/* INPUT */}
-          {isPublic!=='1' && (
+          {!isPublic && !isComplete && (
             <div className="flex w-full border-t border-dashed border-[var(--border-color)] pt-2 mt-2 max-sm:flex-col">
               <textarea
                 ref={inputRef}

@@ -137,7 +137,7 @@ const page = () => {
               style={{ color: 'var(--user-color)' }}
               onClick={() => {
                 showToast("Loading ChatBox...");
-                router.push(`/ChatBox/${username}/${story._id} True`);
+                router.push(`/ChatBox/${username}/${story._id} True ${story.complete}`);
               }}
             >
               <FontAwesomeIcon
