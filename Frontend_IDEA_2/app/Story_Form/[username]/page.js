@@ -35,6 +35,10 @@ export default function StoryForm() {
     }, duration);
   };
 
+  const isFormFilled = () => {
+    return form.title && form.setting && form.character && form.genre;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     toast.info("Story is being created...");
@@ -139,9 +143,10 @@ export default function StoryForm() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                className="mt-6 form-button w-full text-lg tracking-widest max-sm:text-base"
+                className="mt-6 form-button w-full text-lg tracking-widest max-sm:text-base disabled:bg-gray-400 disabled:text-gray-700 disabled:cursor-not-allowed"
+                disabled={!isFormFilled()}
               >
-                [ SAVE CHANGES ]
+                [ CREATE STORY ]
               </motion.button>
             </form>
           </div>

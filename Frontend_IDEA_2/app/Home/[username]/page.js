@@ -21,6 +21,11 @@ export default function HomePage() {
   const [story_id, setstory_id] = useState(null);
 
   // Toast
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [storyToDelete, setStoryToDelete] = useState(null);
+  const [storyType, setStoryType] = useState(null);
+
+  // Toast
   const showToast = (message, duration = 1500) => {
     const toast = document.createElement("div");
     toast.className = "toast show";
@@ -69,9 +74,13 @@ export default function HomePage() {
     }
   };
 
-  const handledelete = async (story, type) => {
-    if (!confirm("Delete story?")) return;
+  const handleDeleteConfirmation = (story, type) => {
+    setStoryToDelete(story);
+    setStoryType(type);
+    setShowDeleteModal(true);
+  };
 
+  const handledelete = async (story, type) => {
     const token = localStorage.getItem("accessToken");
     if (!token) return router.push("/Sign_in");
 
@@ -130,6 +139,34 @@ export default function HomePage() {
     }
   };
 
+  const DeleteConfirmationModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="terminal-border bg-[var(--bg-color)] w-[90%] max-w-md p-4">
+            <div className="terminal-content relative">
+                <h2 className="terminal-title text-center">Delete Story?</h2>
+                <p className="text-center mt-4">Are you sure you want to delete this story?</p>
+                <div className="flex justify-center gap-4 mt-6">
+                    <button
+                        onClick={() => {
+                            handledelete(storyToDelete, storyType);
+                            setShowDeleteModal(false);
+                        }}
+                        className="form-button bg-red-500 hover:bg-red-600"
+                    >
+                        [ Yes ]
+                    </button>
+                    <button
+                        onClick={() => setShowDeleteModal(false)}
+                        className="form-button"
+                    >
+                        [ No ]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+  );
+
   // ⭐ Story Card (responsive)
   const StoryCard = ({ story, type }) => (
     <div className="terminal-border relative rounded-xl bg-[var(--terminal-bg)] overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_#ffffff30]">
@@ -158,7 +195,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => handledelete(story, type)}
+            onClick={() => handleDeleteConfirmation(story, type)}
             className="hover:scale-125 text-red-500"
           >
             <FontAwesomeIcon icon={faTrash} />
@@ -245,6 +282,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen w-full px-3 sm:px-6 py-10 bg-[var(--bg-color)]">
+      {showDeleteModal && <DeleteConfirmationModal />}
       {/* EMAIL MODAL (responsive) */}
       {display && (
         <div className="fixed bottom-10 max-sm:bottom-4 left-1/2 -translate-x-1/2 terminal-border bg-[var(--bg-color)] z-50 w-[90%] max-w-md p-4">
