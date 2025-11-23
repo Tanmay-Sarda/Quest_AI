@@ -157,7 +157,7 @@ export default function SignInPage() {
               type="submit"
               className="form-button self-center hover:scale-110 transition-all duration-200 mt-4"
             >
-              [ SIGNIN ]
+              [ SIGN IN ]
             </button>
 
             <p className="option text-center mt-4">Or sign in using</p>

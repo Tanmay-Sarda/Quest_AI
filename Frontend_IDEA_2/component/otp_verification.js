@@ -13,9 +13,20 @@ export default function OTPPage() {
   const email = searchParams.get("email") || "";
   const mode = searchParams.get("mode") || "signup"; // signup or login
   const [pending, setpending] = useState("")
+  const [resendCooldown, setResendCooldown] = useState(0); // Cooldown state for resend button
   useEffect(() => {
     setpending( localStorage.getItem("pendingSignup") )
   }, )
+
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+        timer = setTimeout(() => {
+            setResendCooldown(resendCooldown - 1);
+        }, 1000);
+    }
+    return () => clearTimeout(timer);
+}, [resendCooldown]);
   
   const pendingSignup = JSON.parse(
     pending || "{}"
@@ -137,6 +148,7 @@ else {
 
   const handleResendOtp = async () => {
   setLoading(true);
+  setResendCooldown(10); // Start 10-second cooldown
 
   let resendUrl = "";
 
@@ -253,7 +265,7 @@ else {
                   transform: loading ? "scale(0.95)" : "scale(1)",
                 }}
               >
-                {loading ? "[ VERIFYING... ⏳ ]" : "[ VERIFY ]"}
+                {loading ? "[ VERIFYING... ]" : "[ VERIFY ]"}
               </button>
 
               <p
@@ -266,19 +278,19 @@ else {
               <button
                 type="button"
                 onClick={handleResendOtp}
-                disabled={loading}
+                disabled={loading || resendCooldown > 0}
                 style={{
                   background: "var(--terminal-bg)",
                   border: "1px dashed var(--border-color)",
                   color: "var(--button-hover-color)",
                   padding: "10px 20px",
                   borderRadius: "4px",
-                  cursor: loading ? "not-allowed" : "pointer",
-                  opacity: loading ? 0.6 : 1,
+                  cursor: (loading || resendCooldown > 0) ? "not-allowed" : "pointer",
+                  opacity: (loading || resendCooldown > 0) ? 0.6 : 1,
                   transition: "0.3s",
                 }}
               >
-                [ RESEND OTP ]
+                {resendCooldown > 0 ? `[ RESEND OTP (${resendCooldown}s) ]` : "[ RESEND OTP ]"}
               </button>
             </div>
           </form>

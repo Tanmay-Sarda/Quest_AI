@@ -275,26 +275,26 @@ export default function Navbar() {
                 onClick={() => {
                   const targetUrl = "/";
                   if (pathname !== targetUrl) {
-                    showToast("📝 Signup");
+                    showToast("📝 Sign up");
                     router.push(targetUrl);
                   }
                 }}
-                title="Signup"
+                title="Sign up"
               >
-                [ SIGNUP ]
+                [ SIGN-UP ]
               </NavButton>
 
               <NavButton
                 onClick={() => {
                   const targetUrl = "/Sign_in";
                   if (pathname !== targetUrl) {
-                    showToast("🔐 Signin");
+                    showToast("🔐 Sign-in");
                     router.push(targetUrl);
                   }
                 }}
-                title="Signin"
+                title="Sign in"
               >
-                [ SIGNIN ]
+                [ SIGN-IN ]
               </NavButton>
             </>
           )}
@@ -320,7 +320,7 @@ export default function Navbar() {
             }}
             title="Toggle Theme"
           >
-            {theme === 'light' ? '☀️' : '🌙'}
+            {theme === 'light' ? '☀' : '⏾'}
           </NavButton>
 
           {/* IF LOGGED IN */}

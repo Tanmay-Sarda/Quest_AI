@@ -10,29 +10,11 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [typedText, setTypedText] = useState("");
 
-  // Typewriter animation removed, static text used instead
   useEffect(() => {
     if (localStorage.getItem("accessToken")) {
       router.push(`/Home/${localStorage.getItem("username")}`);
       return;
     }
-
-    // ❌ Commented out original typewriter animation
-    /*
-    const text = "BAEGIN YOUR JOURNEY";
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < text.length) {
-        setTypedText((prev) => prev + text.charAt(i));
-        i++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 80);
-    return () => clearInterval(interval);
-    */
-
-    // ✔ Static text
     setTypedText("BEGIN YOUR JOURNEY");
   }, []);
 
@@ -191,7 +173,7 @@ export default function SignUpPage() {
             {/* BUTTON + GOOGLE LOGIN */}
             <div className="flex flex-col items-center gap-4 mt-4">
               <button type="submit" className="form-button hover:scale-105">
-                [ SIGNUP ]
+                [ SIGN UP ]
               </button>
 
               <p className="option text-center">Or sign in using</p>
