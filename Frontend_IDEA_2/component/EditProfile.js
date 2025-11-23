@@ -127,7 +127,7 @@ export default function EditProfile({ username }) {
 
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center" style={{ backgroundColor: 'var(--overlay-bg)' }}>
+    <div className="fixed inset-0 flex justify-center items-center" style={{ backgroundColor: 'var(--overlay-bg)', zIndex: 1100 }}>
       <div className="border-4 rounded-2xl p-10 w-[90%] max-w-md relative shadow-lg animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)', color: 'var(--text-color)' }}>
 
         <button

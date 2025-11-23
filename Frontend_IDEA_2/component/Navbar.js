@@ -125,7 +125,7 @@ export default function Navbar() {
   };
 
   const renderNotificationContent = (notification) => (
-    <div key={notification._id} className="p-4 border-b border-gray-700">
+    <div key={notification._id} className="p-4 border-b border-gray-700 bg-gray-800">
       <div className="flex justify-between items-start mb-2">
         <div>
           <p className="font-medium">{notification.fromUser?.email || "Unknown User"}</p>
@@ -208,7 +208,7 @@ export default function Navbar() {
           top: 0,
           width: "100%",
           zIndex: 1000,
-          backgroundColor: "var(--header-bg)",
+          backgroundColor: theme === 'light' ? '#f3f4f6' : '#000000',
           height: "80px",
           display: "flex",
           alignItems: "center",
