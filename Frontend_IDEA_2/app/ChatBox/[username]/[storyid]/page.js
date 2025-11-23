@@ -16,7 +16,7 @@ export default function StoryPage() {
   const [user, setuser] = useState("")
   const storyidParts = storyid.split("%20");
   const trimmedStoryId = storyidParts[0];
-  const isPublic = storyidParts[1] === 'public';
+  const [isPublic, setIsPublic] = useState(storyidParts[1] === 'public');
   const isComplete = storyidParts[2] === 'true';
 
   const [isConfirming, setIsConfirming] = useState(false);
@@ -103,6 +103,10 @@ export default function StoryPage() {
       if (!response.ok) {
         showToast(`Error: ${data.message}`);
         return 
+      }
+
+      if (data.data.public === false) {
+        setIsPublic(false);
       }
 
       setStories(
@@ -212,7 +216,7 @@ export default function StoryPage() {
         <div className="fixed top-0 left-0 right-0 h-16 bg-[var(--header-bg)] flex max-sm:flex-col max-sm:h-auto max-sm:gap-2 justify-end items-center px-4 sm:px-10 py-2 z-10">
         <button
           onClick={handleExit}
-          className="form-button-exit text-sm sm:text-base"
+          className="form-button text-sm sm:text-base"
         >
           <span>[ EXIT ]</span>
         </button>
@@ -220,7 +224,7 @@ export default function StoryPage() {
         {!isPublic && (
           <button
             onClick={handleToggleComplete}
-            className="form-button-com text-sm sm:text-base ml-2"
+            className="form-button text-sm sm:text-base ml-2"
           >
             <span>{isComplete ? "[ CONTINUE ]" : "[ COMPLETE ]"}</span>
           </button>

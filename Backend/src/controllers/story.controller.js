@@ -46,7 +46,7 @@ const createStory = async (req, res) => {
       dialect: dialect,
       ownerid: [{ owner: ownerId, character: character }],
       content: [{
-        prompt: `Starting scene for ${title}`,
+        prompt: '',
         user: ownerId,
         response: generatedContent
       }],
@@ -294,6 +294,7 @@ const addpromptResponse = async (req, res) => {
     console.log(updatedStory.content);
     res.status(200).json(new ApiResponse(true, {
       content: updatedStory.content,
+      public: updatedStory.public,
     }, 'Story continued successfully'));
 
   } catch (error) {
