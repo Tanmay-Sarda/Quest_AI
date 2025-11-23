@@ -25,7 +25,7 @@ const Page = () => {
     if (!localStorage.getItem("accessToken")) {
       showToast("User not authenticated");
       setTimeout(() => {
-        router.push("/Sign_in");
+        router.push("/Login");
       }, 2000);
       return;
     }

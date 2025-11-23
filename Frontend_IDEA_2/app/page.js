@@ -173,7 +173,7 @@ export default function SignUpPage() {
             {/* BUTTON + GOOGLE LOGIN */}
             <div className="flex flex-col items-center gap-4 mt-4">
               <button type="submit" className="form-button hover:scale-105">
-                [ SIGN UP ]
+                [ SIGN-UP ]
               </button>
 
               <p className="option text-center">Or sign in using</p>

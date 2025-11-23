@@ -60,7 +60,7 @@ export default function Navbar() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("username");
     setIsLoggedIn(false);
-    router.push("/Sign_in");
+    router.push("/Login");
   };
 
   const fetchNotifications = async () => {
@@ -244,7 +244,7 @@ export default function Navbar() {
             alt="Quest AI Logo"
             className={`h-[70px] cursor-pointer hover:scale-105 transition-all duration-200 ${theme === 'light' ? 'logo-light' : ''}`}
             onClick={() => {
-              const targetUrl = isLoggedIn ? `/Home/${username}` : "/Sign_in";
+              const targetUrl = isLoggedIn ? `/Home/${username}` : "/Login";
               if (pathname !== targetUrl) {
                 showToast("🏠 Going Home");
                 router.push(targetUrl);
@@ -286,15 +286,15 @@ export default function Navbar() {
 
               <NavButton
                 onClick={() => {
-                  const targetUrl = "/Sign_in";
+                  const targetUrl = "/Login";
                   if (pathname !== targetUrl) {
-                    showToast("🔐 Sign-in");
+                    showToast("🔐 Login");
                     router.push(targetUrl);
                   }
                 }}
-                title="Sign in"
+                title="Login"
               >
-                [ SIGN-IN ]
+                [ LOGIN ]
               </NavButton>
             </>
           )}
@@ -398,7 +398,7 @@ export default function Navbar() {
                     router.push(targetUrl);
                   }
                 } else {
-                  const targetUrl = "/Sign_in";
+                  const targetUrl = "/Login";
                   if (pathname !== targetUrl) {
                     router.push(targetUrl);
                   }
@@ -460,15 +460,15 @@ export default function Navbar() {
 
                 <NavButton
                   onClick={() => {
-                    const targetUrl = "/Sign_in";
+                    const targetUrl = "/Login";
                     setMobileMenuOpen(false);
                     if (pathname !== targetUrl) {
-                      showToast("🔐 Signin");
+                      showToast("🔐 Login");
                       router.push(targetUrl);
                     }
                   }}
                 >
-                  [ SIGNIN ]
+                  [ LOGIN ]
                 </NavButton>
               </>
             )}

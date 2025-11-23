@@ -22,7 +22,7 @@ def test_empty_form_submission(driver, base_url):
         # Should still be on sign in page due to HTML5 validation
         current_url = driver.current_url
         
-        if "Sign_in" in current_url:
+        if "Login" in current_url:
             print("✓ PASS: Form prevents empty submission")
             return True
         else:
@@ -52,7 +52,7 @@ def test_invalid_email_format(driver, base_url):
         # Should still be on sign in page
         current_url = driver.current_url
         
-        if "Sign_in" in current_url:
+        if "Login" in current_url:
             print("✓ PASS: Invalid email format rejected")
             return True
         else:

@@ -45,7 +45,7 @@ export default function HomePage() {
   const addUser = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("accessToken");
-    if (!token) return router.push("/Sign_in");
+    if (!token) return router.push("/Login");
 
     try {
       const res = await fetch(
@@ -82,7 +82,7 @@ export default function HomePage() {
 
   const handledelete = async (story, type) => {
     const token = localStorage.getItem("accessToken");
-    if (!token) return router.push("/Sign_in");
+    if (!token) return router.push("/Login");
 
     try {
       const res = await fetch(
@@ -110,7 +110,7 @@ export default function HomePage() {
 
   const changeAccess = async (story_id) => {
     const token = localStorage.getItem("accessToken");
-    if (!token) return router.push("/Sign_in");
+    if (!token) return router.push("/Login");
 
     try {
       const res = await fetch(
@@ -238,7 +238,7 @@ export default function HomePage() {
   // Fetch stories
   useEffect(() => {
     if (!localStorage.getItem("accessToken")) {
-      return router.push("/Sign_in");
+      return router.push("/Login");
     }
     complete();
     ongoing();

@@ -39,7 +39,7 @@ export default function StoryPage() {
     if (!localStorage.getItem("accessToken") && !isPublic) {
       showToast("User not authenticated");
       setTimeout(() => {
-        router.push("/Sign_in");
+        router.push("/Login");
       }, 2000);
       return;
     }

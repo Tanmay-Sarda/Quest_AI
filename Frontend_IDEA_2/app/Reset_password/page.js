@@ -69,7 +69,7 @@ function ResetPasswordComponent() {
 
       if (res.ok) {
         showToast("✅ Password has been reset!");
-        router.push("/Sign_in");
+        router.push("/Login");
       } else {
         showToast("⚠ " + (data.message || "Failed to reset password"));
       }
