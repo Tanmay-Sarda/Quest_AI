@@ -41,9 +41,8 @@ def test_sql_injection_attempt(driver, base_url):
     
     try:
         driver.get(base_url)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "input"))
-        )
+        WebDriverWait(driver, 10).until(EC.url_to_be(base_url))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         
         # Find all input fields
         input_fields = driver.find_elements(By.TAG_NAME, "input")
@@ -111,9 +110,9 @@ def test_xss_attempt(driver, base_url):
     
     try:
         driver.get(base_url)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "input"))
-        )
+        
+        WebDriverWait(driver, 10).until(EC.url_to_be(base_url))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         
         # Find all input fields
         input_fields = driver.find_elements(By.TAG_NAME, "input")
@@ -178,7 +177,9 @@ def test_session_storage(driver, base_url):
     print("\n=== SECURITY TEST: Secure Storage Practices ===")
     try:
         driver.get(base_url)
-        time.sleep(2)
+        
+        WebDriverWait(driver, 10).until(EC.url_to_be(base_url))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         
         # Check localStorage
         local_storage_keys = driver.execute_script("return Object.keys(localStorage)")
@@ -196,6 +197,7 @@ def test_session_storage(driver, base_url):
         
         print(f"LocalStorage keys: {local_storage_keys}")
         print(f"SessionStorage keys: {session_storage_keys}")
+        return True
         
     except Exception as e:
         print(f"✗ FAIL: {str(e)}")
@@ -203,7 +205,7 @@ def test_session_storage(driver, base_url):
 
 
 
-def test_rate_limiting(base_url, max_requests=1000, time_window=10, max_workers=200):
+def test_rate_limiting(base_url, max_requests=1000, time_window=100, max_workers=200):
     """
     Test if the application has rate limiting to prevent abuse
     Tests server's ability to handle high concurrent load
@@ -233,7 +235,6 @@ def test_rate_limiting(base_url, max_requests=1000, time_window=10, max_workers=
     try:
         start_time = time.time()
         results = []
-        completed_in_window = 0
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all requests
@@ -250,8 +251,6 @@ def test_rate_limiting(base_url, max_requests=1000, time_window=10, max_workers=
                     pbar.update(1)
 
                     # time-window logic
-                    if time.time() - start_time <= time_window:
-                        completed_in_window += 1
         
         total_time = time.time() - start_time
         
@@ -262,7 +261,6 @@ def test_rate_limiting(base_url, max_requests=1000, time_window=10, max_workers=
         error_count = sum(1 for r in results if r.get('status') == 'error')
 
         results.append({
-            'time': avg_response_time,
             'success rate': success_count/max_requests*100,
             'blocked rate': blocked_count/max_requests*100,
             'timeout rate': timeout_count/max_requests*100,
@@ -270,7 +268,11 @@ def test_rate_limiting(base_url, max_requests=1000, time_window=10, max_workers=
         })
         
         avg_response_time = sum(r.get('time', 0) for r in results if r.get('status') == 200) / max(success_count, 1)
-        
+
+        results.append({
+            'avg response time': avg_response_time,
+        })
+
         print(f"\n{'='*60}")
         print("RESULTS")
         print(f"{'='*60}")

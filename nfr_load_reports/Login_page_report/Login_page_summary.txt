@@ -10,11 +10,11 @@ EXECUTIVE SUMMARY
   Recommendation: Monitor performance as traffic grows beyond tested range
 
 [WARNING] High Response Times
-  Description: Average response time reaches 4.41s under load
+  Description: Average response time reaches 30.18s under load
   Recommendation: Optimize database queries, implement caching, or reduce computational complexity
 
 [INFO] Peak Throughput
-  Description: Maximum throughput of 9.8 req/s achieved at 50 concurrent users
+  Description: Maximum throughput of 9.7 req/s achieved at 50 concurrent users
   Recommendation: Monitor for throughput degradation beyond this point
 
 
@@ -22,14 +22,14 @@ EXECUTIVE SUMMARY
 DETAILED RESULTS
 ================================================================================
 
-Users      Success%     Avg Time(s)     Median(s)    P95(s)     Throughput  
+Users      Success%     Avg Time(s)     Median(s)    P95(s)     Throughput   Errors    
 --------------------------------------------------------------------------------
-1          100.0        0.672           0.672        0.672      1.5         
-2          100.0        1.070           1.070        1.317      1.5         
-5          100.0        0.932           0.938        0.971      5.1         
-10         100.0        1.218           1.224        1.315      7.4         
-20         100.0        1.880           1.745        2.296      7.9         
-50         100.0        3.207           2.940        4.626      9.8         
-70         100.0        3.972           3.728        6.080      9.7         
-90         100.0        4.411           4.255        6.681      9.3         
-100        100.0        4.303           4.473        6.236      9.6         
+1          100.0        0.585           0.585        0.585      1.7         
+2          100.0        0.789           0.789        0.795      2.5         
+5          100.0        0.898           0.950        0.952      5.2         
+10         100.0        1.170           1.134        1.260      7.7         
+20         100.0        2.126           2.122        2.276      8.5         
+50         100.0        3.405           3.195        4.750      9.7         
+70         100.0        15.240          17.279       18.199     3.4         
+90         100.0        27.594          27.765       28.539     2.9         
+100        100.0        30.180          30.245       31.442     3.0         

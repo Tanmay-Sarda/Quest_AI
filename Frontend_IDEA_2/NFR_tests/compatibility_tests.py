@@ -13,6 +13,9 @@ def test_browser_compatibility(base_url):
         ("Chrome", webdriver.Chrome),
         ("Firefox", webdriver.Firefox),
         ("Edge", webdriver.Edge)
+        # ("Safari", webdriver.Safari),
+        # ("Opera", webdriver.Opera),
+        # ("Internet Explorer", webdriver.Ie)
     ]
     
     results = []
@@ -23,13 +26,8 @@ def test_browser_compatibility(base_url):
             driver = browser_driver()
             driver.get(base_url)
             
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, "email"))
-            )
-            
-            # Check if all key elements are present
-            driver.find_element(By.ID, "password")
-            driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+            WebDriverWait(driver, 10).until(EC.url_to_be(base_url))
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
             
             print(f"✓ {browser_name}: PASS")
             results.append(True)

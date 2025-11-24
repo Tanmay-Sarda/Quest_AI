@@ -1,14 +1,16 @@
 """
 Common test utilities for Sign In and Sign Up page testing
 """
+from doctest import REPORT_CDIFF
 import core_tests
 import performance_tests
 import security_tests
 import reliability_tests
 import compatibility_tests
+from pathlib import Path
 
 
-def run_nfr_test_suite(page_name, page_url, test_email, test_password):
+def run_nfr_test_suite(page_name, page_url):
     """
     Run complete NFR test suite for a given page
     """
@@ -49,11 +51,16 @@ def run_nfr_test_suite(page_name, page_url, test_email, test_password):
     print("\n" + "=" * 60)
     print("RELIABILITY TESTS")
     print("=" * 60)
-    results['Empty Form Submission'] = reliability_tests.test_empty_form_submission(driver, page_url)
-    results['Invalid Email Format'] = reliability_tests.test_invalid_email_format(driver, page_url)
+
+    if page_name == "Login" or page_name == "Sign_Up":
+        results['Empty Form Submission'] = reliability_tests.test_empty_form_submission(driver, page_url)
+        results['Invalid Email Format'] = reliability_tests.test_invalid_email_format(driver, page_url)
+    
     results['Concurrent Users'] = reliability_tests.test_concurrent_user_simulation(page_url)
-    results['Browser Back Button'] = reliability_tests.test_browser_back_button(driver, page_url)
-    results['Page Refresh'] = reliability_tests.test_page_refresh(driver, page_url)
+    
+    if page_name == "Login" or page_name == "Sign_Up":
+        results['Browser Back Button'] = reliability_tests.test_browser_back_button(driver, page_url)
+        results['Page Refresh'] = reliability_tests.test_page_refresh(driver, page_url)
     
     # Compatibility Tests
     print("\n" + "=" * 60)
@@ -77,7 +84,16 @@ def run_nfr_test_suite(page_name, page_url, test_email, test_password):
     
     print(f"\nOverall: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
     print(f"{total - passed} tests failed")
-    
+    report_dir = Path("nfr_load_reports") / f"{page_name}_page_report"
+    report_dir.mkdir(parents=True, exist_ok=True)  # Create directory if it doesn't exist
+
+    summary_file = report_dir / f"{page_name}_tests_summary.txt"
+    with open(summary_file, 'w', encoding='utf-8') as f:
+        f.write(f"Overall: {passed}/{total} tests passed ({passed/total*100:.1f}%)\n")
+        f.write(f"{total - passed} tests failed\n")
+        for test_name, result in results.items():
+            status = "✓ PASS" if result else "✗ FAIL"
+            f.write(f"{test_name}: {status}\n")
     return passed == total
 
 
@@ -106,7 +122,6 @@ def generate_load_report(page_name, page_url, graph_prefix):
     for insight in insights:
         print(f"\n[{insight['type'].upper()}] {insight['title']}")
         print(f"  {insight['description']}")
-        print(f"  Recommendation: {insight['recommendation']}")
     
     print(f"\nFull report saved to: {report_summary['metadata']['report_folder']}")
     print(f"{len(report_summary['graphs'])} graph files generated")

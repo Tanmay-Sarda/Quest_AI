@@ -6,15 +6,15 @@ EXECUTIVE SUMMARY
 --------------------------------------------------------------------------------
 
 [WARNING] Performance Degradation Detected
-  Description: System success rate drops below 95% at 70 concurrent users
+  Description: System success rate drops below 95% at 1 concurrent users
   Recommendation: Consider implementing load balancing, caching, or horizontal scaling
 
 [WARNING] High Response Times
-  Description: Average response time reaches 14.53s under load
+  Description: Average response time reaches 26.39s under load
   Recommendation: Optimize database queries, implement caching, or reduce computational complexity
 
 [INFO] Peak Throughput
-  Description: Maximum throughput of 6.4 req/s achieved at 100 concurrent users
+  Description: Maximum throughput of 3.7 req/s achieved at 90 concurrent users
   Recommendation: Monitor for throughput degradation beyond this point
 
 
@@ -24,12 +24,12 @@ DETAILED RESULTS
 
 Users      Success%     Avg Time(s)     Median(s)    P95(s)     Throughput   Errors    
 --------------------------------------------------------------------------------
-1          100.0        1.005           1.005        1.005      1.0         
-2          100.0        1.100           1.100        1.100      1.8         
-5          100.0        1.491           1.492        1.529      3.2         
-10         100.0        2.359           2.350        2.435      4.0         
-20         100.0        3.905           3.659        4.458      4.4         
-50         100.0        8.414           8.445        8.668      5.6         
-70         84.3         11.479          10.419       15.473     2.8         
-90         100.0        13.987          13.912       14.698     6.0         
-100        100.0        14.526          14.543       15.089     6.4         
+1          0.0          0.000           0.000        0.000      0.0         
+2          0.0          0.000           0.000        0.000      0.0         
+5          100.0        2.237           2.237        2.243      2.2         
+10         100.0        3.907           3.883        4.086      2.4         
+20         100.0        6.476           6.502        6.646      3.0         
+50         100.0        14.262          14.295       14.712     3.2         
+70         100.0        18.443          18.472       19.251     3.4         
+90         100.0        21.531          21.650       23.023     3.7         
+100        100.0        26.389          26.461       27.568     3.3         

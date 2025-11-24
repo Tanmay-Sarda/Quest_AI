@@ -121,7 +121,9 @@ def test_browser_back_button(driver, base_url):
     print("\n=== RELIABILITY TEST: Browser Back Button ===")
     try:
         driver.get(base_url)
-        time.sleep(2)
+        
+        WebDriverWait(driver, 10).until(EC.url_to_be(base_url))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         
         # Navigate away then back
         driver.get("https://quest-ai-frontend.vercel.app/")
@@ -147,9 +149,9 @@ def test_page_refresh(driver, base_url):
     print("\n=== RELIABILITY TEST: Page Refresh ===")
     try:
         driver.get(base_url)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "email"))
-        )
+        
+        WebDriverWait(driver, 10).until(EC.url_to_be(base_url))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         
         # Fill in some data
         driver.find_element(By.ID, "email").send_keys("test@example.com")

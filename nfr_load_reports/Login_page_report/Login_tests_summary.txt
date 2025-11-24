@@ -1,0 +1,15 @@
+Overall: 13/13 tests passed (100.0%)
+0 tests failed
+Page Load Time: ✓ PASS
+Average Response Time: ✓ PASS
+Concurrent Load (Server-Side): ✓ PASS
+SQL Injection Resistance: ✓ PASS
+XSS Resistance: ✓ PASS
+Session Storage Usage: ✓ PASS
+Rate Limiting: ✓ PASS
+Empty Form Submission: ✓ PASS
+Invalid Email Format: ✓ PASS
+Concurrent Users: ✓ PASS
+Browser Back Button: ✓ PASS
+Page Refresh: ✓ PASS
+Browser Compatibility: ✓ PASS

@@ -21,9 +21,10 @@ def test_load_time_single_load(driver, base_url, max_load_time=3):
     try:
         start_time = time.time()
         driver.get(base_url)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "email"))
-        )
+        
+        WebDriverWait(driver, 10).until(EC.url_to_be(base_url))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+            
         load_time = time.time() - start_time
         
         print(f"Page Load Time: {load_time:.2f} seconds")
@@ -48,9 +49,9 @@ def test_response_time_multiple_loads(driver, base_url, num_loads=5, max_avg_tim
         for i in range(num_loads):
             start_time = time.time()
             driver.get(base_url)
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, "email"))
-            )
+            WebDriverWait(driver, 10).until(EC.url_to_be(base_url))
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+            
             load_time = time.time() - start_time
             load_times.append(load_time)
             print(f"Load {i+1}: {load_time:.2f}s")
@@ -203,7 +204,7 @@ def _create_graphs(results, base_url, report_dir, prefix):
     users = [r['users'] for r in results]
     success_rates = [r['success_rate'] for r in results]
     throughputs = [r['throughput'] for r in results]
-    avg_response_times = [r['avg_response_time'] for r in results]
+    avg_response_time = [r['avg_response_time'] for r in results]
     
     # Graph 1: Throughput vs Users
     plt.figure(figsize=(10, 6))
@@ -236,7 +237,7 @@ def _create_graphs(results, base_url, report_dir, prefix):
     
     # Graph 3: Average Response Time vs Users
     plt.figure(figsize=(10, 6))
-    plt.plot(users, avg_response_times, 'o-', color='red')
+    plt.plot(users, avg_response_time, 'o-', color='red')
     plt.xlabel('Number of Concurrent Users')
     plt.ylabel('Average Response Time (seconds)')
     plt.title(f'Response Time vs Concurrent Users\n{base_url}')
@@ -278,9 +279,9 @@ def _generate_insights(results, user_counts):
         })
     
     # Response time analysis
-    avg_response_times = [r['avg_response_time'] for r in results]
-    if avg_response_times:
-        max_avg_time = max(avg_response_times)
+    avg_response_time = [r['avg_response_time'] for r in results]
+    if avg_response_time:
+        max_avg_time = max(avg_response_time)
         if max_avg_time > 3.0:
             insights.append({
                 'type': 'warning',
@@ -324,7 +325,7 @@ def _create_readable_summary(results, insights, report_dir, prefix):
         f.write("DETAILED RESULTS\n")
         f.write("=" * 80 + "\n\n")
         
-        f.write(f"{'Users':<10} {'Success%':<12} {'Avg Time(s)':<15} {'Median(s)':<12} {'P95(s)':<10} {'Throughput':<12}\n")
+        f.write(f"{'Users':<10} {'Success%':<12} {'Avg Time(s)':<15} {'Median(s)':<12} {'P95(s)':<10} {'Throughput':<12} {'Errors':<10}\n")
         f.write("-" * 80 + "\n")
         
         for result in results:
@@ -348,11 +349,7 @@ def generate_concurrent_load_report(
     report_name = folder_name or graph_prefix or "load_test"
     report_dir = Path(output_dir) / f"{report_name}_report"
     
-    if report_dir.exists():
-        import shutil
-        shutil.rmtree(report_dir)
-    
-    report_dir.mkdir(parents=True)
+    report_dir.mkdir(parents=True, exist_ok=True)
     prefix = graph_prefix or "load_test"
     
     # Print header
