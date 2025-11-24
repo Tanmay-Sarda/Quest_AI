@@ -28,59 +28,82 @@ story_collection = db["stories"]
 
 # --- Prompt Templates ---
 
-# 1. NEW Dialect Generation Prompt
+# 1. Improved Dialect Generation Prompt - Now detects if it's fanfic and extracts source style
 dialect_prompt = PromptTemplate(
     input_variables=["description"],
     template=(
-        "You are a linguistic expert. Analyze the following story description and determine the most fitting narrator dialect. "
-        "Your response must be ONLY the name of the dialect (e.g., 'British English', '1920s hard-boiled detective', 'Cyberpunk street slang'). "
-        "Do not add any preamble or explanation.\n\n"
-        "Story Description: {description}\n\n"
-        "Appropriate Dialect:"
+        "Analyze this story description.\n\n"
+        "Description: {description}\n\n"
+        "If FANFICTION (references existing work/character/universe):\n"
+        "FANFIC: [Source] | STYLE: [50 words max: narrative voice (1st/3rd person), sentence style (short/medium/long), tone, pacing, key patterns]\n\n"
+        "If ORIGINAL story:\n"
+        "ORIGINAL: [5-8 words describing tone and style]\n\n"
+        "Examples:\n"
+        "- FANFIC: Stormlight Archive | STYLE: Third-person limited, epic fantasy tone, medium-long sentences with internal monologue, philosophical themes, detailed magic system explanations, character-driven pacing\n"
+        "- ORIGINAL: gritty noir with cynical edge\n\n"
+        "Be accurate and concise."
     )
 )
 
-# 2. Story Setup Prompt (uses the generated dialect)
+# 2. Improved Story Setup Prompt - Handles both original and fanfic
 setup_prompt = PromptTemplate(
     input_variables=["title", "description", "character", "dialect", "genre"],
     template=(
-        "You are a creative AI Dungeon Master speaking in {dialect} and starting a new adventure. "
-        "Always write in that dialect's tone, word choice, and rhythm. "
+        "You are a masterful storyteller creating a {genre} story.\n\n"
         "Story Title: {title}\n"
-        "Story Genre: {genre}\n"
-        "Story Description: {description}\n"
-        "Main Character: {character}\n\n"
-        "Create an engaging opening scene for this {genre} story. "
-        "Describe the world and introduce the character '{character}' in a compelling way. "
-        "Address the player directly as 'You'. Keep it to 2-4 paragraphs. "
-        "End with a situation that prompts action."
+        "Description: {description}\n"
+        "Protagonist: {character}\n"
+        "Style Guide: {dialect}\n\n"
+        "CRITICAL INSTRUCTIONS:\n"
+        "• If the Style Guide mentions 'FANFIC' or references a source material, you MUST match that source's writing style precisely (narrative voice, sentence structure, tone, pacing, signature elements)\n"
+        "• If it's an original story, use the style descriptor as a guide for atmosphere and tone\n"
+        "• Focus on immersive sensory details (sights, sounds, textures, scents). try to use metaphors that are good and common.\n"
+        "• Use 'show don't tell' - reveal through action and detail, not exposition\n\n"
+        "• IMPORTANT - Introduce '{character}' with clear personality, motivation and background\n\n"
+        "• Address the player as second or third person depending on context naturally\n"
+        "End with a situation that demands choice or action naturally, without asking 'What do you do?'\n\n"
+        "REMEMBER: If this is fanfiction, it must sound like it was written by the original creator."
     )
 )
 
-# 3. Story Continuation Prompt (uses the saved dialect)
+# 3. Improved Story Continuation Prompt - Maintains style consistency
 story_prompt = PromptTemplate(
     input_variables=["story_so_far", "user_input", "character", "dialect"],
     template=(
-        "You are a Dungeon Master continuing an interactive story, speaking in {dialect}. "
-        "Your narration must stay in {dialect}, and every response should feel authentic to that dialect. "
-        "The player is '{character}', the main character. "
-        "Describe the consequences of their actions and the evolving world. "
-        "Keep responses grounded in the established story. Don't take actions for the player.\n\n"
-        "**Story So Far:**\n{story_so_far}\n\n"
-        "**{character}'s Action:** {user_input}\n\n"
-        "**What happens next?** (2-4 sentences, ending with a prompt for the next move)"
+        "Continue this story where {character} is the protagonist.\n\n"
+        "Style: {dialect}\n\n"
+        "CONTEXT:\n{story_so_far}\n\n"
+        "PLAYER ACTION: {user_input}\n\n"
+        "WRITING RULES:\n"
+        "• If Style mentions 'FANFIC', maintain that source's writing style, but don't be TOO fancy.\n"
+        "• Write 2-3 SHORT paragraphs (3-5 sentences each) Use paragraph breaks in the form of '\\n\\n'..\n"
+        "• Use prose fitting the TONE AND ORIGINAL DIALECT of the story.\n\n"
+        "• ORIGINAL CANON RULES AND LORE STILL APLLY IN FANFICS.\n\n"
+        "• Describe what happens as a result of the action.\n"
+        "• Show environmental reactions and consequences.\n"
+        "• NEVER decide what {character} thinks or does next.\n"
+        "• Keep player agency - only narrate the world's response.\n"
+        "• End at a natural pause, not with questions or prompts.\n\n"
+        "Write ONLY the narrative continuation. No meta-commentary or * or ----."
     )
 )
 
+# 4. Improved Summary Prompt
 summary_prompt = PromptTemplate(
     input_variables=["existing_summary", "new_chunk"],
     template=(
-        "You are a story summarizer. Condense the following 'New Story Chunk' into the 'Existing Summary' "
-        "while preserving key events, characters, and plot points. The result should be a single, coherent summary. "
-        "Keep the tone of the original story. If the existing summary is empty, just summarize the new chunk.\n\n"
-        "**Existing Summary:**\n{existing_summary}\n\n"
-        "**New Story Chunk to Add:**\n{new_chunk}\n\n"
-        "**Updated, Coherent Summary:**"
+        "You are condensing a story while preserving its essence.\n\n"
+        "EXISTING SUMMARY:\n{existing_summary}\n\n"
+        "NEW EVENTS TO INTEGRATE:\n{new_chunk}\n\n"
+        "Create an updated summary that:\n"
+        "• Preserves all major plot points, character developments, and revelations\n"
+        "• Maintains chronological order and cause-effect relationships\n"
+        "• Captures tone and atmosphere\n"
+        "• Highlights key decisions and their consequences\n"
+        "• Stays concise but rich in detail\n\n"
+        "If existing summary is empty, summarize only the new chunk. "
+        "Write in past tense, third person. Keep under 300 words.\n\n"
+        "UPDATED SUMMARY:"
     )
 )
 
@@ -128,11 +151,12 @@ async def start_new_story(request: NewStoryRequest):
         dialect_chain = dialect_prompt | llm | StrOutputParser()
         setup_chain = setup_prompt | llm | StrOutputParser()
 
+        # Generate style/dialect (now handles fanfic detection automatically)
         dialect = dialect_chain.invoke({
             "description": request.description
         })
         dialect = dialect.strip().strip('""')
-        print(f"--- LOG: Generated dialect: {dialect} ---")
+        print(f"--- LOG: Generated dialect/style: {dialect} ---")
         
         initial_scene = setup_chain.invoke({
             "title": request.name,
@@ -185,16 +209,15 @@ async def continue_story_api(request: ContinueStoryRequest):
         
         dialect = story.get("dialect", "American English")
 
-        # --- 6. NEW: Context Management & Summarization ---
+        # --- Context Management & Summarization ---
         
-        # Define context limits
-        MAX_RECENT_CONTEXT_TURNS = 15 # Keep 15 turns in full detail
-        TURNS_TO_TRIGGER_SUMMARY = 10 # "Roll up" 10 turns when we exceed 15
+        MAX_RECENT_CONTEXT_TURNS = 15
+        TURNS_TO_TRIGGER_SUMMARY = 10
 
         existing_summary = story.get("summary", "")
         recent_content_list = story.get("content", [])
         
-        # Check if context is too long and needs summarization
+        # Check if context needs summarization
         if len(recent_content_list) > MAX_RECENT_CONTEXT_TURNS:
             print(f"--- LOG: Context limit ({MAX_RECENT_CONTEXT_TURNS}) exceeded. Summarizing... ---")
             
@@ -203,14 +226,13 @@ async def continue_story_api(request: ContinueStoryRequest):
             
             formatted_chunk = format_story_chunk(turns_to_summarize)
             
-            #  Call summarizer chain (ASYNC)
             new_summary = await summary_chain.ainvoke({
                 "existing_summary": existing_summary,
                 "new_chunk": formatted_chunk
             })
             
             existing_summary = new_summary.strip()
-            recent_content_list = remaining_recent_content # We'll use this to build context
+            recent_content_list = remaining_recent_content
             
             await story_collection.update_one(
                 {"_id": story_oid},
@@ -225,7 +247,7 @@ async def continue_story_api(request: ContinueStoryRequest):
 
         formatted_recent_content = format_story_chunk(recent_content_list)
         
-        # Combine summary and recent events for the final context
+        # Combine summary and recent events
         story_so_far = ""
         if existing_summary:
             story_so_far += f"**Story Summary So Far:**\n{existing_summary}\n\n"

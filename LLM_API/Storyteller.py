@@ -10,7 +10,7 @@ load_dotenv()
 
 # --- LLM Setup ---
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",  # Use a current, supported model
+    model="meta-llama/llama-4-maverick-17b-128e-instruct",  # Use a current, supported model
     temperature=0.9,
     groq_api_key=os.environ.get("GROQ_API_KEY")
 )
