@@ -10,9 +10,7 @@ export default function DynamicFooter() {
     if (pathname === "/") {
       return "(N) TERMINAL_INIT: QUEST-AI ONLINE. AWAITING COMMAND.";
     }
-    if (pathname.includes("/")) {
-      return "(N) TERMINAL_INIT: QUEST-AI ONLINE. AWAITING COMMAND.";
-    }
+
     if (pathname.includes("/Login")) {
       return "(N) TERMINAL_INIT: QUEST-AI ONLINE. AWAITING COMMAND.";
     }
