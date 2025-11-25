@@ -1,260 +1,269 @@
 import pytest
+from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
-from fastapi import HTTPException
-from LLM_API import start_new_story, NewStoryRequest, Owner
+
+from storyteller_fastapi import app
+
+client = TestClient(app)
 
 
-@pytest.mark.asyncio
+@pytest.fixture
+def valid_owner():
+    return {"owner": "user123", "character": "Alice"}
+
+@pytest.fixture
+def valid_request(valid_owner):
+    return {
+        "name": "The Lost City",
+        "description": "A mysterious city hidden in the jungle.",
+        "owner": valid_owner,
+        "genre": "adventure"
+    }
+
+
+def mock_chain(return_value=None, side=None):
+    mock = MagicMock()
+    if side:
+        mock.invoke.side_effect = side
+    else:
+        mock.invoke.return_value = return_value
+    return mock
+
+
 class TestStartNewStory:
 
-    async def test_basic_success(self):
-        req = NewStoryRequest(
-            name="The Lost City",
-            description="Adventure desc",
-            owner=Owner(owner="user1", character="Hero"),
-            genre="adventure"
-        )
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = "Epic"
-            mock_llm.generate_initial_scene.return_value = "Scene..."
 
-            result = await start_new_story(req)
+    def test_start_new_story_successful(self, valid_request):
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("British English")), \
+             patch("storyteller_fastapi.setup_chain",   new=mock_chain("You find yourself...")):
 
-        assert result == {
-            "content": "Scene...",
-            "character": "Hero",
-            "dialect": "Epic",
+            response = client.post("/story/new", json=valid_request)
+            data = response.json()
+
+            assert response.status_code == 200
+            assert data["dialect"] == "British English"
+            assert data["content"].startswith("You find yourself")
+
+
+    def test_start_new_story_with_default_genre(self, valid_owner):
+
+        req = {
+            "name": "Space Quest",
+            "description": "Journey to the stars.",
+            "owner": valid_owner
         }
 
-    async def test_genre_none_defaults_to_adventure(self):
-        req = NewStoryRequest(
-            name="Space",
-            description="Stars",
-            owner=Owner(owner="u2", character="Pilot"),
-            genre=None
-        )
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = "SciFi"
-            mock_llm.generate_initial_scene.return_value = "Space scene"
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("Space Opera")), \
+             patch("storyteller_fastapi.setup_chain", new=MagicMock()) as mock_setup:
 
-            res = await start_new_story(req)
+            mock_setup.invoke.return_value = "Intro Scene"
 
-        assert res["dialect"] == "SciFi"
-        assert res["content"] == "Space scene"
+            response = client.post("/story/new", json=req)
+            args = mock_setup.invoke.call_args[0][0]
 
-    async def test_dialect_stripped_quotes(self):
-        req = NewStoryRequest(
-            name="Mystery",
-            description="desc",
-            owner=Owner(owner="u3", character="Detective"),
-            genre="mystery"
-        )
-
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = '  "Noir"  '
-            mock_llm.generate_initial_scene.return_value = "Dark scene"
-
-            res = await start_new_story(req)
-
-        assert res["dialect"] == "Noir"
+            assert args["genre"] == "adventure"
 
 
-    async def test_missing_name_returns_400(self):
-        req = NewStoryRequest(
-            name="",
-            description="desc",
-            owner=Owner(owner="u", character="c"),
-            genre="adventure",
-        )
-        with pytest.raises(HTTPException) as exc:
-            await start_new_story(req)
-        assert exc.value.status_code == 400
+    def test_start_new_story_with_various_characters(self, valid_request):
 
-    async def test_missing_owner_returns_400(self):
-        req = NewStoryRequest(
-            name="Test",
-            description="desc",
-            owner=None,
-            genre="adventure",
-        )
-        with pytest.raises(HTTPException) as exc:
-            await start_new_story(req)
-        assert exc.value.status_code == 400
+        for char in ["Bob", "Élise", "李雷", "O'Connor"]:
+            req = valid_request.copy()
+            req["owner"] = req["owner"].copy()
+            req["owner"]["character"] = char
 
-    async def test_character_none_returns_400(self):
-        req = NewStoryRequest(
-            name="Story",
-            description="Desc",
-            owner=Owner(owner="u", character=None),
-            genre="adventure"
-        )
-        with pytest.raises(HTTPException):
-            await start_new_story(req)
+            with patch("storyteller_fastapi.dialect_chain", new=mock_chain("Detective Noir")), \
+                 patch("storyteller_fastapi.setup_chain", new=mock_chain(f"You are {char}")):
 
-    async def test_empty_genre_defaults_to_adventure(self):
-        req = NewStoryRequest(
-            name="Epic",
-            description="desc",
-            owner=Owner(owner="u", character="c"),
-            genre=""
-        )
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = "Heroic"
-            mock_llm.generate_initial_scene.return_value = "Epic Scene"
-
-            res = await start_new_story(req)
-
-        assert res["dialect"] == "Heroic"
-
-    async def test_description_none_converted_to_empty_string(self):
-        req = NewStoryRequest(
-            name="DescNone",
-            description=None,
-            owner=Owner(owner="u", character="c"),
-            genre="fantasy"
-        )
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = "Magic"
-            mock_llm.generate_initial_scene.return_value = "Wizardry..."
-
-            res = await start_new_story(req)
-
-        mock_llm.generate_dialect.assert_called_once_with("")
-        assert res["dialect"] == "Magic"
-
-    async def test_llm_returns_none_dialect_defaulted(self):
-        req = NewStoryRequest(
-            name="Epic",
-            description="desc",
-            owner=Owner(owner="u", character="c"),
-            genre="fantasy"
-        )
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = None
-            mock_llm.generate_initial_scene.return_value = "Scene"
-
-            res = await start_new_story(req)
-
-        assert res["dialect"] == "default"
-
-    async def test_llm_returns_empty_dialect_defaulted(self):
-        req = NewStoryRequest(
-            name="EmptyDialect",
-            description="desc",
-            owner=Owner(owner="u", character="c"),
-            genre="fantasy"
-        )
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = "   "
-            mock_llm.generate_initial_scene.return_value = "Scene"
-
-            res = await start_new_story(req)
-
-        assert res["dialect"] == "default"
-
-    async def test_llm_initial_scene_none_raises_500(self):
-        req = NewStoryRequest(
-            name="Broken",
-            description="desc",
-            owner=Owner(owner="u", character="c"),
-            genre="fantasy"
-        )
-
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = "Fantasy"
-            mock_llm.generate_initial_scene.return_value = None
-
-            with pytest.raises(HTTPException) as exc:
-                await start_new_story(req)
-
-        assert exc.value.status_code == 500
-
-    async def test_generate_dialect_raises_exception(self):
-        req = NewStoryRequest(
-            name="Error Story",
-            description="desc",
-            owner=Owner(owner="u", character="Crash"),
-            genre="tragedy"
-        )
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.side_effect = Exception("Dialect error")
-
-            with pytest.raises(HTTPException) as exc:
-                await start_new_story(req)
-
-        assert exc.value.status_code == 500
-        assert "Dialect error" in str(exc.value.detail)
-
-    async def test_generate_initial_scene_raises_exception(self):
-        req = NewStoryRequest(
-            name="Scene Error",
-            description="desc",
-            owner=Owner(owner="u", character="Crash2"),
-            genre="comedy"
-        )
-        with patch("LLM_API.llm_service") as mock_llm:
-            mock_llm.generate_dialect.return_value = "Funny"
-            mock_llm.generate_initial_scene.side_effect = Exception("Scene error")
-
-            with pytest.raises(HTTPException) as exc:
-                await start_new_story(req)
-
-        assert exc.value.status_code == 500
-        assert "Scene error" in str(exc.value.detail)
-
-    async def test_FAILED_previous_missing_name(self):
-        req = NewStoryRequest(
-            name="",
-            description="desc",
-            owner=Owner(owner="u", character="char"),
-            genre="adventure"
-        )
-        with pytest.raises(HTTPException):
-            await start_new_story(req)
-
-    async def test_FAILED_previous_missing_owner(self):
-        req = NewStoryRequest(
-            name="Story",
-            description="desc",
-            owner=None,
-            genre="adventure"
-        )
-        with pytest.raises(HTTPException):
-            await start_new_story(req)
-
-    async def test_FAILED_previous_character_none(self):
-        req = NewStoryRequest(
-            name="Story",
-            description="desc",
-            owner=Owner(owner="u", character=None),
-            genre="adventure"
-        )
-        with pytest.raises(HTTPException):
-            await start_new_story(req)
+                resp = client.post("/story/new", json=req)
+                assert resp.json()["character"] == char
 
 
-    async def test_FAILED_previous_llm_none_dialect(self):
-        req = NewStoryRequest(
-            name="Epic",
-            description="desc",
-            owner=Owner(owner="u", character="c"),
-            genre="fantasy"
-        )
-        with patch("LLM_API.llm_service") as mock:
-            mock.generate_dialect.return_value = None
-            mock.generate_initial_scene.return_value = "Scene"
-            with pytest.raises(Exception):
-                await start_new_story(req)
+    def test_start_new_story_with_long_description(self, valid_request):
 
-    async def test_FAILED_previous_scene_none(self):
-        req = NewStoryRequest(
-            name="Broken",
-            description="desc",
-            owner=Owner(owner="u", character="c"),
-            genre="fantasy"
-        )
-        with patch("LLM_API.llm_service") as mock:
-            mock.generate_dialect.return_value = "Fantasy"
-            mock.generate_initial_scene.return_value = None
-            with pytest.raises(Exception):
-                await start_new_story(req)
+        req = valid_request.copy()
+        req["description"] = "A" * 5000
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("Epic")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain("Long scene...")):
+
+            resp = client.post("/story/new", json=req)
+            assert resp.json()["dialect"] == "Epic"
+
+
+    def test_start_new_story_empty_description(self, valid_request):
+
+        req = valid_request.copy()
+        req["description"] = ""
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain("Scene...")):
+
+            resp = client.post("/story/new", json=req)
+            assert resp.json()["dialect"] == ""
+
+
+    def test_start_new_story_genre_none(self, valid_request):
+
+        req = valid_request.copy()
+        req["genre"] = None
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("Fantasy")), \
+             patch("storyteller_fastapi.setup_chain", new=MagicMock()) as mock_setup:
+
+            mock_setup.invoke.return_value = "Fantasy intro"
+
+            response = client.post("/story/new", json=req)
+            args = mock_setup.invoke.call_args[0][0]
+
+            assert args["genre"] == "adventure"
+
+
+    def test_start_new_story_special_characters_in_fields(self, valid_request):
+
+        req = valid_request.copy()
+        req["name"] = "The @dventure! #2024"
+        req["description"] = "Symbols 😊🚀"
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("Emoji Dialect")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain("Emoji Scene")):
+
+            resp = client.post("/story/new", json=req)
+            assert resp.json()["dialect"] == "Emoji Dialect"
+
+
+    def test_start_new_story_llm_error(self, valid_request):
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain(side=Exception("LLM DOWN"))):
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.status_code == 500
+
+
+    def test_start_new_story_setup_chain_error(self, valid_request):
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("British")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain(side=Exception("Setup Fail"))):
+
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.status_code == 500
+
+
+    def test_start_new_story_dialect_with_quotes(self, valid_request):
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain('"Cyberpunk"')), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain("Scene...")):
+
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.json()["dialect"] == "Cyberpunk"
+
+
+    def test_start_new_story_strip_quotes_and_spaces(self, valid_request):
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain('  """ Medieval Bard """ ')), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain("Scene")):
+
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.json()["dialect"] == "Medieval Bard"
+
+
+    def test_start_new_story_whitespace_dialect(self, valid_request):
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("     ")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain("Scene")):
+
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.json()["dialect"] == ""
+
+
+    def test_start_new_story_character_emojis(self, valid_request):
+
+        req = valid_request.copy()
+        req["owner"]["character"] = "Zara🔥🐉"
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("Fantasy Epic")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain("Epic...")):
+
+            resp = client.post("/story/new", json=req)
+            assert resp.json()["character"] == "Zara🔥🐉"
+
+
+    def test_start_new_story_long_character_name(self, valid_request):
+
+        long_name = "A" * 500
+        req = valid_request.copy()
+        req["owner"]["character"] = long_name
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("Epic Tone")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain("Scene")):
+
+            resp = client.post("/story/new", json=req)
+            assert resp.json()["character"] == long_name
+
+
+    def test_start_new_story_setup_chain_weird_format(self, valid_request):
+
+        weird = "\n\n  ## Scene ##  \n"
+
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("Narrator")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain(weird)):
+
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.json()["content"] == weird
+
+
+    def test_missing_name_returns_422(self, valid_request):
+        req = valid_request.copy()
+        del req["name"]
+        resp = client.post("/story/new", json=req)
+        assert resp.status_code == 422
+
+    def test_missing_description_returns_422(self, valid_request):
+        req = valid_request.copy()
+        del req["description"]
+        resp = client.post("/story/new", json=req)
+        assert resp.status_code == 422
+
+    def test_missing_owner_returns_422(self, valid_request):
+        req = valid_request.copy()
+        del req["owner"]
+        resp = client.post("/story/new", json=req)
+        assert resp.status_code == 422
+
+    def test_missing_character_returns_422(self, valid_request):
+        req = valid_request.copy()
+        req["owner"] = {"owner": "abc"}  # missing character
+        resp = client.post("/story/new", json=req)
+        assert resp.status_code == 422
+
+    def test_missing_owner_id_returns_422(self, valid_request):
+        req = valid_request.copy()
+        req["owner"] = {"character": "Alice"}  # missing owner
+        resp = client.post("/story/new", json=req)
+        assert resp.status_code == 422
+
+    def test_owner_wrong_type_returns_422(self, valid_request):
+        req = valid_request.copy()
+        req["owner"] = "not-a-dict"
+        resp = client.post("/story/new", json=req)
+        assert resp.status_code == 422
+
+    def test_genre_wrong_type_returns_422(self, valid_request):
+        req = valid_request.copy()
+        req["genre"] = 12345
+        resp = client.post("/story/new", json=req)
+        assert resp.status_code == 422
+
+    def test_llm_returns_none_dialect(self, valid_request):
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain(None)):
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.status_code == 500
+
+    def test_llm_returns_non_string_dialect(self, valid_request):
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain(123)):
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.status_code == 500
+
+    def test_setup_chain_returns_none(self, valid_request):
+        with patch("storyteller_fastapi.dialect_chain", new=mock_chain("English")), \
+             patch("storyteller_fastapi.setup_chain", new=mock_chain(None)):
+            resp = client.post("/story/new", json=valid_request)
+            assert resp.status_code == 500
