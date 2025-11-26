@@ -80,7 +80,8 @@ const createStory = async (req, res) => {
       dialect: dialect,
       ownerid: [{ owner: ownerId, character: character }],
       content: [{
-        prompt: '',
+        // initial system prompt; must be non-empty to satisfy schema
+        prompt: 'Story start',
         user: ownerId,
         response: generatedContent
       }],

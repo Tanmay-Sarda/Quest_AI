@@ -406,7 +406,7 @@ footer {
 
 .message {
   padding: 10px 15px;
-  max-width: 70%;
+  max-width: 100%;
   border: 1px solid;
   word-wrap: break-word;
   transition: border-color 0.3s ease;
@@ -516,7 +516,7 @@ footer {
   }
 
    .message{
-    max-width: 90%;
+    max-width: 100%;
    }  
 }
 
