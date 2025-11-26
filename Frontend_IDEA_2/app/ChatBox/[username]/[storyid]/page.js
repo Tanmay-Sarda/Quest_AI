@@ -22,6 +22,33 @@ export default function StoryPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");
   const [onConfirmAction, setOnConfirmAction] = useState(null);
+  const [storyOwner, setStoryOwner] = useState(null);
+
+  const mapContentToStories = (content, currentUser, owner) =>
+    content.map((item, index) => {
+      let promptData = {};
+      if (typeof item.prompt === 'string') {
+        // Old data format
+        promptData = {
+          text: item.prompt,
+          // Assume owner is the author for old prompts
+          character: owner ? owner.username : "Unknown",
+          avatar: owner ? owner.avatar : '/QuestLogo.jpeg',
+        };
+      } else {
+        // New data format
+        promptData = {
+            ...item.prompt,
+            avatar: item.prompt.avatar || '/QuestLogo.jpeg' // Fallback for new prompts
+        };
+      }
+
+      return {
+        id: index,
+        prompt: promptData,
+        response: item.response,
+      };
+    });
 
   const showToast = (message, duration = 1500) => {
     const toast = document.createElement("div");
@@ -43,8 +70,10 @@ export default function StoryPage() {
       }, 2000);
       return;
     }
-    setuser(localStorage.getItem("username"));
+    const currentUser = localStorage.getItem("username");
+    setuser(currentUser);
     inputRef.current?.focus();
+
     const fetchStoryContent = async () => {
       try {
         const res = await fetch(
@@ -57,19 +86,14 @@ export default function StoryPage() {
         );
 
         const data = await res.json();
-        if(!res.ok){
-          showToast(`${data.message}`)
-          return 
+        if (!res.ok) {
+          showToast(`${data.message}`);
+          return;
         }
         const existingContent = data.data?.content || [];
-
-        setStories(
-          existingContent.map((item, index) => ({
-            id: index,
-            prompt: item.prompt,
-            response: item.response,
-          }))
-        );
+        const owner = data.data?.owner;
+        setStoryOwner(owner);
+        setStories(mapContentToStories(existingContent, currentUser, owner));
       } catch (error) {
         toast.error("Error:" + error.message);
       }
@@ -82,6 +106,8 @@ export default function StoryPage() {
     e.preventDefault();
     if (!prompt.trim() || !storyid || loading) return;
     setLoading(true);
+
+    const currentUser = localStorage.getItem("username");
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -105,17 +131,14 @@ export default function StoryPage() {
         return 
       }
 
+      const owner = data.data?.owner;
+      setStoryOwner(owner);
+
       if (data.data.public === false) {
         setIsPublic(false);
       }
 
-      setStories(
-        data.data.content.map((item, index) => ({
-          id: index,
-          prompt: item.prompt,
-          response: item.response,
-        }))
-      );
+      setStories(mapContentToStories(data.data.content, currentUser, owner));
       setPrompt("");
     } catch (err) {
       toast.error(err.message);
@@ -242,32 +265,56 @@ export default function StoryPage() {
             className="flex flex-col gap-3 overflow-y-auto custom-scrollbar pb-4"
           >
             {stories.length === 0 ? (
-              <div className="message ai-message">
-                Welcome, adventurer! Your story begins. What is your first
-                action?
+              <div className="w-full flex justify-start">
+                <div className="flex items-end gap-2 max-w-[90%] sm:max-w-[70%]">
+                    <img
+                      src={"/QuestLogo.jpeg"}
+                      alt={"AI"}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  <div className="message ai-message rounded-xl relative group p-2 bg-black/20 text-white rounded-bl-none min-w-[80px]">
+                    <p className="text-xs text-gray-400 mb-1 font-bold">
+                      Story-Master
+                    </p>
+                    <p className="break-words">
+                      Welcome, adventurer! Your story begins. What is your first
+                      action?
+                    </p>
+                  </div>
+                </div>
               </div>
             ) : (
-              stories.map((s) => (
-                <div key={s.id} className="flex flex-col gap-2 w-full">
-                  <div className="message user-message break-words rounded-xl relative group">
-                    {s.prompt}
-                    <button
-                      onClick={() => handleCopy(s.prompt)}
-                      className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Copy className="w-4 h-4 text-[var(--text-color)]/70 hover:text-[var(--text-color)]" />
-                    </button>
-                  </div>
-
-                  <div className="ai-message message break-words rounded-xl relative group">
-                    {s.response}
-                    <button
-                      onClick={() => handleCopy(s.response)}
-                      className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Copy className="w-4 h-4 text-[var(--text-color)]/70 hover:text-[var(--text-color)]" />
-                    </button>
-                  </div>
+              stories.flatMap(s => [
+                { ...s.prompt, type: 'prompt', id: s.id + '-prompt' },
+                { text: s.response, type: 'response', id: s.id + '-response', character: 'Story-Master', avatar: '/QuestLogo.jpeg' }
+              ]).map(msg => (
+                <div key={msg.id} className={`w-full flex ${msg.type === 'response' ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`flex items-end gap-2 max-w-[90%] sm:max-w-[80%] ${msg.type === 'prompt' ? 'flex-row-reverse' : ''}`}>
+                        <img
+                            src={msg.avatar || "/QuestLogo.jpeg"}
+                            alt={msg.character}
+                            className="w-8 h-8 rounded-full"
+                        />
+                        <div className={`message relative group p-2 min-w-[80px] border-dotted border-2 ${
+                            msg.type === 'response' ? 'bg-black/20 text-white border-gray-500' :
+                            (msg.character === user
+                                ? "bg-white/5 text-white border-gray-400"
+                                : "bg-white/5 text-white border-gray-500")
+                        }`}>
+                            {(msg.character !== user || msg.type === 'response') && (
+                                <p className="text-xs text-gray-400 mb-1 font-bold">
+                                    {msg.character}
+                                </p>
+                            )}
+                            <p className="break-words">{msg.text}</p>
+                            <button
+                                onClick={() => handleCopy(msg.text)}
+                                className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <Copy className="w-4 h-4 text-[var(--text-color)]/70 hover:text-[var(--text-color)]" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
               ))
             )}

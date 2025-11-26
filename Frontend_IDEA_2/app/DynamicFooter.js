@@ -15,8 +15,7 @@ export default function DynamicFooter() {
       return "(N) TERMINAL_INIT: QUEST-AI ONLINE. AWAITING COMMAND.";
     }
     if (pathname.includes("/Home")) {
-      //return "(N) SESSION ACTIVE. AWAITING COMMAND.";
-      return "";
+      return "(N) SESSION ACTIVE. AWAITING COMMAND.";
     }
     if (pathname.includes("/About")) {
       return "(N) SYSTEM INFO LOADED.";
