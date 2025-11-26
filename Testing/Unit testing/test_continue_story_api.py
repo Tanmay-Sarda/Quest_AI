@@ -1,341 +1,773 @@
 import pytest
-import types
+import pytest_asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 from bson import ObjectId
 from fastapi import HTTPException
 
-from LLM_API import continue_story_api, ContinueStoryRequest
+from storyteller_fastapi import continue_story_api, ContinueStoryRequest
 
-import pytest
-import os
-from unittest.mock import patch
-
-# Add this fixture definition
-@pytest.fixture
-def patch_env():
-    """
-    Patches environment variables needed for the API tests.
-    """
-    env_vars = {
-        "MAX_RECENT": "15",
-        "SUMMARY_TRIGGER": "10"
-    }
-    
-    with patch.dict(os.environ, env_vars):
-        yield
-
+@pytest.mark.asyncio
 class TestContinueStoryApi:
-    @pytest.fixture(autouse=True)
-    def setup_mocks(self):
-        # Patch story_repo and llm_service in LLM_API
-        patcher_repo = patch("LLM_API.story_repo", autospec=True)
-        patcher_llm = patch("LLM_API.llm_service", autospec=True)
-        self.mock_repo = patcher_repo.start()
-        self.mock_llm = patcher_llm.start()
-        yield
-        patcher_repo.stop()
-        patcher_llm.stop()
+    # --- HAPPY PATHS ---
 
-    @pytest.mark.happy
-    @pytest.mark.asyncio
-    async def test_happy_path_basic(self):
+    @pytest.mark.happy_path
+    async def test_continue_story_happy_path_basic(self):
         """
-        Test normal operation: valid story/user, content < MAX_RECENT, character found.
+        Test that continue_story_api returns correct response for a valid request with typical story data.
         """
         story_id = str(ObjectId())
         user_id = str(ObjectId())
-        user_action = "Go north"
+        user_action = "I open the mysterious door."
         character = "Alice"
         dialect = "British English"
-        story = {
-            "_id": ObjectId(story_id),
-            "title": "Test Story",
-            "description": "A test story.",
-            "ownerid": [{"owner": ObjectId(user_id), "character": character}],
-            "dialect": dialect,
-            "summary": "Once upon a time...",
-            "content": [
-                {"prompt": "Start", "user": ObjectId(user_id), "response": "It begins."}
-            ],
-            "complete": False,
-        }
-        # Setup mocks
-        self.mock_repo.find_story = AsyncMock(return_value=story)
-        self.mock_llm.continue_story = MagicMock(return_value="The story continues.")
-        self.mock_repo.push_content = AsyncMock()
-        self.mock_repo.update_story = AsyncMock()
-        self.mock_repo.find_story = AsyncMock(side_effect=[story, {**story, "content": story["content"] + [{"prompt": user_action, "user": ObjectId(user_id), "response": "The story continues."}]}])
+        story_title = "The Haunted Manor"
+        story_description = "A spooky adventure."
+        summary = "Alice entered the manor."
+        content = [
+            {"prompt": "Look around", "user": ObjectId(), "response": "You see cobwebs."},
+            {"prompt": "Call out", "user": ObjectId(), "response": "Your voice echoes."}
+        ]
+        ownerid = [{"owner": ObjectId(user_id), "character": character}]
+        updated_content = content + [{
+            "prompt": user_action,
+            "user": ObjectId(user_id),
+            "response": "The door creaks open, revealing darkness."
+        }]
 
-        req = ContinueStoryRequest(
-            story_id=story_id,
-            user_id=user_id,
-            user_action=user_action,
-        )
-        result = await continue_story_api(req)
-        assert result["story_id"] == story_id
-        assert result["title"] == "Test Story"
-        assert result["character"] == character
-        assert result["dialect"] == dialect
-        assert result["summary"] == "Once upon a time..."
-        assert result["complete"] is False
-        assert any(c["prompt"] == user_action for c in result["content"])
+        # Patch DB and LLM
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+            # find_one returns the story
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "title": story_title,
+                    "description": story_description,
+                    "ownerid": ownerid,
+                    "dialect": dialect,
+                    "summary": summary,
+                    "content": content,
+                    "complete": False
+                },
+                {
+                    "_id": ObjectId(story_id),
+                    "title": story_title,
+                    "description": story_description,
+                    "ownerid": ownerid,
+                    "dialect": dialect,
+                    "summary": summary,
+                    "content": updated_content,
+                    "complete": False
+                }
+            ])
+            # update_one is a dummy async
+            mock_collection.update_one = AsyncMock()
+            # story_chain.ainvoke returns the next scene
+            mock_story_chain.ainvoke = AsyncMock(return_value="The door creaks open, revealing darkness.")
 
-    @pytest.mark.happy
-    @pytest.mark.asyncio
-    async def test_happy_path_no_summary(self):
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action=user_action
+            )
+            result = await continue_story_api(req)
+
+            assert result["story_id"] == story_id
+            assert result["title"] == story_title
+            assert result["description"] == story_description
+            assert result["character"] == character
+            assert result["summary"] == summary
+            assert result["dialect"] == dialect
+            assert result["complete"] is False
+            # Last content should match the new action/response
+            assert result["content"][-1]["prompt"] == user_action
+            assert result["content"][-1]["response"] == "The door creaks open, revealing darkness."
+            assert result["content"][-1]["user"] == user_id
+
+    @pytest.mark.happy_path
+    async def test_continue_story_with_context_summarization(self):
         """
-        Test normal operation: story has no summary, content < MAX_RECENT.
+        Test that context summarization is triggered when content exceeds MAX_RECENT_CONTEXT_TURNS.
         """
         story_id = str(ObjectId())
         user_id = str(ObjectId())
-        user_action = "Look around"
         character = "Bob"
-        story = {
-            "_id": ObjectId(story_id),
-            "title": "No Summary Story",
-            "description": "No summary yet.",
-            "ownerid": [{"owner": ObjectId(user_id), "character": character}],
-            "dialect": "American English",
-            "summary": "",
-            "content": [],
-            "complete": False,
-        }
-        self.mock_repo.find_story = AsyncMock(side_effect=[story, {**story, "content": [{"prompt": user_action, "user": ObjectId(user_id), "response": "You see a forest."}]}])
-        self.mock_llm.continue_story = MagicMock(return_value="You see a forest.")
-        self.mock_repo.push_content = AsyncMock()
-        self.mock_repo.update_story = AsyncMock()
+        dialect = "Cyberpunk"
+        summary = "Bob started his journey."
+        # 16 turns triggers summarization (MAX_RECENT_CONTEXT_TURNS=15)
+        content = [
+            {"prompt": f"Action {i}", "user": ObjectId(), "response": f"Response {i}"} for i in range(16)
+        ]
+        ownerid = [{"owner": ObjectId(user_id), "character": character}]
+        # After summarization, first 10 turns are summarized, 6 remain
+        remaining_content = content[10:]
+        new_summary = "Bob started his journey. Many things happened."
+        user_action = "Hack the terminal."
+        updated_content = remaining_content + [{
+            "prompt": user_action,
+            "user": ObjectId(user_id),
+            "response": "You hack the terminal and alarms blare."
+        }]
 
-        req = ContinueStoryRequest(
-            story_id=story_id,
-            user_id=user_id,
-            user_action=user_action,
-        )
-        result = await continue_story_api(req)
-        assert result["summary"] == ""
-        assert result["character"] == character
-        assert result["title"] == "No Summary Story"
-        assert result["content"][0]["prompt"] == user_action
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain, \
+             patch("storyteller_fastapi.summary_chain") as mock_summary_chain:
+            # find_one: first for original, second for updated
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Cyber Heist",
+                    "description": "A neon-lit adventure.",
+                    "ownerid": ownerid,
+                    "dialect": dialect,
+                    "summary": summary,
+                    "content": content,
+                    "complete": False
+                },
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Cyber Heist",
+                    "description": "A neon-lit adventure.",
+                    "ownerid": ownerid,
+                    "dialect": dialect,
+                    "summary": new_summary,
+                    "content": updated_content,
+                    "complete": False
+                }
+            ])
+            mock_collection.update_one = AsyncMock()
+            mock_summary_chain.ainvoke = AsyncMock(return_value=new_summary)
+            mock_story_chain.ainvoke = AsyncMock(return_value="You hack the terminal and alarms blare.")
 
-    @pytest.mark.happy
-    @pytest.mark.asyncio
-    async def test_happy_path_character_not_found(self):
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action=user_action
+            )
+            result = await continue_story_api(req)
+
+            # Check that summary was updated
+            assert result["summary"] == new_summary
+            # Check that only the last 7 content entries remain (6 + new)
+            assert len(result["content"]) == 7
+            assert result["content"][-1]["prompt"] == user_action
+            assert result["content"][-1]["response"] == "You hack the terminal and alarms blare."
+
+    @pytest.mark.happy_path
+    async def test_continue_story_with_no_existing_summary(self):
         """
-        Test: user_id not found in ownerid, character should be None.
+        Test that continue_story_api works when the story has no existing summary.
         """
         story_id = str(ObjectId())
         user_id = str(ObjectId())
-        other_user = str(ObjectId())
-        user_action = "Jump"
-        story = {
-            "_id": ObjectId(story_id),
-            "title": "No Character",
-            "description": "No character for this user.",
-            "ownerid": [{"owner": ObjectId(other_user), "character": "Eve"}],
-            "dialect": "American English",
-            "summary": "",
-            "content": [],
-            "complete": False,
-        }
-        self.mock_repo.find_story = AsyncMock(side_effect=[story, {**story, "content": [{"prompt": user_action, "user": ObjectId(user_id), "response": "You jump high."}]}])
-        self.mock_llm.continue_story = MagicMock(return_value="You jump high.")
-        self.mock_repo.push_content = AsyncMock()
-        self.mock_repo.update_story = AsyncMock()
+        character = "Eve"
+        dialect = "1920s hard-boiled detective"
+        content = [
+            {"prompt": "Knock on the door", "user": ObjectId(), "response": "A gruff voice answers."}
+        ]
+        ownerid = [{"owner": ObjectId(user_id), "character": character}]
+        user_action = "Ask about the missing person."
+        updated_content = content + [{
+            "prompt": user_action,
+            "user": ObjectId(user_id),
+            "response": "He narrows his eyes and says, 'Who wants to know?'"
+        }]
 
-        req = ContinueStoryRequest(
-            story_id=story_id,
-            user_id=user_id,
-            user_action=user_action,
-        )
-        result = await continue_story_api(req)
-        assert result["character"] is None
-        assert result["content"][0]["prompt"] == user_action
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "The Case of the Vanished Dame",
+                    "description": "A noir mystery.",
+                    "ownerid": ownerid,
+                    "dialect": dialect,
+                    "content": content,
+                    "complete": False
+                },
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "The Case of the Vanished Dame",
+                    "description": "A noir mystery.",
+                    "ownerid": ownerid,
+                    "dialect": dialect,
+                    "content": updated_content,
+                    "complete": False
+                }
+            ])
+            mock_collection.update_one = AsyncMock()
+            mock_story_chain.ainvoke = AsyncMock(return_value="He narrows his eyes and says, 'Who wants to know?'")
 
-    @pytest.mark.happy
-    @pytest.mark.asyncio
-    async def test_happy_path_summary_triggered(self):
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action=user_action
+            )
+            result = await continue_story_api(req)
+            assert result["summary"] == ""
+            assert result["character"] == character
+            assert result["content"][-1]["prompt"] == user_action
+
+    # --- EDGE CASES ---
+
+    @pytest.mark.edge_case
+    async def test_continue_story_invalid_story_id(self):
         """
-        Test: content > MAX_RECENT triggers summarization and content truncation.
-        """
-        story_id = str(ObjectId())
-        user_id = str(ObjectId())
-        user_action = "Open the door"
-        character = "Sam"
-        # 16 content entries (MAX_RECENT=15, SUMMARY_TRIGGER=10)
-        content = [{"prompt": f"Action {i}", "user": ObjectId(user_id), "response": f"Resp {i}"} for i in range(16)]
-        story = {
-            "_id": ObjectId(story_id),
-            "title": "Long Story",
-            "description": "A long story.",
-            "ownerid": [{"owner": ObjectId(user_id), "character": character}],
-            "dialect": "American English",
-            "summary": "Old summary.",
-            "content": content,
-            "complete": False,
-        }
-        # After summarization, content should be content[10:]
-        new_summary = "Merged summary."
-        updated_story = {**story, "summary": new_summary, "content": content[10:] + [{"prompt": user_action, "user": ObjectId(user_id), "response": "You open the door."}]}
-        self.mock_repo.find_story = AsyncMock(side_effect=[story, updated_story])
-        self.mock_llm.summarize = AsyncMock(return_value=new_summary)
-        self.mock_llm.continue_story = MagicMock(return_value="You open the door.")
-        self.mock_repo.update_story = AsyncMock()
-        self.mock_repo.push_content = AsyncMock()
-
-        req = ContinueStoryRequest(
-            story_id=story_id,
-            user_id=user_id,
-            user_action=user_action,
-        )
-        result = await continue_story_api(req)
-        assert result["summary"] == new_summary
-        # Only the last 6 (16-10) + new entry
-        assert len(result["content"]) == 7
-        assert result["content"][-1]["prompt"] == user_action
-
-    @pytest.mark.edge
-    @pytest.mark.asyncio
-    async def test_invalid_story_id(self):
-        """
-        Test: invalid story_id format raises HTTPException 400.
+        Test that an invalid story_id format raises HTTP 400.
         """
         req = ContinueStoryRequest(
-            story_id="notanobjectid",
+            story_id="not_a_valid_oid",
             user_id=str(ObjectId()),
-            user_action="Test",
+            user_action="Test action"
         )
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(HTTPException) as excinfo:
             await continue_story_api(req)
-        assert exc.value.status_code == 400
-        assert "Invalid story_id format" in str(exc.value.detail)
+        assert excinfo.value.status_code == 400
+        assert "Invalid story_id format" in excinfo.value.detail
 
-    @pytest.mark.edge
-    @pytest.mark.asyncio
-    async def test_invalid_user_id(self):
+    @pytest.mark.edge_case
+    async def test_continue_story_invalid_user_id(self):
         """
-        Test: invalid user_id format raises HTTPException 400.
+        Test that an invalid user_id format raises HTTP 400.
         """
         req = ContinueStoryRequest(
             story_id=str(ObjectId()),
-            user_id="notanobjectid",
-            user_action="Test",
+            user_id="not_a_valid_oid",
+            user_action="Test action"
         )
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(HTTPException) as excinfo:
             await continue_story_api(req)
-        assert exc.value.status_code == 400
-        assert "Invalid user_id format" in str(exc.value.detail)
+        assert excinfo.value.status_code == 400
+        assert "Invalid user_id format" in excinfo.value.detail
 
-    @pytest.mark.edge
-    @pytest.mark.asyncio
-    async def test_story_not_found(self):
+    @pytest.mark.edge_case
+    async def test_continue_story_story_not_found(self):
         """
-        Test: story_repo.find_story returns None, should raise 404.
+        Test that a missing story in the DB raises HTTP 404.
         """
         story_id = str(ObjectId())
         user_id = str(ObjectId())
-        self.mock_repo.find_story = AsyncMock(return_value=None)
-        req = ContinueStoryRequest(
-            story_id=story_id,
-            user_id=user_id,
-            user_action="Test",
-        )
-        with pytest.raises(HTTPException) as exc:
-            await continue_story_api(req)
-        assert exc.value.status_code == 404
-        assert "Story not found" in str(exc.value.detail)
+        with patch("storyteller_fastapi.story_collection") as mock_collection:
+            mock_collection.find_one = AsyncMock(return_value=None)
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Test action"
+            )
+            with pytest.raises(HTTPException) as excinfo:
+                await continue_story_api(req)
+            assert excinfo.value.status_code == 404
+            assert excinfo.value.detail == "Story not found"
 
-    @pytest.mark.edge
-    @pytest.mark.asyncio
-    async def test_llm_service_raises(self):
+    @pytest.mark.edge_case
+    async def test_continue_story_user_not_in_ownerid(self):
         """
-        Test: llm_service.continue_story raises an exception, should return 500.
+        Test that if the user is not in the story's ownerid, character is None but function still works.
         """
         story_id = str(ObjectId())
         user_id = str(ObjectId())
-        character = "Alice"
-        story = {
-            "_id": ObjectId(story_id),
-            "title": "Test Story",
-            "description": "A test story.",
-            "ownerid": [{"owner": ObjectId(user_id), "character": character}],
-            "dialect": "British English",
-            "summary": "Once upon a time...",
-            "content": [],
-            "complete": False,
-        }
-        self.mock_repo.find_story = AsyncMock(side_effect=[story])
-        self.mock_llm.continue_story = MagicMock(side_effect=Exception("LLM error"))
-        req = ContinueStoryRequest(
-            story_id=story_id,
-            user_id=user_id,
-            user_action="Go north",
-        )
-        with pytest.raises(HTTPException) as exc:
-            await continue_story_api(req)
-        assert exc.value.status_code == 500
-        assert "Internal Server Error" in str(exc.value.detail)
+        other_user_id = str(ObjectId())
+        content = []
+        ownerid = [{"owner": ObjectId(other_user_id), "character": "NotYou"}]
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Lost",
+                    "description": "Lost in the woods.",
+                    "ownerid": ownerid,
+                    "dialect": "American English",
+                    "content": content,
+                    "complete": False
+                },
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Lost",
+                    "description": "Lost in the woods.",
+                    "ownerid": ownerid,
+                    "dialect": "American English",
+                    "content": [{
+                        "prompt": "Shout for help",
+                        "user": ObjectId(user_id),
+                        "response": "Your voice echoes in the trees."
+                    }],
+                    "complete": False
+                }
+            ])
+            mock_collection.update_one = AsyncMock()
+            mock_story_chain.ainvoke = AsyncMock(return_value="Your voice echoes in the trees.")
 
-    @pytest.mark.edge
-    @pytest.mark.asyncio
-    async def test_push_content_raises(self):
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Shout for help"
+            )
+            result = await continue_story_api(req)
+            assert result["character"] is None
+            assert result["content"][-1]["prompt"] == "Shout for help"
+
+    @pytest.mark.edge_case
+    async def test_continue_story_empty_content(self):
         """
-        Test: story_repo.push_content raises, should return 500.
+        Test that continue_story_api works when the story's content is empty.
         """
         story_id = str(ObjectId())
         user_id = str(ObjectId())
-        character = "Alice"
-        story = {
-            "_id": ObjectId(story_id),
-            "title": "Test Story",
-            "description": "A test story.",
-            "ownerid": [{"owner": ObjectId(user_id), "character": character}],
-            "dialect": "British English",
-            "summary": "Once upon a time...",
-            "content": [],
-            "complete": False,
-        }
-        self.mock_repo.find_story = AsyncMock(side_effect=[story])
-        self.mock_llm.continue_story = MagicMock(return_value="Next scene.")
-        self.mock_repo.push_content = AsyncMock(side_effect=Exception("DB error"))
-        req = ContinueStoryRequest(
-            story_id=story_id,
-            user_id=user_id,
-            user_action="Go north",
-        )
-        with pytest.raises(HTTPException) as exc:
-            await continue_story_api(req)
-        assert exc.value.status_code == 500
-        assert "Internal Server Error" in str(exc.value.detail)
+        character = "Solo"
+        ownerid = [{"owner": ObjectId(user_id), "character": character}]
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Alone",
+                    "description": "A solitary journey.",
+                    "ownerid": ownerid,
+                    "dialect": "American English",
+                    "content": [],
+                    "complete": False
+                },
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Alone",
+                    "description": "A solitary journey.",
+                    "ownerid": ownerid,
+                    "dialect": "American English",
+                    "content": [{
+                        "prompt": "Start walking",
+                        "user": ObjectId(user_id),
+                        "response": "You begin your journey alone."
+                    }],
+                    "complete": False
+                }
+            ])
+            mock_collection.update_one = AsyncMock()
+            mock_story_chain.ainvoke = AsyncMock(return_value="You begin your journey alone.")
 
-    @pytest.mark.edge
-    @pytest.mark.asyncio
-    async def test_continue_story_async(self):
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Start walking"
+            )
+            result = await continue_story_api(req)
+            assert result["content"][-1]["prompt"] == "Start walking"
+            assert result["content"][-1]["response"] == "You begin your journey alone."
+
+    @pytest.mark.edge_case
+    async def test_continue_story_db_update_failure(self):
         """
-        Test: llm_service.continue_story returns a coroutine (async), should be awaited.
+        Test that a DB update failure raises HTTP 500.
         """
         story_id = str(ObjectId())
         user_id = str(ObjectId())
-        character = "Alice"
-        story = {
-            "_id": ObjectId(story_id),
-            "title": "Test Story",
-            "description": "A test story.",
-            "ownerid": [{"owner": ObjectId(user_id), "character": character}],
-            "dialect": "British English",
-            "summary": "Once upon a time...",
-            "content": [],
-            "complete": False,
-        }
-        self.mock_repo.find_story = AsyncMock(side_effect=[story, {**story, "content": [{"prompt": "Go north", "user": ObjectId(user_id), "response": "Async next scene."}]}])
-        async def async_continue_story(*args, **kwargs):
-            return "Async next scene."
-        self.mock_llm.continue_story = async_continue_story
-        self.mock_repo.push_content = AsyncMock()
-        self.mock_repo.update_story = AsyncMock()
+        character = "FailGuy"
+        ownerid = [{"owner": ObjectId(user_id), "character": character}]
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+            mock_collection.find_one = AsyncMock(return_value={
+                "_id": ObjectId(story_id),
+                "title": "Fail Story",
+                "description": "A story that fails.",
+                "ownerid": ownerid,
+                "dialect": "American English",
+                "content": [],
+                "complete": False
+            })
+            # Simulate update_one raising an exception
+            mock_collection.update_one = AsyncMock(side_effect=Exception("DB error"))
+            mock_story_chain.ainvoke = AsyncMock(return_value="Failure is imminent.")
 
-        req = ContinueStoryRequest(
-            story_id=story_id,
-            user_id=user_id,
-            user_action="Go north",
-        )
-        result = await continue_story_api(req)
-        assert any(c["response"] == "Async next scene." for c in result["content"])
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Try to win"
+            )
+            with pytest.raises(HTTPException) as excinfo:
+                await continue_story_api(req)
+            assert excinfo.value.status_code == 500
+            assert "Internal Server Error" in excinfo.value.detail
+
+    @pytest.mark.edge_case
+    async def test_continue_story_llm_failure(self):
+        """
+        Test that an LLM (story_chain) failure raises HTTP 500.
+        """
+        story_id = str(ObjectId())
+        user_id = str(ObjectId())
+        character = "LLMFail"
+        ownerid = [{"owner": ObjectId(user_id), "character": character}]
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+            mock_collection.find_one = AsyncMock(return_value={
+                "_id": ObjectId(story_id),
+                "title": "LLM Down",
+                "description": "A story with a broken LLM.",
+                "ownerid": ownerid,
+                "dialect": "American English",
+                "content": [],
+                "complete": False
+            })
+            mock_collection.update_one = AsyncMock()
+            # Simulate LLM failure
+            mock_story_chain.ainvoke = AsyncMock(side_effect=Exception("LLM error"))
+
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Try to talk"
+            )
+            with pytest.raises(HTTPException) as excinfo:
+                await continue_story_api(req)
+            assert excinfo.value.status_code == 500
+            assert "Internal Server Error" in excinfo.value.detail
+
+        # ---------------------------------------------------------
+    # MISSING EDGE CASES (ADDED)
+    # ---------------------------------------------------------
+
+    @pytest.mark.edge_case
+    async def test_continue_story_summary_chain_failure(self):
+        """
+        If summary_chain fails during summarization, the API should return HTTP 500.
+        """
+        story_id = str(ObjectId())
+        user_id = str(ObjectId())
+
+        # Content long enough to trigger summarization
+        content = [{"prompt": f"A{i}", "user": ObjectId(), "response": f"R{i}"} for i in range(20)]
+        ownerid = [{"owner": ObjectId(user_id), "character": "Hero"}]
+
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.summary_chain") as mock_summary_chain:
+
+            mock_collection.find_one = AsyncMock(return_value={
+                "_id": ObjectId(story_id),
+                "title": "Summary Failure",
+                "description": "Test desc",
+                "ownerid": ownerid,
+                "dialect": "American English",
+                "summary": "",
+                "content": content,
+                "complete": False
+            })
+
+            mock_collection.update_one = AsyncMock()
+
+            # Force summary_chain to fail
+            mock_summary_chain.ainvoke = AsyncMock(side_effect=Exception("Summarizer broke"))
+
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Move forward"
+            )
+
+            with pytest.raises(HTTPException) as excinfo:
+                await continue_story_api(req)
+
+            assert excinfo.value.status_code == 500
+            assert "Internal Server Error" in excinfo.value.detail
+
+
+    @pytest.mark.edge_case
+    async def test_continue_story_summary_chain_invalid_output(self):
+        """
+        If summary_chain returns invalid output (None or non-string), the API should raise 500.
+        """
+        story_id = str(ObjectId())
+        user_id = str(ObjectId())
+
+        content = [{"prompt": f"A{i}", "user": ObjectId(), "response": f"R{i}"} for i in range(20)]
+        ownerid = [{"owner": ObjectId(user_id), "character": "Hero"}]
+
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain, \
+             patch("storyteller_fastapi.summary_chain") as mock_summary_chain:
+
+            mock_collection.find_one = AsyncMock(return_value={
+                "_id": ObjectId(story_id),
+                "title": "Invalid Summary Output",
+                "description": "Test",
+                "ownerid": ownerid,
+                "dialect": "American English",
+                "summary": "",
+                "content": content,
+                "complete": False
+            })
+
+            mock_collection.update_one = AsyncMock()
+
+            # Return invalid summary format
+            mock_summary_chain.ainvoke = AsyncMock(return_value=None)
+
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Try something"
+            )
+
+            with pytest.raises(HTTPException) as excinfo:
+                await continue_story_api(req)
+
+            assert excinfo.value.status_code == 500
+
+
+    @pytest.mark.edge_case
+    async def test_continue_story_malformed_content_entries(self):
+        """
+        If story content contains malformed entries (missing keys), API should still process 
+        but fill defaults without crashing.
+        """
+        story_id = str(ObjectId())
+        user_id = str(ObjectId())
+        ownerid = [{"owner": ObjectId(user_id), "character": "Hero"}]
+
+        malformed_content = [
+            {},  # completely empty
+            {"prompt": "P"},  # missing user & response
+            {"response": "R"},  # missing prompt
+            {"user": ObjectId()},  # missing prompt & response
+        ]
+
+        updated_content = malformed_content + [{
+            "prompt": "Act",
+            "user": ObjectId(user_id),
+            "response": "Done."
+        }]
+
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Malformed",
+                    "description": "Test malformed content",
+                    "ownerid": ownerid,
+                    "dialect": "American English",
+                    "summary": "",
+                    "content": malformed_content,
+                    "complete": False
+                },
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Malformed",
+                    "description": "Test malformed content",
+                    "ownerid": ownerid,
+                    "dialect": "American English",
+                    "summary": "",
+                    "content": updated_content,
+                    "complete": False
+                }
+            ])
+
+            mock_collection.update_one = AsyncMock()
+            mock_story_chain.ainvoke = AsyncMock(return_value="Done.")
+
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Act"
+            )
+
+            result = await continue_story_api(req)
+
+            assert len(result["content"]) == 5
+            assert result["content"][-1]["response"] == "Done."
+
+
+    @pytest.mark.edge_case
+    async def test_continue_story_non_list_content(self):
+        """
+        If 'content' is not a list, the API should raise HTTP 500 instead of iterating.
+        """
+        story_id = str(ObjectId())
+        user_id = str(ObjectId())
+        ownerid = [{"owner": ObjectId(user_id), "character": "Hero"}]
+
+        # invalid content (string instead of list)
+        bad_content = "not a list"
+
+        with patch("storyteller_fastapi.story_collection") as mock_collection:
+
+            mock_collection.find_one = AsyncMock(return_value={
+                "_id": ObjectId(story_id),
+                "title": "Bad Content",
+                "description": "Content is not list",
+                "ownerid": ownerid,
+                "dialect": "American English",
+                "summary": "",
+                "content": bad_content,
+                "complete": False
+            })
+
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Fix it"
+            )
+
+            with pytest.raises(HTTPException) as excinfo:
+                await continue_story_api(req)
+
+            assert excinfo.value.status_code == 500
+
+
+    @pytest.mark.edge_case
+    async def test_continue_story_invalid_dialect_type(self):
+        """
+        If dialect is an invalid type (e.g., int), the API should still work 
+        because dialect is only interpolated as a string.
+        """
+        story_id = str(ObjectId())
+        user_id = str(ObjectId())
+        ownerid = [{"owner": ObjectId(user_id), "character": "Hero"}]
+
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Bad dialect",
+                    "description": "Test",
+                    "ownerid": ownerid,
+                    "dialect": 12345,  # invalid type
+                    "summary": "",
+                    "content": [],
+                    "complete": False
+                },
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Bad dialect",
+                    "description": "Test",
+                    "ownerid": ownerid,
+                    "dialect": 12345,
+                    "summary": "",
+                    "content": [{
+                        "prompt": "Test",
+                        "user": ObjectId(user_id),
+                        "response": "OK"
+                    }],
+                    "complete": False
+                }
+            ])
+
+            mock_collection.update_one = AsyncMock()
+            mock_story_chain.ainvoke = AsyncMock(return_value="OK")
+
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Test"
+            )
+
+            result = await continue_story_api(req)
+
+            # Should not fail; dialect coerces to string when formatting
+            assert result["dialect"] == 12345
+
+
+    @pytest.mark.edge_case
+    async def test_continue_story_ownerid_missing(self):
+        """
+        If ownerid is missing entirely, character should be None but API still works.
+        """
+        story_id = str(ObjectId())
+        user_id = str(ObjectId())
+
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Missing ownerid",
+                    "description": "Test",
+                    "dialect": "American English",
+                    "summary": "",
+                    "content": [],
+                    "complete": False
+                },
+                {
+                    "_id": ObjectId(story_id),
+                    "title": "Missing ownerid",
+                    "description": "Test",
+                    "dialect": "American English",
+                    "summary": "",
+                    "content": [{
+                        "prompt": "Proceed",
+                        "user": ObjectId(user_id),
+                        "response": "Done"
+                    }],
+                    "complete": False
+                }
+            ])
+
+            mock_collection.update_one = AsyncMock()
+            mock_story_chain.ainvoke = AsyncMock(return_value="Done")
+
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Proceed"
+            )
+
+            result = await continue_story_api(req)
+
+            assert result["character"] is None
+            assert result["content"][-1]["response"] == "Done"
+
+
+    @pytest.mark.edge_case
+    async def test_continue_story_missing_title_description(self):
+        """
+        If title or description is missing in DB object, API should default them safely.
+        """
+        story_id = str(ObjectId())
+        user_id = str(ObjectId())
+        ownerid = [{"owner": ObjectId(user_id), "character": "Hero"}]
+
+        with patch("storyteller_fastapi.story_collection") as mock_collection, \
+             patch("storyteller_fastapi.story_chain") as mock_story_chain:
+
+            # First find_one → missing title & description
+            mock_collection.find_one = AsyncMock(side_effect=[
+                {
+                    "_id": ObjectId(story_id),
+                    "ownerid": ownerid,
+                    "dialect": "American English",
+                    "summary": "",
+                    "content": [],
+                    "complete": False
+                },
+                # After update, DB returns the populated content
+                {
+                    "_id": ObjectId(story_id),
+                    "ownerid": ownerid,
+                    "dialect": "American English",
+                    "summary": "",
+                    "content": [{
+                        "prompt": "Act",
+                        "user": ObjectId(user_id),
+                        "response": "OK"
+                    }],
+                    "complete": False
+                }
+            ])
+
+            mock_collection.update_one = AsyncMock()
+            mock_story_chain.ainvoke = AsyncMock(return_value="OK")
+
+            req = ContinueStoryRequest(
+                story_id=story_id,
+                user_id=user_id,
+                user_action="Act"
+            )
+
+            result = await continue_story_api(req)
+
+            assert result["title"] == ""      # defaults safely
+            assert result["description"] == ""  # defaults safely
+            assert result["content"][-1]["response"] == "OK"
