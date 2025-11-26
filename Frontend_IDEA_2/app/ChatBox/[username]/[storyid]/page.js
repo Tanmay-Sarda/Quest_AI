@@ -24,29 +24,58 @@ export default function StoryPage() {
   const [onConfirmAction, setOnConfirmAction] = useState(null);
   const [storyOwner, setStoryOwner] = useState(null);
 
+  const formatPromptText = (text = "") => {
+    // 1) Convert any literal "\n" sequences to real newlines
+    const normalized = text.replace(/\\n/g, "\n");
+
+    // 2) Allow at most two newline characters in total
+    let newlineCount = 0;
+    let result = "";
+    for (let i = 0; i < normalized.length; i += 1) {
+      const char = normalized[i];
+      if (char === "\n") {
+        newlineCount += 1;
+        if (newlineCount > 2) {
+          continue;
+        }
+      }
+      result += char;
+    }
+
+    // 3) Ensure no remaining literal "\n" text
+    return result.replaceAll(/\\n/g, " ");
+  };
+
   const mapContentToStories = (content, currentUser, owner) =>
     content.map((item, index) => {
+      const ownerName =
+        (owner && (owner.character || owner.username)) || "Unknown";
       let promptData = {};
-      if (typeof item.prompt === 'string') {
+      if (typeof item.prompt === "string") {
         // Old data format
+        const text = item.prompt || "";
         promptData = {
-          text: item.prompt,
-          // Assume owner is the author for old prompts
-          character: owner ? owner.username : "Unknown",
-          avatar: owner ? owner.avatar : '/QuestLogo.jpeg',
+          text: formatPromptText(text),
+          character: ownerName,
         };
       } else {
         // New data format
+        const basePrompt = {
+          ...item.prompt,
+        };
+        const character = basePrompt.character || ownerName;
+        const rawText = basePrompt.text || "";
         promptData = {
-            ...item.prompt,
-            avatar: item.prompt.avatar || '/QuestLogo.jpeg' // Fallback for new prompts
+          ...basePrompt,
+          character,
+          text: formatPromptText(rawText),
         };
       }
 
       return {
         id: index,
         prompt: promptData,
-        response: item.response,
+        response: formatPromptText(item.response || ""),
       };
     });
 
@@ -266,12 +295,7 @@ export default function StoryPage() {
           >
             {stories.length === 0 ? (
               <div className="w-full flex justify-start">
-                <div className="flex items-end gap-2 max-w-[90%] sm:max-w-[70%]">
-                    <img
-                      src={"/QuestLogo.jpeg"}
-                      alt={"AI"}
-                      className="w-8 h-8 rounded-full"
-                    />
+                <div className="flex items-end max-w-[90%] sm:max-w-[70%]">
                   <div className="message ai-message rounded-xl relative group p-2 bg-black/20 text-white rounded-bl-none min-w-[80px]">
                     <p className="text-xs text-gray-400 mb-1 font-bold">
                       Story-Master
@@ -286,16 +310,11 @@ export default function StoryPage() {
             ) : (
               stories.flatMap(s => [
                 { ...s.prompt, type: 'prompt', id: s.id + '-prompt' },
-                { text: s.response, type: 'response', id: s.id + '-response', character: 'Story-Master', avatar: '/QuestLogo.jpeg' }
+                { text: s.response, type: 'response', id: s.id + '-response', character: 'Story-Master' }
               ]).map(msg => (
                 <div key={msg.id} className={`w-full flex ${msg.type === 'response' ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`flex items-end gap-2 max-w-[90%] sm:max-w-[80%] ${msg.type === 'prompt' ? 'flex-row-reverse' : ''}`}>
-                        <img
-                            src={msg.avatar || "/QuestLogo.jpeg"}
-                            alt={msg.character}
-                            className="w-8 h-8 rounded-full"
-                        />
-                        <div className={`message relative group p-2 min-w-[80px] border-dotted border-2 ${
+                    <div className={`flex items-end max-w-[90%] sm:max-w-[80%] ${msg.type === 'prompt' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`message rounded-xl relative group p-2 min-w-[80px] border-dotted border-2 ${
                             msg.type === 'response' ? 'bg-black/20 text-white border-gray-500' :
                             (msg.character === user
                                 ? "bg-white/5 text-white border-gray-400"
@@ -306,7 +325,7 @@ export default function StoryPage() {
                                     {msg.character}
                                 </p>
                             )}
-                            <p className="break-words">{msg.text}</p>
+                            <p className="break-words whitespace-pre-wrap">{msg.text}</p>
                             <button
                                 onClick={() => handleCopy(msg.text)}
                                 className="absolute bottom-[-18px] right-2 opacity-0 group-hover:opacity-100 transition-opacity"

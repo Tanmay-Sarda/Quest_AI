@@ -5,6 +5,40 @@ import asyncHandler from '../utils/AsyncHandler.js';
 import { Story } from '../models/Story.models.js';
 import mongoose from 'mongoose';
 
+const extractOwnerInfo = (storyDoc, viewerId) => {
+  if (!storyDoc) {
+    return null;
+  }
+
+  const ownerEntries = storyDoc.ownerid || [];
+  if (!ownerEntries.length) {
+    return null;
+  }
+
+  let ownerEntry = null;
+  if (viewerId) {
+    ownerEntry = ownerEntries.find((entry) =>
+      entry.owner?.equals
+        ? entry.owner.equals(viewerId)
+        : entry.owner?.toString() === viewerId?.toString()
+    );
+  }
+
+  if (!ownerEntry) {
+    ownerEntry = ownerEntries[0];
+  }
+
+  if (!ownerEntry) {
+    return null;
+  }
+
+  const ownerId = ownerEntry.owner?.toString?.() ?? ownerEntry.owner;
+  return {
+    id: ownerId,
+    character: ownerEntry.character,
+    username: ownerEntry.character,
+  };
+};
 
 const createStory = async (req, res) => {
   console.log("createStory called");
@@ -230,12 +264,13 @@ const getStoryContent = async (req, res) => {
 
     const story = await Story.findOne({
       _id: trimmedStoryId,
-    }).select('-ownerid');
+    });
 
     if (!story) {
       return res.status(404).json(new ApiError(404, 'Story not found or you are not the owner'));
     }
 
+    const ownerInfo = extractOwnerInfo(story, req.user?._id);
 
     res.status(200).json(new ApiResponse(true, {
       _id: story._id,
@@ -244,7 +279,8 @@ const getStoryContent = async (req, res) => {
       genre: story.genre,
       content: story.content,
       complete: story.complete,
-      public: story.public
+      public: story.public,
+      owner: ownerInfo
     }, 'Story content fetched successfully'));
   } catch (err) {
     return res.status(500).json(new ApiError(500, "Failed to fetch story content"))
@@ -281,7 +317,7 @@ const addpromptResponse = async (req, res) => {
     );
 
     // Fetch updated story from MongoDB
-    const updatedStory = await Story.findById(trimmedStoryId).select('-ownerid');
+    const updatedStory = await Story.findById(trimmedStoryId);
 
     if (!updatedStory) {
       return res.status(404).json(new ApiError(404, 'Story not found after update'));
@@ -290,11 +326,14 @@ const addpromptResponse = async (req, res) => {
       updatedStory.public = false;
       await updatedStory.save();
     }
+
+    const ownerInfo = extractOwnerInfo(updatedStory, userId);
     console.log("Story continued successfully");
     console.log(updatedStory.content);
     res.status(200).json(new ApiResponse(true, {
       content: updatedStory.content,
       public: updatedStory.public,
+      owner: ownerInfo
     }, 'Story continued successfully'));
 
   } catch (error) {
