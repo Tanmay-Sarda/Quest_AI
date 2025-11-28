@@ -388,36 +388,37 @@ export default function Navbar() {
       >
         <div style={{ padding: 14 }}>
           <div className="flex items-center justify-between mb-2">
-            <div
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (isLoggedIn) {
-                  const targetUrl = `/Edit/${username}`;
-                  if (pathname !== targetUrl) {
-                    router.push(targetUrl);
-                  }
-                } else {
-                  const targetUrl = "/Login";
-                  if (pathname !== targetUrl) {
-                    router.push(targetUrl);
-                  }
-                }
-              }}
-            >
-              <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-900 flex items-center justify-center">
-                {profileImage ? (
-                  <img src={profileImage} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-lg font-bold text-white">{(username || "U").charAt(0).toUpperCase()}</span>
-                )}
-              </div>
-              <div>
-                <p className="font-semibold text-white">{username || "Guest"}</p>
-                <p className="text-xs text-gray-400">Edit profile</p>
-              </div>
-            </div>
-            <button
+                        {isLoggedIn && (
+                          <div
+                            className="flex items-center gap-3 cursor-pointer"
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              if (isLoggedIn) {
+                                const targetUrl = `/Edit/${username}`;
+                                if (pathname !== targetUrl) {
+                                  router.push(targetUrl);
+                                }
+                              } else {
+                                const targetUrl = "/Login";
+                                if (pathname !== targetUrl) {
+                                  router.push(targetUrl);
+                                }
+                              }
+                            }}
+                          >
+                            <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-900 flex items-center justify-center">
+                              {profileImage ? (
+                                <img src={profileImage} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-lg font-bold text-white">{(username || "U").charAt(0).toUpperCase()}</span>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white">{username || "Guest"}</p>
+                              <p className="text-xs text-gray-400">Edit profile</p>
+                            </div>
+                          </div>
+                        )}            <button
               onClick={() => {
                 showToast("✖ Closing Menu");
                 setMobileMenuOpen(false);

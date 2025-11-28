@@ -62,7 +62,7 @@ export default function EditProfilePage() {
         toast.success("✅ Profile updated successfully! Please sign in again.");
         localStorage.removeItem("accessToken"); // Log user out for security
         setTimeout(() => {
-          router.push("/Sign_in");
+          router.push("/Login");
         }, 2500);
       } else {
         toast.error(`⚠️ ${data.message || "Update failed"}`);

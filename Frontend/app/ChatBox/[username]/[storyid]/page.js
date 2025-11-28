@@ -24,7 +24,7 @@ export default function StoryPage() {
         const token = localStorage.getItem("accessToken");
         if (!token) {
           toast.error("You must be logged in to access this story.");
-          router.push("/Sign_in");
+          router.push("/Login");
         }
 
         const res= await fetch(
