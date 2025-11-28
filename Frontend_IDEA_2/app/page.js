@@ -118,14 +118,17 @@ export default function SignUpPage() {
               <label htmlFor="name" className="sm:w-[120px]">
                 NAME :
               </label>
-              <input
-                id="name"
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative w-full">
+                <input
+                  id="name"
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full"
+                />
+              </div>
             </div>
 
             {/* EMAIL */}
@@ -133,14 +136,17 @@ export default function SignUpPage() {
               <label htmlFor="email" className="sm:w-[120px]">
                 EMAIL :
               </label>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative w-full">
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full"
+                />
+              </div>
             </div>
 
             {/* PASSWORD */}
