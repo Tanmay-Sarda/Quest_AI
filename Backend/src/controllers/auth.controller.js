@@ -20,6 +20,7 @@ import e from "express";
  * HELPER 1 — Generate + Send OTP
  ****************************************/
 const generateAndSendOtp = async (email) => {
+  email = email.toLowerCase();
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpHash = await bcrypt.hash(otp, 10);
 

@@ -8,7 +8,6 @@ const asyncHandler = (requestHandler) => {
       // Check if it's a promise
       if (result instanceof Promise) {
         return result.catch((error) => {
-          console.error(`Error: ${error.message}`);
           next(error);
         });
       }
@@ -16,7 +15,6 @@ const asyncHandler = (requestHandler) => {
       return result;
     } catch (error) {
       // Handle synchronous errors
-      console.error(`Error: ${error.message}`);
       next(error);
     }
   };
