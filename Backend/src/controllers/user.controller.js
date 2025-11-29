@@ -14,7 +14,13 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const registerUser = async (req, res) => {
     try {
-        const { username, email, password, profilePicture } = req.body;
+        const { username, email, password } = req.body;
+
+        if (username === "" || password === "" || email === "") {
+            return res
+                .status(408)
+                .json(new ApiError(408, 'Required username,password and email'));
+        }
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
@@ -27,15 +33,11 @@ const registerUser = async (req, res) => {
         // Create user
         const newUser = new User({ username, email, password });
 
-        if (profilePicture) {
-            newUser.profilePicture = profilePicture;
-        }
-
         await newUser.save();
 
         res.status(201).json(
             new ApiResponse(
-                true,
+                201,
                 { _id: newUser._id, username: newUser.username, email: newUser.email },
                 'User registered successfully'
             )
@@ -57,7 +59,7 @@ const googleLogin = async (req, res) => {
         });
 
         const payload = ticket.getPayload();
-        const { email, name } = payload;
+        const { email, name, profilePicture } = payload;
 
         // Check if user already exists
         let user = await User.findOne({ email });
@@ -75,6 +77,9 @@ const googleLogin = async (req, res) => {
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
 
+        if (profilePicture) {
+            user.profilePicture = profilePicture
+        }
         // Save tokens to DB
         user.accesstoken = accessToken;
         user.refreshtoken = refreshToken;
@@ -119,13 +124,13 @@ const loginUser = async (req, res) => {
             httpOnly: true,// Prevents client-side access to the cookie 
             secure: process.env.NODE_ENV === "production", // Use secure cookies in production (HTTPS)
             sameSite: "lax",
-            maxAge: 24 * 60 * 60 * 1000, // 1 day
+            maxAge: 86400000, // 1 day
         }
         return res.
             status(200).
             cookie("accessToken", accessToken, cookieOptions).
             cookie("refreshToken", refreshToken, cookieOptions). // Set refresh token with a longer expiry (30 days)
-            json(new ApiResponse(true, { user: { _id: user._id, username: user.username, email: user.email, profilePicture: user.profilePicture, refreshToken, accessToken } }, 'Login successful'));
+            json(new ApiResponse(200, { user: { _id: user._id, username: user.username, email: user.email, profilePicture: user.profilePicture, refreshToken, accessToken } }, 'Login successful'));
     } catch (err) {
         res.status(500).json(new ApiError(500, 'Internal server error'));
     }
@@ -157,39 +162,6 @@ const logoutUser = async (req, res) => {
 }
     ;
 
-// const generateRefreshToken = async (req, res) => {
-
-//     const refreshToken1 = req.cookies?.refreshToken || req.header("Authorization")?.replace("Bearer ", "") || req.body.refreshToken; // Get token from cookies or Authorization header or request body
-
-//     if (!refreshToken1) {
-//         return res.status(401).json(new ApiError(401, "Unauthorized access, token is missing"));
-//     }
-
-//     try {
-//         const decoded = jwt.verify(refreshToken1, process.env.REFRESH_TOKEN_SECRET);
-//         const user = await User.findById(decoded?._id); //We add id in the decoded token, so we can use it to find the user in the database
-//         if (!user || user.refreshtoken !== refreshToken1) {
-//             return res.status(403).json(new ApiError(403, "Forbidden access, token is invalid"));
-//         }
-//         const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id);
-
-//         const cookieOptions = {
-//             //httpOnly and secure options use because this change only in production not in development(frontend cannot access the cookie)
-//             httpOnly: true, // Prevents client-side access to the cookie 
-//             secure: process.env.NODE_ENV === "production", // Use secure cookies in production (HTTPS)
-//             sameSite: "lax",
-//             maxAge: 24 * 60 * 60 * 1000, // 1 day
-//         }
-//         return res.
-//             status(200).
-//             cookie("accessToken", accessToken, cookieOptions). // Set new access token in HTTP-only cookie
-//             cookie("refreshToken", refreshToken, cookieOptions). // Set new refresh token in HTTP-only cookie
-//             json(new ApiResponse(true, { accessToken, refreshToken }, "New access token generated successfully"));
-//     } catch (error) {
-//         console.error(`Refresh token error: ${error.message}`);
-//         return res.status(403).json(new ApiError(403, "Forbidden access, token is invalid"));
-//     }
-// }
 
 const updateUserProfile = async (req, res) => {
     const userId = req.user._id; // From verifyJWT middleware
@@ -197,7 +169,6 @@ const updateUserProfile = async (req, res) => {
 
     // If a new profile picture is uploaded, handle the upload to Cloudinary  
     if (req.file) {
-        console.log("YES")
         try {
             // Upload new profile picture to Cloudinary
             const uploadResult = await uploadCloudinary(req.file.path);
@@ -231,26 +202,26 @@ const updateUserProfile = async (req, res) => {
 };
 
 const updateApiKey = async (req, res) => {
-    try{
-    const userId = req.user._id;
-    const { apiKey } = req.body;
+    try {
+        const userId = req.user._id;
+        const { apiKey } = req.body;
 
-    if (!apiKey) {
-        return res.status(400).json(new ApiError(400, "API key is required"));
+        if (!apiKey) {
+            return res.status(400).json(new ApiError(400, "API key is required"));
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json(new ApiError(404, "User not found"));
+        }
+
+        user.apiKey = apiKey;
+        await user.save();
+
+        res.status(200).json(new ApiResponse(200, {}, "API key updated successfully"));
+    } catch (error) {
+        return res.status(500).json(new ApiError(500, "Internal server error"))
     }
-
-    const user = await User.findById(userId);
-    if (!user) {
-        return res.status(404).json(new ApiError(404, "User not found"));
-    }
-
-    user.apiKey = apiKey;
-    await user.save();
-
-    res.status(200).json(new ApiResponse(200, {}, "API key updated successfully"));
-}catch(error){
-    return res.status(500).json(new ApiError(500,"Internal server error"))
-}
 };
 
 const resetpassword = async (req, res) => {
@@ -270,7 +241,7 @@ const resetpassword = async (req, res) => {
         return res.status(400).json(new ApiError(400, 'OTP verification required to reset password'));
     }
 
-    if (Date.now() - otpRecord.verifiedAt.getTime() > 10 * 60 * 1000) {
+    if (Date.now() - otpRecord.verifiedAt.getTime() > 600000) {
         return res.status(400).json(new ApiError(400, 'OTP verification has expired. Please verify OTP again.'));
     }
 
@@ -283,4 +254,4 @@ const resetpassword = async (req, res) => {
     res.status(200).json(new ApiResponse(true, {}, 'Password reset successfully'));
 };
 
-export { registerUser, loginUser, logoutUser, googleLogin, updateUserProfile, resetpassword, updateApiKey};
+export { registerUser, loginUser, logoutUser, googleLogin, updateUserProfile, resetpassword, updateApiKey };
