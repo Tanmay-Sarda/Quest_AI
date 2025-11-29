@@ -3,6 +3,7 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import asyncHandler from '../utils/AsyncHandler.js';
 import { Story } from '../models/Story.models.js';
+import { User } from '../models/User.models.js';
 import mongoose from 'mongoose';
 
 const extractOwnerInfo = (storyDoc, viewerId) => {
