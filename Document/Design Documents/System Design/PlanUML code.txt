@@ -1,0 +1,103 @@
+@startuml
+
+actor User as U
+
+package "Client Layer" {
+  component [React / Web App\n(Frontend)] as FE
+}
+
+package "Backend API (Node.js + Express)" {
+  
+  package "Controllers" {
+    component [Auth Controller\n+ sendSignupOTP()\n+ verifySignupOTP()\n+ sendLoginOTP()\n+ verifyLoginOTP()\n+ sendForgetPasswordOTP()\n+ verifyForgetPasswordOTP()] as AuthController
+    
+    component [User Controller\n+ registerUser()\n+ loginUser()\n+ logoutUser()\n+ updateUserProfile()\n+ updateApiKey()\n+ resetPassword()] as UserController
+    
+    component [Story Controller\n+ createStory()\n+ getAllStories()\n+ getStoryContent()\n+ getComplete()\n+ getIncomplete()\n+ addPromptResponse()\n+ deleteStory()\n+ toggleCompleteStatus()\n+ changeAccess()\n+ getPublicStories()] as StoryController
+    
+    component [Notification Controller\n+ getNotificationsForUser()\n+ createNotification()\n+ deleteNotification()] as NotificationController
+  }
+  
+  package "Middleware Layer" {
+    component [Token Middleware\n+ generateAccessToken()\n+ generateRefreshToken()] as TokenMiddleware
+    component [API Key Middleware] as APIKeyMiddleware
+    component [Async Handler] as AsyncHandler
+    component [Error Handlers] as ErrorHandlers
+  }
+  
+  package "Utility Services" {
+    component [Cloudinary Service] as CloudinaryService
+    component [Mailer Service\n+ sendOTPEmail()] as MailerService
+    component [Api Response] as ApiResponse
+    component [Api Error] as ApiError
+  }
+  
+  package "Validation Layer" {
+    component [Auth Validation\n+ emailSchema\n+ signupVerifySchema\n+ loginVerifySchema\n+ forgotVerifySchema] as AuthValidation
+  }
+}
+
+package "Database Layer" {
+  database "MongoDB" as MongoDB
+}
+
+package "Models (Mongoose)" {
+  component [User Model] as UserModel
+  component [Story Model] as StoryModel
+  component [Otp Model] as OtpModel
+  component [Notification Model] as NotificationModel
+}
+
+cloud "AI Story Generator\n(FastAPI)" as FastAPI
+cloud "Email Service\n(SMTP)" as EmailService
+cloud "Cloudinary CDN" as CloudStorage
+cloud "JWT Signing\nSecrets" as JWTSecret
+
+' User interactions
+U --> FE : Uses Application
+FE --> AuthController : OTP Flows
+FE --> UserController : User Management
+FE --> StoryController : Story Operations
+FE --> NotificationController : Notifications
+
+' Auth Controller flows
+AuthController --> AuthValidation : Validate Input
+AuthController --> OtpModel : Generate/Verify OTP
+AuthController --> UserModel : Check User Exists
+AuthController --> MailerService : Send OTP Email
+AuthController --> UserController : After OTP Verification
+MailerService --> EmailService : Send Email
+
+' User Controller flows
+UserController --> UserModel : CRUD User
+UserController --> TokenMiddleware : Generate JWT Tokens
+UserController --> CloudinaryService : Upload/Delete Profile Pic
+TokenMiddleware --> JWTSecret : Sign Tokens
+UserController --> MongoDB : Save User/Token
+
+' Story Controller flows
+StoryController --> UserModel : Validate API Key
+StoryController --> StoryModel : CRUD Story
+StoryController --> NotificationController : Trigger Notifications
+StoryController --> MongoDB : Read/Write Story Data
+StoryController --> FastAPI : /story/new\n/story/continue
+FastAPI --> MongoDB : Update Story Content
+StoryController --> CloudStorage : (optional uploads)
+
+' Notification Controller flows
+NotificationController --> UserModel : Find Users
+NotificationController --> NotificationModel : CRUD Notifications
+NotificationController --> StoryModel : Update Story Owners
+NotificationController --> MongoDB : Read/Write Notifications
+
+' Common Error Handling
+AuthController --> ApiError : Error Responses
+UserController --> ApiError : Error Responses
+StoryController --> ApiError : Error Responses
+NotificationController --> ApiError : Error Responses
+
+AuthController --> ApiResponse : Success Responses
+UserController --> ApiResponse : Success Responses
+StoryController --> ApiResponse : Success Responses
+NotificationController --> ApiResponse : Success Responses
+@enduml

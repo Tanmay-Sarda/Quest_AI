@@ -1,0 +1,61 @@
+@startuml
+class User {
+    + username: String
+    + email: String
+    + password: String
+    + profilePicture: String
+    + accesstoken: String
+    + refreshtoken: String
+    + apiKey: String
+
+    + isPasswordCorrect(password)
+    + isApiKeyCorrect(apiKey)
+    + generateAccessToken()
+    + generateRefreshToken()
+}
+
+class Story {
+    + title: String
+    + description: String
+    + genre: String
+    + ownerid: Owner[]
+    + content: Content[]
+    + complete: Boolean
+    + public: Boolean
+}
+
+class Owner {
+    + owner: ObjectId (User)
+    + character: String
+}
+
+class Content {
+    + prompt: String
+    + user: ObjectId (User)
+    + response: String
+}
+
+class Otp {
+    + email: String
+    + otpHash: String
+    + expiresAt: Date
+    + attempts: Number
+    + isVerified: Boolean
+    + verifiedAt: Date
+}
+
+class Notification {
+    + toUser: ObjectId (User)
+    + fromUser: ObjectId (User)
+    + story_id: ObjectId (Story)
+    + status: Number (0,1,2)
+}
+
+User "1" --> "many" Story : creates >
+User "1" --> "many" Content : writes >
+Story "1" --> "many" Content
+Story "1" --> "many" Owner
+Otp --> User : email for >
+Notification --> User : to / from >
+Notification --> Story : related to >
+@enduml
