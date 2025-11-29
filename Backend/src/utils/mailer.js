@@ -12,8 +12,6 @@ apiInstance.setApiKey(
   process.env.BREVO_API_KEY
 );
 
-console.log("Brevo Mailer Loaded");
-
 /* ************************
 // SEND OTP EMAIL FUNCTION
 // ************************/
@@ -49,13 +47,8 @@ export async function sendOTPEmail(to, otp) {
 
   try {
     const response = await apiInstance.sendTransacEmail(emailData);
-    console.log("OTP email sent via Brevo:", response.messageId || response);
     return response;
   } catch (error) {
-    console.error(
-      "Failed to send OTP email via Brevo:",
-      error.response?.body || error.message
-    );
     throw error;
   }
 }

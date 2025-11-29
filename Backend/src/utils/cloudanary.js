@@ -9,7 +9,6 @@ cloudinary.config({
 
  
 const uploadCloudinary = async (filePath) => {
-    console.log("Uploading to Cloudinary:", filePath);
     try {
         // Validate file path first
         if (!filePath) {
@@ -38,6 +37,8 @@ const uploadCloudinary = async (filePath) => {
         return result;
     } catch (error) {
         // Only clean up if file exists and we have a valid filePath
+        console.error("Cloudinary Upload Error:", error.message);
+        
         if (filePath && fs.existsSync(filePath)) {
             try {
                 fs.unlinkSync(filePath);
@@ -46,7 +47,6 @@ const uploadCloudinary = async (filePath) => {
                 // Don't throw the cleanup error, preserve the original error
             }
         }
-        console.error("Cloudinary Upload Error:", error.message);
         throw error; // Re-throw the original error
     }
 }
