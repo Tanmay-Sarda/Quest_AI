@@ -216,11 +216,13 @@ else {
 
           <form onSubmit={handleSubmit}>
             <div
+            className="hover:6px"
               style={{
                 display: "flex",
                 justifyContent: "center",
                 gap: "12px",
                 marginBottom: "30px",
+          
               }}
             >
               {otp.map((digit, index) => (
@@ -233,9 +235,8 @@ else {
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleBackspace(index, e)}
                   onPaste={index === 0 ? handlePaste : undefined}
+                  className="w-[40px] h-[40px]   sm:w-[50px] sm:h-[50px]"
                   style={{
-                    width: "50px",
-                    height: "50px",
                     textAlign: "center",
                     fontSize: "1.5rem",
                     fontWeight: "bold",

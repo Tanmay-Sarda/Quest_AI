@@ -138,7 +138,7 @@ export default function EditProfile({ username }) {
           ✖
         </button>
 
-        <h2 className="text-3xl mb-1 md:mb-4 font-bold text-center tracking-wide">
+        <h2 className="text-3xl mb-1 md:mb-2 font-bold text-center tracking-wide">
           Edit Profile
         </h2>
 
