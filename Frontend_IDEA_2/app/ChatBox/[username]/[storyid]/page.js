@@ -318,7 +318,7 @@ export default function StoryPage() {
           >
             {stories.length === 0 ? ( null
             ) : (
-              stories.slice(1).flatMap(s => [
+              stories.flatMap(s => [
                 { ...s.prompt, type: 'prompt', id: s.id + '-prompt' },
                 { text: s.response, type: 'response', id: s.id + '-response', character: 'Story-Master' }
               ]).map(msg => (
