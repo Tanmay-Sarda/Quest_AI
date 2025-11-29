@@ -127,6 +127,23 @@ export default function StoryPage() {
     setLoading(true);
 
     const currentUser = localStorage.getItem("username");
+    const currentPrompt = prompt; // Store current prompt before clearing
+
+    // Immediately display the user's message
+    setStories((prevStories) => [
+      ...prevStories,
+      {
+        id: Date.now(), // Unique ID for the temporary message
+        prompt: {
+          text: formatPromptText(currentPrompt),
+          character: currentUser,
+        },
+        response: "", // LLM response will be filled later or replaced
+      },
+    ]);
+    setPrompt(""); // Clear the input field
+
+    setLoading(true); // Start loading after displaying user's message
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -139,7 +156,7 @@ export default function StoryPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ prompt: currentPrompt }), // Use currentPrompt here
         }
       );
 
@@ -147,7 +164,9 @@ export default function StoryPage() {
 
       if (!response.ok) {
         toast.error(`Error: ${data.message}`);
-        return 
+        // Optionally, remove the temporarily added user message if there was an error
+        setStories((prevStories) => prevStories.slice(0, prevStories.length - 1));
+        return
       }
 
       const owner = data.data?.owner;
@@ -161,6 +180,8 @@ export default function StoryPage() {
       setPrompt("");
     } catch (err) {
       toast.error(err.message);
+      // Remove the temporarily added user message if there was an error
+      setStories((prevStories) => prevStories.slice(0, prevStories.length - 1));
     } finally {
       setLoading(false);
     }
@@ -295,22 +316,9 @@ export default function StoryPage() {
             ref={scrollRef}
             className="flex flex-col gap-3 overflow-y-auto custom-scrollbar pb-4"
           >
-            {stories.length === 0 ? (
-            <div className="w-full flex justify-start">
-              <div className="flex items-end max-w-[90%] sm:max-w-[70%]">
-                  <div className="message ai-message rounded-xl relative group p-2 bg-black/20 text-white rounded-bl-none min-w-[80px]">
-                    <p className="text-xs text-gray-400 mb-1 font-bold">
-                      Story-Master
-                    </p>
-                    <p className="break-words">
-                      Welcome, adventurer! Your story begins. What is your first
-                      action?
-                    </p>
-                  </div>
-                </div>
-              </div>
+            {stories.length === 0 ? ( null
             ) : (
-              stories.flatMap(s => [
+              stories.slice(1).flatMap(s => [
                 { ...s.prompt, type: 'prompt', id: s.id + '-prompt' },
                 { text: s.response, type: 'response', id: s.id + '-response', character: 'Story-Master' }
               ]).map(msg => (
@@ -348,7 +356,7 @@ export default function StoryPage() {
                     </p>
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <p className="break-words ml-2">is thinking...</p>
+                      <p className="break-words ml-2"> The Story master is thinking...</p>
                     </div>
                   </div>
                 </div>
