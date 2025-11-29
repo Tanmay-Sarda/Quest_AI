@@ -27,6 +27,8 @@
   --danger-color: #ff4d4d;
   --scanline-color-1: rgba(255,255,255,0.02);
   --scanline-color-2: rgba(255,255,255,0.01);
+  --user-message-bg: rgba(255, 255, 255, 0.05);
+  --ai-message-bg: rgba(0, 0, 0, 0.2);
 }
 
 /* Light Theme Variables */
@@ -56,6 +58,8 @@ html[data-theme="light"] {
   --danger-color: #ff4d4d;
   --scanline-color-1: rgba(0,0,0,0.05);
   --scanline-color-2: rgba(0,0,0,0.03);
+  --user-message-bg: rgba(0, 0, 0, 0.05);
+  --ai-message-bg: rgba(0, 0, 0, 0.05);
 }
 
 /* Base retro body */
@@ -407,7 +411,6 @@ footer {
 .message {
   padding: 10px 15px;
   max-width: 100%;
-  border: 1px solid;
   word-wrap: break-word;
   transition: border-color 0.3s ease;
 }
@@ -415,15 +418,15 @@ footer {
 .user-message {
   align-self: flex-end;
   border-color: var(--user-color);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--user-message-bg);
   color: var(--user-color);
 }
 
 .ai-message {
   align-self: flex-start;
   border-color: var(--ai-color);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-color);
+  background: var(--ai-message-bg);
+  color: var(--ai-color);
 }
 
 #chat-form {

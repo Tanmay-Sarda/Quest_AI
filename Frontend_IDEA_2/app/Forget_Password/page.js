@@ -91,10 +91,10 @@ export default function ForgotPasswordPage() {
             <div className="text-center mt-6">
               <button
                 type="button"
-                onClick={() => router.push("/sign-in")}
+                onClick={() => router.push("/Login")}
                 className="text-white hover:underline font-semibold"
               >
-                Back to Sign In
+                Back to Login
               </button>
             </div>
           </form>

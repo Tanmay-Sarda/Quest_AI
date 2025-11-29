@@ -44,7 +44,7 @@ export default function SignUpPage() {
         toast.success("✅ Registration successful! Redirecting to Sign In...");
 
         setTimeout(() => {
-          router.push('/Sign_in');
+          router.push('/Login');
         }, 2000);
         setForm({ name: "", email: "", password: "", profilePicture: "" });
       } else {

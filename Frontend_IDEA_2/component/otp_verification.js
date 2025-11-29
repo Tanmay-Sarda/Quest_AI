@@ -122,7 +122,7 @@ else {
 
           // SIGNUP FLOW → redirect to login
           showToast(" Signup successful! Please log in.");
-          setTimeout(() => router.push("/Sign_in"), 1500); 
+          setTimeout(() => router.push("/Login"), 1500); 
         } else {
           // LOGIN FLOW → store tokens and redirect to user's Home 
           try {

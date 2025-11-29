@@ -144,7 +144,7 @@ async def start_new_story(request: NewStoryRequest):
     """Non-streaming version (backward compatible)"""
     try:
         llm = ChatGroq(
-            model="moonshotai/kimi-k2-instruct",
+            model="llama-3.3-70b-versatile",
             temperature=0.9,
             groq_api_key=request.api_key
         )

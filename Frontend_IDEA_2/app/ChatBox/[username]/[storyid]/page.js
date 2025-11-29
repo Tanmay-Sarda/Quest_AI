@@ -79,21 +79,11 @@ export default function StoryPage() {
       };
     });
 
-  const showToast = (message, duration = 1500) => {
-    const toast = document.createElement("div");
-    toast.className = "toast show";
-    toast.textContent = message;
-    document.body.appendChild(toast);
 
-    setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => toast.remove(), 500);
-    }, duration);
-  };
 
   useEffect(() => {
     if (!localStorage.getItem("accessToken") && !isPublic) {
-      showToast("User not authenticated");
+      toast.error("User not authenticated");
       setTimeout(() => {
         router.push("/Login");
       }, 2000);
@@ -116,7 +106,7 @@ export default function StoryPage() {
 
         const data = await res.json();
         if (!res.ok) {
-          showToast(`${data.message}`);
+          toast.error(`${data.message}`);
           return;
         }
         const existingContent = data.data?.content || [];
@@ -137,6 +127,23 @@ export default function StoryPage() {
     setLoading(true);
 
     const currentUser = localStorage.getItem("username");
+    const currentPrompt = prompt; // Store current prompt before clearing
+
+    // Immediately display the user's message
+    setStories((prevStories) => [
+      ...prevStories,
+      {
+        id: Date.now(), // Unique ID for the temporary message
+        prompt: {
+          text: formatPromptText(currentPrompt),
+          character: currentUser,
+        },
+        response: "", // LLM response will be filled later or replaced
+      },
+    ]);
+    setPrompt(""); // Clear the input field
+
+    setLoading(true); // Start loading after displaying user's message
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -149,15 +156,17 @@ export default function StoryPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ prompt: currentPrompt }), // Use currentPrompt here
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        showToast(`Error: ${data.message}`);
-        return 
+        toast.error(`Error: ${data.message}`);
+        // Optionally, remove the temporarily added user message if there was an error
+        setStories((prevStories) => prevStories.slice(0, prevStories.length - 1));
+        return
       }
 
       const owner = data.data?.owner;
@@ -171,6 +180,8 @@ export default function StoryPage() {
       setPrompt("");
     } catch (err) {
       toast.error(err.message);
+      // Remove the temporarily added user message if there was an error
+      setStories((prevStories) => prevStories.slice(0, prevStories.length - 1));
     } finally {
       setLoading(false);
     }
@@ -224,11 +235,11 @@ export default function StoryPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          showToast(`Error: ${data.message}`);
+          toast.error(`Error: ${data.message}`);
           return;
         }
 
-        showToast(data.message);
+        toast.success(data.message);
         setTimeout(() => router.push(`/Home/${username}`), 1500);
       } catch (err) {
         toast.error(err.message);
@@ -257,6 +268,18 @@ export default function StoryPage() {
 
   return (
     <div className="absolute top-15 flex flex-col items-center max-h-screen w-full px-2 sm:px-4 bg-[var(--bg-color)]">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       {isConfirming && (
         <ConfirmationModal
           message={confirmMessage}
@@ -293,21 +316,7 @@ export default function StoryPage() {
             ref={scrollRef}
             className="flex flex-col gap-3 overflow-y-auto custom-scrollbar pb-4"
           >
-            {stories.length === 0 ? (
-            <div className="w-full flex justify-start">
-              <div className="flex items-end max-w-[90%] sm:max-w-[70%]">
-                  <div className="message ai-message rounded-xl relative group p-2 bg-black/20 text-white rounded-bl-none min-w-[80px]">
-                    <p className="text-xs text-gray-400 mb-1 font-bold">
-                      Story-Master
-                    </p>
-                    <p className="break-words">
-                      Welcome, adventurer! Your story begins. What is your first
-                      action?
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
+            {stories.length === 0 ? (NULL) : (
               stories.flatMap(s => [
                 { ...s.prompt, type: 'prompt', id: s.id + '-prompt' },
                 { text: s.response, type: 'response', id: s.id + '-response', character: 'Story-Master' }
@@ -315,11 +324,13 @@ export default function StoryPage() {
                 <div key={msg.id} className={`w-full flex ${msg.type === 'response' ? 'justify-start' : 'justify-end'}`}>
                     <div className={`flex items-end max-w-[90%] sm:max-w-[80%] ${msg.type === 'prompt' ? 'flex-row-reverse' : ''}`}>
                         <div className={`message rounded-xl relative group p-2 min-w-[100px] border-dotted border-2 ${
-                            msg.type === 'response' ? 'bg-black/20 text-white border-gray-500' :
-                            (msg.character === user
-                                ? "bg-white/5 text-white border-gray-400"
-                                : "bg-white/5 text-white border-gray-500")
-                        }`}>
+                            msg.type === 'response'
+                                ? 'ai-message'
+                                : msg.character === user
+                                ? 'user-message'
+                                : 'ai-message'
+                        }`}
+                        >
                             {(msg.character !== user || msg.type === 'response') && (
                                 <p className="text-xs text-gray-400 mb-1 font-bold">
                                     {msg.character}
@@ -336,6 +347,21 @@ export default function StoryPage() {
                     </div>
                 </div>
               ))
+            )}
+            {loading && (
+              <div className="w-full flex justify-start">
+                <div className="flex items-end max-w-[90%] sm:max-w-[70%]">
+                  <div className="message ai-message rounded-xl relative group p-2 rounded-bl-none min-w-[80px]">
+                    <p className="text-xs text-gray-400 mb-1 font-bold">
+                      Story-Master
+                    </p>
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <p className="break-words ml-2">is thinking...</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
@@ -359,7 +385,7 @@ export default function StoryPage() {
                 disabled={loading || !prompt.trim()}
                 className="form-button mt-2 sm:mt-0 sm:ml-2 text-sm sm:text-base"
               >
-                <span>{loading ? "[ O ]" : "[ SEND ]"}</span>
+                <span>{loading ? "[ ... ]" : "[ SEND ]"}</span>
               </button>
             </div>
           )}
