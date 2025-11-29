@@ -128,17 +128,17 @@ export default function EditProfile({ username }) {
 
   return (
     <div className="fixed inset-0 flex justify-center items-center" style={{ backgroundColor: 'var(--overlay-bg)', zIndex: 1100 }}>
-      <div className="border-4 rounded-2xl p-10 w-[90%] max-w-md relative shadow-lg animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)', color: 'var(--text-color)' }}>
+      <div className="border-4 rounded-2xl p-10 w-[90%] h-[95vh] max-w-md relative shadow-lg animate-fade-in" style={{ backgroundColor: 'var(--bg-color)', borderColor: 'var(--border-color)', color: 'var(--text-color)' }}>
 
         <button
           onClick={() => router.push(`/Home/${username}`)}
-          className="absolute top-4 right-5 text-2xl"
+          className="absolute top-4 right-5 text-2xl hover:cursor-pointer"
           style={{ color: 'var(--danger-color)' }}
         >
           ✖
         </button>
 
-        <h2 className="text-3xl mb-6 font-bold text-center tracking-wide">
+        <h2 className="text-3xl mb-1 md:mb-4 font-bold text-center tracking-wide">
           Edit Profile
         </h2>
 
@@ -189,7 +189,7 @@ export default function EditProfile({ username }) {
                 onClick={() => fileInputRef.current?.click()}
                 className="form-button rounded-md p-1 transform transition-all duration-200 hover:scale-105 hover:text-[#39FF14]"
               >
-                Update profile picture
+                Update profile here
               </button>
 
               {newP && (
@@ -254,7 +254,7 @@ export default function EditProfile({ username }) {
         </form>
 
         <form onSubmit={handleApiKeySubmit} className="flex flex-col gap-4 mt-8">
-          <h3 className="text-2xl mb-4 font-bold text-center tracking-wide">
+          <h3 className="text-2xl  font-bold text-center tracking-wide">
             Update API Key
           </h3>
           <div className="w-full relative">
