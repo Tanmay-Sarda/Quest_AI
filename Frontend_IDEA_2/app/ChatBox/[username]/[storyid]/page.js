@@ -316,21 +316,20 @@ export default function StoryPage() {
             ref={scrollRef}
             className="flex flex-col gap-3 overflow-y-auto custom-scrollbar pb-4"
           >
-            {stories.length === 0 ? (NULL) : (
-              stories.flatMap(s => [
+            {stories.length === 0 ? ( null
+            ) : (
+              stories.slice(1).flatMap(s => [
                 { ...s.prompt, type: 'prompt', id: s.id + '-prompt' },
                 { text: s.response, type: 'response', id: s.id + '-response', character: 'Story-Master' }
               ]).map(msg => (
                 <div key={msg.id} className={`w-full flex ${msg.type === 'response' ? 'justify-start' : 'justify-end'}`}>
                     <div className={`flex items-end max-w-[90%] sm:max-w-[80%] ${msg.type === 'prompt' ? 'flex-row-reverse' : ''}`}>
                         <div className={`message rounded-xl relative group p-2 min-w-[100px] border-dotted border-2 ${
-                            msg.type === 'response'
-                                ? 'ai-message'
-                                : msg.character === user
-                                ? 'user-message'
-                                : 'ai-message'
-                        }`}
-                        >
+                            msg.type === 'response' ? 'bg-black/20 text-white border-gray-500' :
+                            (msg.character === user
+                                ? "bg-white/5 text-white border-gray-400"
+                                : "bg-white/5 text-white border-gray-500")
+                        }`}>
                             {(msg.character !== user || msg.type === 'response') && (
                                 <p className="text-xs text-gray-400 mb-1 font-bold">
                                     {msg.character}
@@ -351,13 +350,13 @@ export default function StoryPage() {
             {loading && (
               <div className="w-full flex justify-start">
                 <div className="flex items-end max-w-[90%] sm:max-w-[70%]">
-                  <div className="message ai-message rounded-xl relative group p-2 rounded-bl-none min-w-[80px]">
+                  <div className="message ai-message rounded-xl relative group p-2 bg-black/20 text-white rounded-bl-none min-w-[80px]">
                     <p className="text-xs text-gray-400 mb-1 font-bold">
                       Story-Master
                     </p>
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <p className="break-words ml-2">is thinking...</p>
+                      <p className="break-words ml-2"> The Story master is thinking...</p>
                     </div>
                   </div>
                 </div>
