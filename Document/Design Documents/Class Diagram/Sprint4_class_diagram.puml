@@ -1,0 +1,102 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #F0F8FF
+    ArrowColor #333333
+    BorderColor #333333
+}
+
+package "Backend API Layer" {
+
+    class AuthController {
+        + register(UserDTO): Response
+        + login(LoginDTO): Token
+        + forgotPassword(email: String): Response
+        + verifyOTP(email: String, code: String): Token
+        + resetPassword(token: String, newPass: String): Response
+    }
+
+    class StoryController {
+        + createStory(CreateStoryDTO): StoryResponse
+        + continueStory(StoryId: UUID, prompt: String): StoryResponse
+        + getStoryHistory(userId: UUID): List<Story>
+        + exportStory(format: String): File
+    }
+}
+
+package "Domain/Model Layer" {
+
+    class User {
+        - id: UUID
+        - username: String
+        - email: String
+        - passwordHash: String
+        - isVerified: Boolean
+        + validatePassword(input: String): Boolean
+    }
+
+    class OTP {
+        - id: UUID
+        - userId: UUID
+        - code: String [6-digit]
+        - expirationTime: DateTime
+        - isUsed: Boolean
+        + isValid(): Boolean
+    }
+
+    class Story {
+        - id: UUID
+        - userId: UUID
+        - title: String
+        - content: Text
+        - genre: GenreType
+        - style: StyleType
+        - dialect: String
+        - createdAt: DateTime
+        - lastEdited: DateTime
+        + addSegment(text: String)
+        + updateContext(prompt: String)
+    }
+
+    class Character {
+        - id: UUID
+        - storyId: UUID
+        - name: String
+        - description: String
+        - role: String
+    }
+}
+
+package "Service Layer" {
+
+    class EmailService {
+        + sendVerificationEmail(email: String, otp: String): void
+        + sendPasswordReset(email: String, link: String): void
+    }
+
+    class LLMService {
+        - modelVersion: String = "Llama 3.3 70B"
+        + generateNarrative(prompt: String, context: String, genre: GenreType): String
+        + extractStyle(text: String): StyleType
+        + detectDialect(text: String): String
+        + extractCharacters(text: String): List<Character>
+    }
+}
+
+' Relationships
+
+User "1" *-- "0..*" Story : owns
+User "1" -- "0..*" OTP : requests
+Story "1" *-- "0..*" Character : contains
+
+AuthController ..> User : manages
+AuthController ..> OTP : validates
+AuthController ..> EmailService : uses
+
+StoryController ..> Story : manages
+StoryController ..> LLMService : invokes
+StoryController ..> User : authenticates
+
+@enduml
