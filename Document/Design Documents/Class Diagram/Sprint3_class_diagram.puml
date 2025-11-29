@@ -1,0 +1,89 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam monochrome false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Sprint 3: Storyteller System Class Diagram
+
+package "Database" {
+    class User {
+        +user_id: UUID
+        +username: String
+        +email: String
+        +password_hash: String
+        +register(): void
+        +login(): AuthToken
+    }
+
+    class Story {
+        +session_id: UUID
+        +title: String
+        +setting: String
+        +tone: String
+        +created_at: DateTime
+        +last_updated: DateTime
+        +add_segment(segment: StorySegment): void
+        +get_full_history(): List<StorySegment>
+    }
+
+    class StorySegment {
+        +segment_id: UUID
+        +user_prompt: String
+        +ai_response: String
+        +timestamp: DateTime
+    }
+}
+
+package "API Layer (FastAPI)" {
+    class StoryController {
+        +create_story(metadata: StoryCreateRequest): SessionID
+        +generate_response(request: GenerateRequest): StoryResponse
+        +get_history(session_id: UUID): HistoryResponse
+        +save_state(session_id: UUID): Status
+    }
+}
+
+package "Service Layer" {
+    class StoryService {
+        +initialize_new_story(user_id: UUID, metadata: Metadata): Story
+        +process_turn(session_id: UUID, user_prompt: String): String
+        -retrieve_context(session_id: UUID): String
+    }
+
+    class ContextCompressor {
+        <<Sprint 3 Feature>>
+        +compress_history(segments: List<StorySegment>): String
+        +summarize_text(text: String): String
+        +check_token_limit(current_context: String): Boolean
+    }
+
+    class DialectManager {
+        <<Sprint 3 Feature>>
+        +inject_dialect_rules(system_prompt: String, tone: String): String
+        +format_output_style(raw_response: String, setting: String): String
+    }
+}
+
+package "External Integrations" {
+    class LLMClient {
+        -api_key: String
+        -model_version: String
+        +generate_text(system_prompt: String, user_context: String): String
+        +validate_api_connection(): Boolean
+    }
+}
+
+' Relationships
+User "1" --> "*" Story : owns >
+Story "1" *-- "*" StorySegment : contains >
+
+StoryController ..> StoryService : delegates to >
+StoryService --> Story : reads/writes >
+StoryService --> LLMClient : requests generation >
+StoryService ..> ContextCompressor : uses >
+StoryService ..> DialectManager : uses >
+
+
+@enduml

@@ -1,0 +1,100 @@
+@startuml
+
+' Style configurations for better readability
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    ArrowColor Black
+    BorderColor Black
+}
+
+' ---------------------------------------------------------
+' Entities (Database Schema Representations)
+' ---------------------------------------------------------
+
+class User {
+    ' Derived from User Stories 1 & 2 (Register/Login)
+    +UUID userId
+    +String username
+    +String email
+    -String passwordHash
+    +Date createdAt
+    --
+    +register(username, email, password)
+    +login(email, password)
+    +logout()
+}
+
+class Story {
+    ' Derived from User Story 5 (Story Form)
+    +UUID storyId
+    +UUID ownerId
+    +String title
+    +String genre
+    +String setting
+    +List<String> characters
+    +Date lastEdited
+    --
+    +create(details)
+    +getHistory()
+}
+
+class StoryInteraction {
+    ' Derived from User Story 6 (Story Generation Page)
+    ' Represents the history of prompts and AI responses
+    +UUID interactionId
+    +UUID storyId
+    +String userPrompt
+    +String aiResponse
+    +Date timestamp
+    --
+    +saveInteraction()
+}
+
+' ---------------------------------------------------------
+' Controllers & Services (Backend Logic)
+' ---------------------------------------------------------
+
+class AuthController {
+    ' Handles Logic from Sequence Diagram (Week 1 Goal)
+    +validateCredentials(email, password)
+    +encryptPassword(password)
+    +generateSessionToken()
+    +terminateSession()
+}
+
+class StoryController {
+    ' Handles API endpoints for /story/create and /story/generate
+    +createStory(details)
+    +generateNextSegment(prompt, context)
+    +fetchStoryList(userId)
+    +validateStoryState()
+}
+
+class LLMService {
+    ' Derived from Sprint 2 Week 1 (LLM API Integration)
+    ' Represents the Python Program/Wrapper
+    -String apiKey
+    --
+    +connectToAPI()
+    +generateContent(prompt, previousContext)
+    -formatPrompt(prompt)
+}
+
+' ---------------------------------------------------------
+' Relationships
+' ---------------------------------------------------------
+
+' A User owns multiple Stories [User Story 7]
+User "1" -- "0..*" Story : owns >
+
+' A Story contains multiple interactions (Composition) [User Story 6]
+Story "1" *-- "0..*" StoryInteraction : contains >
+
+' Controllers interact with Entities and Services
+AuthController ..> User : manages >
+StoryController ..> Story : manages >
+StoryController ..> StoryInteraction : updates >
+StoryController ..> LLMService : calls >
+
+@enduml
