@@ -79,21 +79,11 @@ export default function StoryPage() {
       };
     });
 
-  const showToast = (message, duration = 1500) => {
-    const toast = document.createElement("div");
-    toast.className = "toast show";
-    toast.textContent = message;
-    document.body.appendChild(toast);
 
-    setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => toast.remove(), 500);
-    }, duration);
-  };
 
   useEffect(() => {
     if (!localStorage.getItem("accessToken") && !isPublic) {
-      showToast("User not authenticated");
+      toast.error("User not authenticated");
       setTimeout(() => {
         router.push("/Login");
       }, 2000);
@@ -116,7 +106,7 @@ export default function StoryPage() {
 
         const data = await res.json();
         if (!res.ok) {
-          showToast(`${data.message}`);
+          toast.error(`${data.message}`);
           return;
         }
         const existingContent = data.data?.content || [];
@@ -156,7 +146,7 @@ export default function StoryPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        showToast(`Error: ${data.message}`);
+        toast.error(`Error: ${data.message}`);
         return 
       }
 
@@ -224,11 +214,11 @@ export default function StoryPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          showToast(`Error: ${data.message}`);
+          toast.error(`Error: ${data.message}`);
           return;
         }
 
-        showToast(data.message);
+        toast.success(data.message);
         setTimeout(() => router.push(`/Home/${username}`), 1500);
       } catch (err) {
         toast.error(err.message);
@@ -257,6 +247,18 @@ export default function StoryPage() {
 
   return (
     <div className="absolute top-15 flex flex-col items-center max-h-screen w-full px-2 sm:px-4 bg-[var(--bg-color)]">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       {isConfirming && (
         <ConfirmationModal
           message={confirmMessage}
@@ -337,6 +339,21 @@ export default function StoryPage() {
                 </div>
               ))
             )}
+            {loading && (
+              <div className="w-full flex justify-start">
+                <div className="flex items-end max-w-[90%] sm:max-w-[70%]">
+                  <div className="message ai-message rounded-xl relative group p-2 bg-black/20 text-white rounded-bl-none min-w-[80px]">
+                    <p className="text-xs text-gray-400 mb-1 font-bold">
+                      Story-Master
+                    </p>
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <p className="break-words ml-2">is thinking...</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* INPUT */}
@@ -359,7 +376,7 @@ export default function StoryPage() {
                 disabled={loading || !prompt.trim()}
                 className="form-button mt-2 sm:mt-0 sm:ml-2 text-sm sm:text-base"
               >
-                <span>{loading ? "[ O ]" : "[ SEND ]"}</span>
+                <span>{loading ? "[ ... ]" : "[ SEND ]"}</span>
               </button>
             </div>
           )}
